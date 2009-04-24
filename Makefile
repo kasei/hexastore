@@ -68,20 +68,22 @@ storage.o: storage.c storage.h hexastore_types.h
 
 ########
 
-SPARQLParser.cc: SPARQLParser.yy
+SPARQLParser.cc:
+SPARQLParser.hh: SPARQLParser.yy
 	bison -o SPARQLParser.cc SPARQLParser.yy
 
-SPARQLScanner.cc: SPARQLScanner.ll
+SPARQLScanner.cc:
+SPARQLScanner.hh: SPARQLScanner.ll
 	flex -o SPARQLScanner.cc SPARQLScanner.ll
 
-SPARQLParser.o: SPARQLParser.cc SPARQLParser.hh
+SPARQLParser.o: SPARQLParser.yy SPARQLScanner.ll SPARQLParser.hh SPARQLScanner.hh
 	$(CPP) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
 
-SPARQLScanner.o: SPARQLScanner.cc SPARQLScanner.hh
+SPARQLScanner.o: SPARQLScanner.cc SPARQLParser.hh SPARQLScanner.hh
 	$(CPP) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
 
-parse_query: SPARQLParser.o SPARQLScanner.o
-	$(CPP) -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o
+parse_query: SPARQLScanner.o SPARQLParser.o $(OBJECTS)
+	$(CPP) $(INC) $(LIBS) -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o $(OBJECTS)
 
 ########
 
@@ -174,7 +176,7 @@ clean:
 	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM
-	rm -f test parse print optimize a.out server
+	rm -f test parse print optimize a.out server parse_query
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
