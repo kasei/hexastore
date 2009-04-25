@@ -1,11 +1,9 @@
-# CFLAGS	=	-O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
-CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
+# CFLAGS	=	-O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
+CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast #  -Werror # -DDEBUG_INDEX_SELECTION
 CC			=	gcc $(CFLAGS)
-CPPFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -pedantic -ggdb -Wall
-CPP			=	g++ $(CPPFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o SPARQLParser.o SPARQLScanner.o
 
 all: parse print optimize tests examples parse_query
 
@@ -68,22 +66,22 @@ storage.o: storage.c storage.h hexastore_types.h
 
 ########
 
-SPARQLParser.cc:
-SPARQLParser.hh: SPARQLParser.yy
-	bison -o SPARQLParser.cc SPARQLParser.yy
+SPARQLParser.c:
+SPARQLParser.h: SPARQLParser.yy
+	bison -o SPARQLParser.c SPARQLParser.yy
 
-SPARQLScanner.cc:
-SPARQLScanner.hh: SPARQLScanner.ll
-	flex -o SPARQLScanner.cc SPARQLScanner.ll
+SPARQLScanner.c:
+SPARQLScanner.h: SPARQLScanner.ll
+	flex -o SPARQLScanner.c SPARQLScanner.ll
 
-SPARQLParser.o: SPARQLParser.yy SPARQLScanner.ll SPARQLParser.hh SPARQLScanner.hh
-	$(CPP) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
+SPARQLParser.o: SPARQLParser.yy SPARQLScanner.ll SPARQLParser.h SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.c
 
-SPARQLScanner.o: SPARQLScanner.cc SPARQLParser.hh SPARQLScanner.hh
-	$(CPP) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
+SPARQLScanner.o: SPARQLScanner.c SPARQLParser.h SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.c
 
-parse_query: SPARQLScanner.o SPARQLParser.o $(OBJECTS)
-	$(CPP) $(INC) $(LIBS) -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o $(OBJECTS)
+parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
+	$(CC) $(INC) $(LIBS) -o parse_query parse_query.c $(OBJECTS)
 
 ########
 
@@ -180,5 +178,5 @@ clean:
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
-	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.cc SPARQLScanner.cc SPARQLParser.hh
-	rm -f stack.hh position.hh location.hh
+	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.c SPARQLScanner.c SPARQLParser.h
+	rm -f stack.h position.h location.h

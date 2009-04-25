@@ -39,7 +39,12 @@
 #include <strings.h>
 
 #include <libdrizzle/drizzle_server.h>
-#include <hexastore.h>
+
+/* HEXASTORE STUFF */
+#include "hexastore.h"
+#include "bgp.h"
+extern hx_bgp* parse_bgp_query_string ( char* );
+/*******************/
 
 #define HX_SERVER_VERSION "Hexastore Server using libdrizzle 0.2"
 
@@ -64,6 +69,7 @@ typedef struct
   drizzle_result_st result;
   drizzle_column_st column;
   hx_hexastore* db;
+  hx_storage_manager* storage;
   bool send_columns;
   uint8_t verbose;
   uint64_t rows;
@@ -90,6 +96,7 @@ int main(int argc, char *argv[])
   hx_server server;
 
   server.db= NULL;
+  server.storage= NULL;
   server.verbose= 0;
 
   while((c = getopt(argc, argv, "c:mv")) != EOF)
@@ -126,7 +133,8 @@ int main(int argc, char *argv[])
     return 1;
   }
   hx_storage_manager* s = hx_new_memory_storage_manager();
-  server.db  = hx_read( s, f, 0 );
+  server.db			= hx_read( s, f, 0 );
+  server.storage	= s;
   
   if (server.db == NULL)
   {
@@ -278,29 +286,34 @@ static void server_run(hx_server *server)
 //                                &hx_err);
 //     }
 	
-    int count = 1;
-    char* columns[3]	= { "subject", "predicate", "object" };
-    hx_index_iter* iter = hx_index_new_iter( server->db->spo );
-	if (iter == NULL) {
-      printf("hx_index_new_iter failed\n");
-      return;
-    }
-
-	char* fields[3];
-    hx_node_id s, p, o;
+	fprintf( stderr, "query: %s\n", data );
     hx_nodemap* map	= hx_get_nodemap( server->db );;
-    while (!hx_index_iter_finished( iter )) {
-      hx_index_iter_current( iter, &s, &p, &o );
-      hx_node* sn = hx_nodemap_get_node( map, s );
-      hx_node* pn = hx_nodemap_get_node( map, p );
-      hx_node* on = hx_nodemap_get_node( map, o );
-      hx_node_string( sn, &(fields[0]) );
-      hx_node_string( pn, &(fields[1]) );
-      hx_node_string( on, &(fields[2]) );
+	hx_bgp* b	= parse_bgp_query_string( data );
+	if (b == NULL) {
+		fprintf( stderr, "Failed to parse query\n" );
+		return;
+	}
+	
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, server->db, server->storage );
+	int size		= hx_variablebindings_iter_size( iter );
+	char** columns	= hx_variablebindings_iter_names( iter );
+	
+	int count	= 0;
+	char** fields	= calloc( size, sizeof( char* ) );
+    while (!hx_variablebindings_iter_finished( iter )) {
+    	count++;
+		hx_variablebindings* b;
+		hx_variablebindings_iter_current( iter, &b );
+		for (int i = 0; i < size; i++) {
+			char* string;
+			hx_node* node	= hx_variablebindings_node_for_binding( b, map, i );
+			hx_node_string( node, &string );
+			fields[i]	= string;
+		}
       
-      row_cb( server, 3, fields, columns );
-      
-      hx_index_iter_next( iter );
+		row_cb( server, size, fields, columns );
+		hx_free_variablebindings( b, 0 );
+		hx_variablebindings_iter_next( iter );
     }
     hx_free_index_iter( iter );
     

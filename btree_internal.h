@@ -5,12 +5,14 @@
 extern "C" {
 #endif
 
+/*
 // #define BRANCHING_SIZE	124
 // #define BRANCHING_SIZE	252
 // #define BRANCHING_SIZE	510
 // #define BRANCHING_SIZE	1022
 // #define BRANCHING_SIZE	14
 // #define BRANCHING_SIZE	4
+*/
 
 static uint32_t HX_BTREE_NODE_ROOT	= 1;
 static uint32_t HX_BTREE_NODE_LEAF	= 2;
@@ -29,7 +31,7 @@ int hx_btree_node_add_child ( hx_storage_manager* s, hx_btree_node* node, hx_nod
 hx_storage_id_t hx_btree_node_get_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint32_t branching_size );
 int hx_btree_node_remove_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint32_t branching_size );
 
-// setter methods
+/* setter methods */
 hx_btree_node* hx_btree_node_next_neighbor ( hx_storage_manager* s, hx_btree_node* node );
 hx_btree_node* hx_btree_node_prev_neighbor ( hx_storage_manager* s, hx_btree_node* node );
 int hx_btree_node_set_parent ( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* parent );

@@ -17,6 +17,7 @@ extern "C" {
 #include "hexastore_types.h"
 
 
+/**
 // node type characters:
 // ?	- Variable
 //	R	- IRI resource
@@ -31,10 +32,11 @@ extern "C" {
 //	X - hexastore
 //	I - index
 //	M - node map
+**/
 
-const static int HX_NODE_NONE	= 0;
-const static int HX_NODE_IOK	= 1;
-const static int HX_NODE_NOK	= 2;
+static const int HX_NODE_NONE	= 0;
+static const int HX_NODE_IOK	= 1;
+static const int HX_NODE_NOK	= 2;
 
 typedef struct {
 	char type;

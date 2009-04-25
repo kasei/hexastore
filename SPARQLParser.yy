@@ -26,7 +26,6 @@
 
 #include <stdio.h>
 #include "node.h"
-#include "triple.h"
 
 int yylex ( void );
 void yyerror (char const *s);
@@ -34,11 +33,13 @@ void yyerror (char const *s);
 #define YYSTYPE_IS_DECLARED
 
 typedef struct {
+	/**
 	// type is either:
 	// - 'N' for a full node,
 	// - 'V' for a char* variable name
 	// - 'Q' for a QName (that still needs to be expanded)
 	// - 'L' for a Literal with Qname datatype
+	**/
 	char type;
 	void* ptr;
 	char* datatype;
@@ -94,7 +95,7 @@ extern void XXXdebug_triple( triple_t*, prologue_t* );
 
 
 %{
-#include "SPARQLScanner.hh"
+#include "SPARQLScanner.h"
 %}
 %token			__EOF__		 0	"end of file"
 
@@ -187,8 +188,9 @@ extern void XXXdebug_triple( triple_t*, prologue_t* );
  /*** END SPARQL - Change the grammar's tokens above ***/
 
 %{
+#include <stdlib.h>
 #include <stdarg.h>
-#include "SPARQLScanner.hh"
+#include "SPARQLScanner.h"
 %}
 
 %% /*** Grammar Rules ***/
@@ -210,14 +212,16 @@ myQuery:
 Prologue:
 	_QBaseDecl_E_Opt _QPrefixDecl_E_Star {
 		prologue_t* p	= (prologue_t*) calloc( 1, sizeof( prologue_t ) );
-		p->ns				= (namespace_set_t*) $2;
-		p->base				= (char*) $1;
-		$$					= (void*) p;
+		p->ns			= (namespace_set_t*) $2;
+		p->base			= (char*) $1;
+		$$				= (void*) p;
 	}
 ;
 
 _QBaseDecl_E_Opt:
-	{}
+	{
+		$$	= NULL;
+	}
 
 	| BaseDecl	{
 		$$	= $1;
@@ -230,6 +234,7 @@ _QPrefixDecl_E_Star:
 	}
 
 	| _QPrefixDecl_E_Star PrefixDecl {
+		namespace_t* n;
 		namespace_set_t* set	= (namespace_set_t*) $1;
 		if (set == NULL) {
 			set	= (namespace_set_t*) calloc( 1, sizeof( namespace_set_t ) );
@@ -239,17 +244,19 @@ _QPrefixDecl_E_Star:
 		}
 		
 		if (set->allocated <= (set->namespace_count + 1)) {
-			set->allocated	*= 2;
+			int i;
+			namespace_t** old;
 			namespace_t** newlist	= (namespace_t**) calloc( set->allocated, sizeof( namespace_t* ) );
-			for (int i = 0; i < set->namespace_count; i++) {
+			set->allocated	*= 2;
+			for (i = 0; i < set->namespace_count; i++) {
 				newlist[i]	= set->namespaces[i];
 			}
-			namespace_t** old		= set->namespaces;
+			old		= set->namespaces;
 			set->namespaces			= newlist;
 			free( old );
 		}
 		
-		namespace_t* n	= (namespace_t*) $2;
+		n	= (namespace_t*) $2;
 		set->namespaces[ set->namespace_count++ ]	= n;
 		$$	= set;
 	}
@@ -273,18 +280,35 @@ PrefixDecl:
 
 TriplesBlock:
 	TriplesSameSubject _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt {
-		$$	= $1; // XXX
+		if ($2 == NULL) {
+			$$	= $1;
+		} else {
+			/* XXX */
+			int i;
+			triple_set_t* triples1	= (triple_set_t*) $1;
+			triple_set_t* triples2	= (triple_set_t*) $2;
+			for (i = 0; i < triples2->triple_count; i++) {
+				add_triple_to_set( triples1, triples2->triples[i] );
+			}
+			$$	= triples1;
+		}
 	}
 ;
 
 _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C:
-	GT_DOT _QTriplesBlock_E_Opt {}
+	GT_DOT _QTriplesBlock_E_Opt {
+		$$	= $2;
+	}
 ;
 
 _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt:
-	{}
+	{
+		$$	= NULL;
+	}
 
-	| _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C	{}
+	| _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C	{
+		$$	= $1;
+	}
 ;
 
 _QTriplesBlock_E_Opt:
@@ -299,74 +323,129 @@ _QTriplesBlock_E_Opt:
 
 TriplesSameSubject:
 	VarOrTerm PropertyListNotEmpty	{
+		int i;
 		triple_set_t* subj_triples	= (triple_set_t*) $1;
+		if (subj_triples->triple_count == 0) {
+			fprintf( stderr, "uh oh. VarOrTerm didn't return any graph triples.\n" );
+		}
 		node_t* subject	= subj_triples->triples[0]->subject;
 		triple_set_t* triples	= (triple_set_t*) $2;
-		for (int i = 0; i < triples->triple_count; i++) {
+		for (i = 0; i < triples->triple_count; i++) {
 			triples->triples[i]->subject	= subject;
 		}
 		$$	= triples;
 	}
 
-	| TriplesNode PropertyList	{}
+	| TriplesNode PropertyList	{
+		fprintf( stderr, "TriplesSameSubject[2] not implemented\n" );
+		$$	= NULL;
+	}
 ;
 
 PropertyListNotEmpty:
 	Verb ObjectList _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star	{
-		// XXX
+		triple_set_t* triples;
+		triples	= (triple_set_t*) $2;
+		/* XXX */
+		int i;
 		node_t* predicate	= (node_t*) $1;
-		triple_set_t* triples	= (triple_set_t*) $2;
-		for (int i = 0; i < triples->triple_count; i++) {
+		for (i = 0; i < triples->triple_count; i++) {
 			triples->triples[i]->predicate	= predicate;
+		}
+		if ($3 != NULL) {
+			int i;
+			triple_set_t* triples2	= (triple_set_t*) $3;
+			for (i = 0; i < triples2->triple_count; i++) {
+				add_triple_to_set( triples, triples2->triples[i] );
+			}
 		}
 		$$	= (void*) triples;
 	}
 ;
 
 _O_QVerb_E_S_QObjectList_E_C:
-	Verb ObjectList {}
+	Verb ObjectList {
+		triple_set_t* triples	= (triple_set_t*) $2;
+		int i;
+		node_t* predicate	= (node_t*) $1;
+		for (i = 0; i < triples->triple_count; i++) {
+			triples->triples[i]->predicate	= predicate;
+		}
+		$$	= (void*) triples;
+	}
 ;
 
 _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt:
-	{}
+	{
+		$$	= NULL;
+	}
 
-	| _O_QVerb_E_S_QObjectList_E_C	{}
+	| _O_QVerb_E_S_QObjectList_E_C	{
+		$$	= $1;
+	}
 ;
 
 _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C:
-	GT_SEMI _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt	{}
+	GT_SEMI _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt	{
+		$$	= $2;
+	}
 ;
 
 _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star:
-	{}
+	{
+		$$	= NULL;
+	}
 
-	| _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C	{}
+	| _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C	{
+		triple_set_t* triples;
+		if ($1 == NULL) {
+			triples	= (triple_set_t*) $2;
+		} else {
+			triples	= (triple_set_t*) $1;
+			if ($2 != NULL) {
+				int i;
+				triple_set_t* triples2	= (triple_set_t*) $2;
+				for (i = 0; i < triples2->triple_count; i++) {
+					add_triple_to_set( triples, triples2->triples[i] );
+				}
+			}
+		}
+		$$	= triples;
+	}
 ;
 
 PropertyList:
-	_QPropertyListNotEmpty_E_Opt	{}
+	_QPropertyListNotEmpty_E_Opt	{
+		$$	= $1;
+	}
 ;
 
 _QPropertyListNotEmpty_E_Opt:
-	{}
+	{
+		$$	= NULL;
+	}
 
-	| PropertyListNotEmpty	{}
+	| PropertyListNotEmpty	{
+		$$	= $1;
+	}
 ;
 
 ObjectList:
 	Object _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star	{
-		// XXX
+		triple_t* t;
+		node_t* object;
 		triple_set_t* set;
+		triple_set_t* obj_triples;
 		if ($2 == NULL) {
 			set	= new_triple_set( 5 );
 		} else {
 			set	= (triple_set_t*) $2;
 		}
 		
-		triple_set_t* obj_triples	= (triple_set_t*) $1;
-		node_t* object	= obj_triples->triples[0]->subject;
+		obj_triples	= (triple_set_t*) $1;
+		object	= obj_triples->triples[0]->subject;
 		
-		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->object			= object;
 		add_triple_to_set( set, t );
 		$$	= (void*) set;
@@ -385,17 +464,20 @@ _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star:
 	}
 
 	| _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star _O_QGT_COMMA_E_S_QObject_E_C	{
+		triple_t* t;
+		node_t* object;
 		triple_set_t* set;
+		triple_set_t* obj_triples;
 		if ($1 == NULL) {
 			set	= new_triple_set( 5 );
 		} else {
 			set	= (triple_set_t*) $1;
 		}
 		
-		triple_set_t* obj_triples	= (triple_set_t*) $2;
-		node_t* object	= obj_triples->triples[0]->subject;
+		obj_triples	= (triple_set_t*) $2;
+		object	= obj_triples->triples[0]->subject;
 		
-		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->object			= object;
 		add_triple_to_set( set, t );
 		
@@ -411,6 +493,18 @@ Object:
 
 Verb:
 	VarOrIRIref {
+		/*
+		triple_t* t;
+		node_t* object;
+		triple_set_t* set	= new_triple_set( 5 );
+		t					= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->subject			= $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
+		add_triple_to_set( set, t );
+		$$	= set;
+		*/
+		
 		$$	= $1;
 	}
 
@@ -442,7 +536,9 @@ GraphNode:
 		$$	= $1;
 	}
 
-	| TriplesNode	{}
+	| TriplesNode	{
+		$$	= NULL;
+	}
 ;
 
 VarOrTerm:
@@ -450,6 +546,9 @@ VarOrTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
+		add_triple_to_set( set, t );
 		$$	= set;
 	}
 
@@ -459,9 +558,13 @@ VarOrTerm:
 ;
 
 VarOrIRIref:
-	Var {}
+	Var {
+		$$	= $1;
+	}
 
-	| IRIref	{}
+	| IRIref	{
+		$$	= $1;
+	}
 ;
 
 Var:
@@ -469,12 +572,14 @@ Var:
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
 		n->type	= 'V';
 		n->ptr	= (void*) $1;
+		$$	= n;
 	}
 
 	| VAR2	{
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
 		n->type	= 'V';
 		n->ptr	= (void*) $1;
+		$$	= n;
 	}
 ;
 
@@ -483,6 +588,8 @@ GraphTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
 		add_triple_to_set( set, t );
 		$$	= set;
 	}
@@ -491,6 +598,8 @@ GraphTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
 		add_triple_to_set( set, t );
 		$$	= set;
 	}
@@ -499,6 +608,8 @@ GraphTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
 		add_triple_to_set( set, t );
 		$$	= set;
 	}
@@ -507,6 +618,8 @@ GraphTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
 		add_triple_to_set( set, t );
 		$$	= set;
 	}
@@ -515,6 +628,8 @@ GraphTerm:
 		triple_set_t* set	= new_triple_set( 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->subject			= (node_t*) $1;
+		t->predicate		= NULL;
+		t->object			= NULL;
 		add_triple_to_set( set, t );
 		$$	= set;
 	}
@@ -669,11 +784,12 @@ String:
 
 IRIref:
 	IRI_REF {
-		hx_node* iri	= hx_new_node_resource( (char*) $1 );
+		node_t* r;
 		char* string;
+		hx_node* iri	= hx_new_node_resource( (char*) $1 );
 		hx_node_string( iri, &string );
 		free( string );
-		node_t* r	= (node_t*) calloc( 1, sizeof( node_t ) );
+		r	= (node_t*) calloc( 1, sizeof( node_t ) );
 		r->type			= 'N';
 		r->ptr			= iri;
 		$$	= (void*) r;
@@ -699,12 +815,13 @@ PrefixedName:
 
 BlankNode:
 	BLANK_NODE_LABEL {
-		hx_node* b	= hx_new_node_blank( (char*) $1 );
+		node_t* r;
 		char* string;
+		hx_node* b	= hx_new_node_blank( (char*) $1 );
 		hx_node_string( b, &string );
 		free( string );
 		
-		node_t* r	= (node_t*) calloc( 1, sizeof( node_t ) );
+		r	= (node_t*) calloc( 1, sizeof( node_t ) );
 		r->type			= 'N';
 		r->ptr			= b;
 		$$	= (void*) r;
@@ -1516,12 +1633,10 @@ BlankNode:
 /* START main */
 
 #include <stdio.h>
-// #include "SPARQLFrob.h"
-
-#include <stdio.h>
 #include <stdlib.h>
-#include <ostream>
-#include <fstream>
+#include "triple.h"
+#include "node.h"
+#include "bgp.h"
 
 void* parsedPattern	= NULL;
 
@@ -1529,37 +1644,48 @@ void free_prologue ( prologue_t* p );
 char* prefix_uri ( prologue_t* p, char* ns );
 char* qualify_qname ( prologue_t* p, char* qname );
 hx_node* generate_node ( node_t* n, prologue_t* p, int* counter );
+hx_bgp* parse_bgp_query ( void );
+hx_bgp* parse_bgp_query_string ( char* string );
 
 void yyerror (char const *s) {
 	fprintf (stderr, "*** %s\n", s);
 }
 
-int main(void) {
+hx_bgp* parse_bgp_query_string ( char* string ) {
+	yy_scan_string( string );
+	return parse_bgp_query();
+}
+
+hx_bgp* parse_bgp_query ( void ) {
 	if (yyparse() == 0) {
+		int i;
+		hx_bgp* b;
+		triple_set_t* bgp;
+		hx_triple** triples;
+		int counter	= -1;
 		query_t* q		= (query_t*) parsedPattern;
-		prologue_t* p	= q->prologue;
-		if (p->base) {
-			fprintf( stderr, "BASE <%s>\n", p->base );
-		}
-		if (p->ns != NULL) {
-			fprintf( stderr, "%d namespaces:\n", p->ns->namespace_count );
-			namespace_set_t* s	= p->ns;
-			for (int i = 0; i < s->namespace_count; i++) {
-				namespace_t* n	= s->namespaces[i];
-				fprintf( stderr, "  PREFIX %s: <%s>\n", n->name, n->uri );
+		prologue_t* prologue	= q->prologue;
+		bgp	= q->bgp;
+		triples	= (hx_triple**) calloc( bgp->triple_count, sizeof( hx_triple* ) );
+		for (i = 0; i < bgp->triple_count; i++) {
+			triple_t* t		= bgp->triples[i];
+			hx_node* s	= generate_node( t->subject, prologue, &counter );
+			hx_node* p	= generate_node( t->predicate, prologue, &counter );
+			hx_node* o	= generate_node( t->object, prologue, &counter );
+			hx_triple* triple;
+			if (s == NULL || p == NULL || o == NULL) {
+				fprintf( stderr, "Got NULL node in triple: (%p, %p, %p)\n", (void*) s, (void*) p, (void*) o );
+				return NULL;
 			}
+			triple	= hx_new_triple( s, p, o );
+			triples[i]	= triple;
 		}
+		free_prologue( prologue );
 		
-		triple_set_t* bgp	= q->bgp;
-		for (int i = 0; i < bgp->triple_count; i++) {
-			triple_t* t	= bgp->triples[i];
-			fprintf( stderr, "Triple %d:\n", i+1 );
-			XXXdebug_triple( t, p );
-		}
-		
-		free_prologue( p );
+		b	= hx_new_bgp( bgp->triple_count, triples );
+		return b;
 	}
-	return 0;
+	return NULL;
 }
 
 /* END main */
@@ -1577,15 +1703,20 @@ hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
 	} else if (n->type == 'V') {
 		char* name	= (char*) n->ptr;
 		char* copy	= (char*) malloc( strlen( name ) + 1 );
+		hx_node* v;
 		strcpy( copy, name );
-		hx_node* v	= hx_new_node_named_variable( (*counter)--, copy );
+		v	= hx_new_node_named_variable( (*counter)--, copy );
 		return v;
 	} else if (n->type == 'Q') {
 		char* uri	= qualify_qname( p, (char*) n->ptr );
+		if (uri == NULL)
+			return NULL;
 		hx_node* u	= hx_new_node_resource( uri );
 		return u;
 	} else if (n->type == 'L') {
 		char* dt	= qualify_qname( p, n->datatype );
+		if (dt == NULL)
+			return NULL;
 		char* value	= (char*) n->ptr;
 		hx_node* l	= (hx_node*) hx_new_node_dt_literal( value, dt );
 		return l;
@@ -1607,27 +1738,35 @@ void XXXdebug_node( node_t* n, prologue_t* p ) {
 	}
 }
 
-char* qualify_qname ( prologue_t* p, char* qname ) {
-	char* ns	= qname;
-	char* local	= strchr( ns, ':' );
+char* qualify_qname ( prologue_t* p, char* _qname ) {
+	char* qname	= (char*) malloc( strlen( _qname ) + 1 );
+	char *ns, *local, *ns_uri;
+	
+	strcpy( qname, _qname );
+	ns	= qname;
+	local	= strchr( ns, ':' );
+	
 	*(local++)	= (char) 0;
-	char* ns_uri	= prefix_uri( p, ns );
+	ns_uri	= prefix_uri( p, ns );
 	if (ns_uri == NULL) {
 		char* uri	= (char*) calloc( strlen( local ) + 1, sizeof( char ) );
 		strcpy( uri, local );
+		free( qname );
 		return uri;
 	} else {
 		char* uri	= (char*) calloc( strlen( ns_uri ) + strlen( local ) + 1, sizeof( char ) );
 		strcat( uri, ns_uri );
 		strcat( uri, local );
+		free( qname );
 		return uri;
 	}
 }
 
 char* prefix_uri ( prologue_t* p, char* ns ) {
 	if (p->ns != NULL) {
+		int i;
 		namespace_set_t* s	= p->ns;
-		for (int i = 0; i < s->namespace_count; i++) {
+		for (i = 0; i < s->namespace_count; i++) {
 			namespace_t* n	= s->namespaces[i];
 			if (strcmp( n->name, ns ) == 0) {
 				return n->uri;
@@ -1642,8 +1781,9 @@ void free_prologue ( prologue_t* p ) {
 		free( p->base );
 	}
 	if (p->ns != NULL) {
+		int i;
 		namespace_set_t* s	= p->ns;
-		for (int i = 0; i < s->namespace_count; i++) {
+		for (i = 0; i < s->namespace_count; i++) {
 			namespace_t* n	= s->namespaces[i];
 			free( n->name );
 			free( n->uri );
@@ -1664,12 +1804,15 @@ triple_set_t* new_triple_set ( int size ) {
 
 void add_triple_to_set( triple_set_t* set, triple_t* t ) {
 	if (set->allocated <= (set->triple_count + 1)) {
+		int i;
+		triple_t** old;
+		triple_t** newlist;
 		set->allocated	*= 2;
-		triple_t** newlist	= (triple_t**) calloc( set->allocated, sizeof( triple_t* ) );
-		for (int i = 0; i < set->triple_count; i++) {
+		newlist	= (triple_t**) calloc( set->allocated, sizeof( triple_t* ) );
+		for (i = 0; i < set->triple_count; i++) {
 			newlist[i]	= set->triples[i];
 		}
-		triple_t** old	= set->triples;
+		old	= set->triples;
 		set->triples	= newlist;
 		free( old );
 	}
@@ -1722,353 +1865,3 @@ extern node_t* new_dt_literal_node ( char* string, char* dt ) {
 /******************************************************************************/
 /******************************************************************************/
 
-
-/* Productions */
-// %type <p_Query> Query
-// %type <p__O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C> _O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C
-// %type <p_Prologue> Prologue
-// %type <p__QBaseDecl_E_Opt> _QBaseDecl_E_Opt
-// %type <p__QPrefixDecl_E_Star> _QPrefixDecl_E_Star
-// %type <p_BaseDecl> BaseDecl
-// %type <p_PrefixDecl> PrefixDecl
-// %type <p_SelectQuery> SelectQuery
-// %type <p__O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C> _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C
-// %type <p__Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt> _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt
-// %type <p__QVar_E_Plus> _QVar_E_Plus
-// %type <p__O_QVar_E_Plus_Or_QGT_TIMES_E_C> _O_QVar_E_Plus_Or_QGT_TIMES_E_C
-// %type <p__QDatasetClause_E_Star> _QDatasetClause_E_Star
-// %type <p_ConstructQuery> ConstructQuery
-// %type <p_DescribeQuery> DescribeQuery
-// %type <p__QVarOrIRIref_E_Plus> _QVarOrIRIref_E_Plus
-// %type <p__O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C> _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C
-// %type <p__QWhereClause_E_Opt> _QWhereClause_E_Opt
-// %type <p_AskQuery> AskQuery
-// %type <p_DatasetClause> DatasetClause
-// %type <p__O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C> _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C
-// %type <p_DefaultGraphClause> DefaultGraphClause
-// %type <p_NamedGraphClause> NamedGraphClause
-// %type <p_SourceSelector> SourceSelector
-// %type <p_WhereClause> WhereClause
-// %type <p__QIT_WHERE_E_Opt> _QIT_WHERE_E_Opt
-// %type <p_SolutionModifier> SolutionModifier
-// %type <p__QOrderClause_E_Opt> _QOrderClause_E_Opt
-// %type <p__QLimitOffsetClauses_E_Opt> _QLimitOffsetClauses_E_Opt
-// %type <p_LimitOffsetClauses> LimitOffsetClauses
-// %type <p__QOffsetClause_E_Opt> _QOffsetClause_E_Opt
-// %type <p__QLimitClause_E_Opt> _QLimitClause_E_Opt
-// %type <p__O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C> _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C
-// %type <p_OrderClause> OrderClause
-// %type <p__QOrderCondition_E_Plus> _QOrderCondition_E_Plus
-// %type <p_OrderCondition> OrderCondition
-// %type <p__O_QIT_ASC_E_Or_QIT_DESC_E_C> _O_QIT_ASC_E_Or_QIT_DESC_E_C
-// %type <p__O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C> _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C
-// %type <p__O_QConstraint_E_Or_QVar_E_C> _O_QConstraint_E_Or_QVar_E_C
-// %type <p_LimitClause> LimitClause
-// %type <p_OffsetClause> OffsetClause
-// %type <p_GroupGraphPattern> GroupGraphPattern
-// %type <p__QTriplesBlock_E_Opt> _QTriplesBlock_E_Opt
-// %type <p__O_QGraphPatternNotTriples_E_Or_QFilter_E_C> _O_QGraphPatternNotTriples_E_Or_QFilter_E_C
-// %type <p__QGT_DOT_E_Opt> _QGT_DOT_E_Opt
-// %type <p__O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C> _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C
-// %type <p__Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star> _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star
-// %type <p_TriplesBlock> TriplesBlock
-// %type <p__O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C> _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C
-// %type <p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt> _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt
-// %type <p_GraphPatternNotTriples> GraphPatternNotTriples
-// %type <p_OptionalGraphPattern> OptionalGraphPattern
-// %type <p_GraphGraphPattern> GraphGraphPattern
-// %type <p_GroupOrUnionGraphPattern> GroupOrUnionGraphPattern
-// %type <p__O_QIT_UNION_E_S_QGroupGraphPattern_E_C> _O_QIT_UNION_E_S_QGroupGraphPattern_E_C
-// %type <p__Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star> _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star
-// %type <p_Filter> Filter
-// %type <p_Constraint> Constraint
-// %type <p_FunctionCall> FunctionCall
-// %type <p_ArgList> ArgList
-// %type <p__O_QGT_COMMA_E_S_QExpression_E_C> _O_QGT_COMMA_E_S_QExpression_E_C
-// %type <p__Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star> _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star
-// %type <p__O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C> _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C
-// %type <p_ConstructTemplate> ConstructTemplate
-// %type <p__QConstructTriples_E_Opt> _QConstructTriples_E_Opt
-// %type <p_ConstructTriples> ConstructTriples
-// %type <p__O_QGT_DOT_E_S_QConstructTriples_E_Opt_C> _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C
-// %type <p__Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt> _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt
-// %type <p_TriplesSameSubject> TriplesSameSubject
-// %type <p_PropertyListNotEmpty> PropertyListNotEmpty
-// %type <p__O_QVerb_E_S_QObjectList_E_C> _O_QVerb_E_S_QObjectList_E_C
-// %type <p__Q_O_QVerb_E_S_QObjectList_E_C_E_Opt> _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt
-// %type <p__O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C> _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C
-// %type <p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star> _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star
-// %type <p_PropertyList> PropertyList
-// %type <p__QPropertyListNotEmpty_E_Opt> _QPropertyListNotEmpty_E_Opt
-// %type <p_ObjectList> ObjectList
-// %type <p__O_QGT_COMMA_E_S_QObject_E_C> _O_QGT_COMMA_E_S_QObject_E_C
-// %type <p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star> _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star
-// %type <p_Object> Object
-// %type <p_Verb> Verb
-// %type <p_TriplesNode> TriplesNode
-// %type <p_BlankNodePropertyList> BlankNodePropertyList
-// %type <p_Collection> Collection
-// %type <p__QGraphNode_E_Plus> _QGraphNode_E_Plus
-// %type <p_GraphNode> GraphNode
-// %type <p_VarOrTerm> VarOrTerm
-// %type <p_VarOrIRIref> VarOrIRIref
-// %type <p_Var> Var
-// %type <p_GraphTerm> GraphTerm
-// %type <p_Expression> Expression
-// %type <p_ConditionalOrExpression> ConditionalOrExpression
-// %type <p__O_QGT_OR_E_S_QConditionalAndExpression_E_C> _O_QGT_OR_E_S_QConditionalAndExpression_E_C
-// %type <p__Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star> _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star
-// %type <p_ConditionalAndExpression> ConditionalAndExpression
-// %type <p__O_QGT_AND_E_S_QValueLogical_E_C> _O_QGT_AND_E_S_QValueLogical_E_C
-// %type <p__Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star> _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star
-// %type <p_ValueLogical> ValueLogical
-// %type <p_RelationalExpression> RelationalExpression
-// %type <p__O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C> _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C
-// %type <p__Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt> _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt
-// %type <p_NumericExpression> NumericExpression
-// %type <p_AdditiveExpression> AdditiveExpression
-// %type <p__O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C> _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C
-// %type <p__Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star> _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star
-// %type <p_MultiplicativeExpression> MultiplicativeExpression
-// %type <p__O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C> _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C
-// %type <p__Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star> _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star
-// %type <p_UnaryExpression> UnaryExpression
-// %type <p_PrimaryExpression> PrimaryExpression
-// %type <p_BrackettedExpression> BrackettedExpression
-// %type <p_BuiltInCall> BuiltInCall
-// %type <p_RegexExpression> RegexExpression
-// %type <p__Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt> _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt
-// %type <p_IRIrefOrFunction> IRIrefOrFunction
-// %type <p__QArgList_E_Opt> _QArgList_E_Opt
-// %type <p_RDFLiteral> RDFLiteral
-// %type <p__O_QGT_DTYPE_E_S_QIRIref_E_C> _O_QGT_DTYPE_E_S_QIRIref_E_C
-// %type <p__O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C> _O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C
-// %type <p__Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C_E_Opt> _Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C_E_Opt
-// %type <p_NumericLiteral> NumericLiteral
-// %type <p_NumericLiteralUnsigned> NumericLiteralUnsigned
-// %type <p_NumericLiteralPositive> NumericLiteralPositive
-// %type <p_NumericLiteralNegative> NumericLiteralNegative
-// %type <p_BooleanLiteral> BooleanLiteral
-// %type <p_String> String
-// %type <p_IRIref> IRIref
-// %type <p_PrefixedName> PrefixedName
-// %type <p_BlankNode> BlankNode
-
-
-
- /*** BEGIN SPARQL - Change the grammar's tokens below ***/
-
-// %union {
-//	   /* Terminals */
-//	   IT_BASE* p_IT_BASE;
-//	   IT_PREFIX* p_IT_PREFIX;
-//	   IT_SELECT* p_IT_SELECT;
-//	   IT_DISTINCT* p_IT_DISTINCT;
-//	   IT_REDUCED* p_IT_REDUCED;
-//	   GT_TIMES* p_GT_TIMES;
-//	   IT_CONSTRUCT* p_IT_CONSTRUCT;
-//	   IT_DESCRIBE* p_IT_DESCRIBE;
-//	   IT_ASK* p_IT_ASK;
-//	   IT_FROM* p_IT_FROM;
-//	   IT_NAMED* p_IT_NAMED;
-//	   IT_WHERE* p_IT_WHERE;
-//	   IT_ORDER* p_IT_ORDER;
-//	   IT_BY* p_IT_BY;
-//	   IT_ASC* p_IT_ASC;
-//	   IT_DESC* p_IT_DESC;
-//	   IT_LIMIT* p_IT_LIMIT;
-//	   IT_OFFSET* p_IT_OFFSET;
-//	   GT_LCURLEY* p_GT_LCURLEY;
-//	   GT_RCURLEY* p_GT_RCURLEY;
-//	   GT_DOT* p_GT_DOT;
-//	   IT_OPTIONAL* p_IT_OPTIONAL;
-//	   IT_GRAPH* p_IT_GRAPH;
-//	   IT_UNION* p_IT_UNION;
-//	   IT_FILTER* p_IT_FILTER;
-//	   GT_COMMA* p_GT_COMMA;
-//	   GT_LPAREN* p_GT_LPAREN;
-//	   GT_RPAREN* p_GT_RPAREN;
-//	   GT_SEMI* p_GT_SEMI;
-//	   IT_a* p_IT_a;
-//	   GT_LBRACKET* p_GT_LBRACKET;
-//	   GT_RBRACKET* p_GT_RBRACKET;
-//	   GT_OR* p_GT_OR;
-//	   GT_AND* p_GT_AND;
-//	   GT_EQUAL* p_GT_EQUAL;
-//	   GT_NEQUAL* p_GT_NEQUAL;
-//	   GT_LT* p_GT_LT;
-//	   GT_GT* p_GT_GT;
-//	   GT_LE* p_GT_LE;
-//	   GT_GE* p_GT_GE;
-//	   GT_PLUS* p_GT_PLUS;
-//	   GT_MINUS* p_GT_MINUS;
-//	   GT_DIVIDE* p_GT_DIVIDE;
-//	   GT_NOT* p_GT_NOT;
-//	   IT_STR* p_IT_STR;
-//	   IT_LANG* p_IT_LANG;
-//	   IT_LANGMATCHES* p_IT_LANGMATCHES;
-//	   IT_DATATYPE* p_IT_DATATYPE;
-//	   IT_BOUND* p_IT_BOUND;
-//	   IT_sameTerm* p_IT_sameTerm;
-//	   IT_isIRI* p_IT_isIRI;
-//	   IT_isURI* p_IT_isURI;
-//	   IT_isBLANK* p_IT_isBLANK;
-//	   IT_isLITERAL* p_IT_isLITERAL;
-//	   IT_REGEX* p_IT_REGEX;
-//	   GT_DTYPE* p_GT_DTYPE;
-//	   IT_true* p_IT_true;
-//	   IT_false* p_IT_false;
-//	   IRI_REF* p_IRI_REF;
-//	   PNAME_NS* p_PNAME_NS;
-//	   PNAME_LN* p_PNAME_LN;
-//	   BLANK_NODE_LABEL* p_BLANK_NODE_LABEL;
-//	   VAR1* p_VAR1;
-//	   VAR2* p_VAR2;
-//	   LANGTAG* p_LANGTAG;
-//	   INTEGER* p_INTEGER;
-//	   DECIMAL* p_DECIMAL;
-//	   DOUBLE* p_DOUBLE;
-//	   INTEGER_POSITIVE* p_INTEGER_POSITIVE;
-//	   DECIMAL_POSITIVE* p_DECIMAL_POSITIVE;
-//	   DOUBLE_POSITIVE* p_DOUBLE_POSITIVE;
-//	   INTEGER_NEGATIVE* p_INTEGER_NEGATIVE;
-//	   DECIMAL_NEGATIVE* p_DECIMAL_NEGATIVE;
-//	   DOUBLE_NEGATIVE* p_DOUBLE_NEGATIVE;
-//	   STRING_LITERAL1* p_STRING_LITERAL1;
-//	   STRING_LITERAL2* p_STRING_LITERAL2;
-//	   STRING_LITERAL_LONG1* p_STRING_LITERAL_LONG1;
-//	   STRING_LITERAL_LONG2* p_STRING_LITERAL_LONG2;
-//	   NIL* p_NIL;
-//	   ANON* p_ANON;
-// 
-//	   /* Productions */
-//	   Query* p_Query;
-//	   _O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C* p__O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C;
-//	   Prologue* p_Prologue;
-//	   _QBaseDecl_E_Opt* p__QBaseDecl_E_Opt;
-//	   _QPrefixDecl_E_Star* p__QPrefixDecl_E_Star;
-//	   BaseDecl* p_BaseDecl;
-//	   PrefixDecl* p_PrefixDecl;
-//	   SelectQuery* p_SelectQuery;
-//	   _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C* p__O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C;
-//	   _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt* p__Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt;
-//	   _QVar_E_Plus* p__QVar_E_Plus;
-//	   _O_QVar_E_Plus_Or_QGT_TIMES_E_C* p__O_QVar_E_Plus_Or_QGT_TIMES_E_C;
-//	   _QDatasetClause_E_Star* p__QDatasetClause_E_Star;
-//	   ConstructQuery* p_ConstructQuery;
-//	   DescribeQuery* p_DescribeQuery;
-//	   _QVarOrIRIref_E_Plus* p__QVarOrIRIref_E_Plus;
-//	   _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C* p__O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C;
-//	   _QWhereClause_E_Opt* p__QWhereClause_E_Opt;
-//	   AskQuery* p_AskQuery;
-//	   DatasetClause* p_DatasetClause;
-//	   _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C* p__O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C;
-//	   DefaultGraphClause* p_DefaultGraphClause;
-//	   NamedGraphClause* p_NamedGraphClause;
-//	   SourceSelector* p_SourceSelector;
-//	   WhereClause* p_WhereClause;
-//	   _QIT_WHERE_E_Opt* p__QIT_WHERE_E_Opt;
-//	   SolutionModifier* p_SolutionModifier;
-//	   _QOrderClause_E_Opt* p__QOrderClause_E_Opt;
-//	   _QLimitOffsetClauses_E_Opt* p__QLimitOffsetClauses_E_Opt;
-//	   LimitOffsetClauses* p_LimitOffsetClauses;
-//	   _QOffsetClause_E_Opt* p__QOffsetClause_E_Opt;
-//	   _QLimitClause_E_Opt* p__QLimitClause_E_Opt;
-//	   _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C* p__O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C;
-//	   OrderClause* p_OrderClause;
-//	   _QOrderCondition_E_Plus* p__QOrderCondition_E_Plus;
-//	   OrderCondition* p_OrderCondition;
-//	   _O_QIT_ASC_E_Or_QIT_DESC_E_C* p__O_QIT_ASC_E_Or_QIT_DESC_E_C;
-//	   _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C* p__O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C;
-//	   _O_QConstraint_E_Or_QVar_E_C* p__O_QConstraint_E_Or_QVar_E_C;
-//	   LimitClause* p_LimitClause;
-//	   OffsetClause* p_OffsetClause;
-//	   GroupGraphPattern* p_GroupGraphPattern;
-//	   _QTriplesBlock_E_Opt* p__QTriplesBlock_E_Opt;
-//	   _O_QGraphPatternNotTriples_E_Or_QFilter_E_C* p__O_QGraphPatternNotTriples_E_Or_QFilter_E_C;
-//	   _QGT_DOT_E_Opt* p__QGT_DOT_E_Opt;
-//	   _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C* p__O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C;
-//	   _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star* p__Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star;
-//	   TriplesBlock* p_TriplesBlock;
-//	   _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C* p__O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C;
-//	   _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt* p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt;
-//	   GraphPatternNotTriples* p_GraphPatternNotTriples;
-//	   OptionalGraphPattern* p_OptionalGraphPattern;
-//	   GraphGraphPattern* p_GraphGraphPattern;
-//	   GroupOrUnionGraphPattern* p_GroupOrUnionGraphPattern;
-//	   _O_QIT_UNION_E_S_QGroupGraphPattern_E_C* p__O_QIT_UNION_E_S_QGroupGraphPattern_E_C;
-//	   _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star* p__Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star;
-//	   Filter* p_Filter;
-//	   Constraint* p_Constraint;
-//	   FunctionCall* p_FunctionCall;
-//	   ArgList* p_ArgList;
-//	   _O_QGT_COMMA_E_S_QExpression_E_C* p__O_QGT_COMMA_E_S_QExpression_E_C;
-//	   _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star* p__Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star;
-//	   _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C* p__O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C;
-//	   ConstructTemplate* p_ConstructTemplate;
-//	   _QConstructTriples_E_Opt* p__QConstructTriples_E_Opt;
-//	   ConstructTriples* p_ConstructTriples;
-//	   _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C* p__O_QGT_DOT_E_S_QConstructTriples_E_Opt_C;
-//	   _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt* p__Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt;
-//	   TriplesSameSubject* p_TriplesSameSubject;
-//	   PropertyListNotEmpty* p_PropertyListNotEmpty;
-//	   _O_QVerb_E_S_QObjectList_E_C* p__O_QVerb_E_S_QObjectList_E_C;
-//	   _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt* p__Q_O_QVerb_E_S_QObjectList_E_C_E_Opt;
-//	   _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C* p__O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C;
-//	   _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star* p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
-//	   PropertyList* p_PropertyList;
-//	   _QPropertyListNotEmpty_E_Opt* p__QPropertyListNotEmpty_E_Opt;
-//	   ObjectList* p_ObjectList;
-//	   _O_QGT_COMMA_E_S_QObject_E_C* p__O_QGT_COMMA_E_S_QObject_E_C;
-//	   _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star* p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star;
-//	   Object* p_Object;
-//	   Verb* p_Verb;
-//	   TriplesNode* p_TriplesNode;
-//	   BlankNodePropertyList* p_BlankNodePropertyList;
-//	   Collection* p_Collection;
-//	   _QGraphNode_E_Plus* p__QGraphNode_E_Plus;
-//	   GraphNode* p_GraphNode;
-//	   VarOrTerm* p_VarOrTerm;
-//	   VarOrIRIref* p_VarOrIRIref;
-//	   Var* p_Var;
-//	   GraphTerm* p_GraphTerm;
-//	   Expression* p_Expression;
-//	   ConditionalOrExpression* p_ConditionalOrExpression;
-//	   _O_QGT_OR_E_S_QConditionalAndExpression_E_C* p__O_QGT_OR_E_S_QConditionalAndExpression_E_C;
-//	   _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star* p__Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star;
-//	   ConditionalAndExpression* p_ConditionalAndExpression;
-//	   _O_QGT_AND_E_S_QValueLogical_E_C* p__O_QGT_AND_E_S_QValueLogical_E_C;
-//	   _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star* p__Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star;
-//	   ValueLogical* p_ValueLogical;
-//	   RelationalExpression* p_RelationalExpression;
-//	   _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C* p__O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C;
-//	   _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt* p__Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt;
-//	   NumericExpression* p_NumericExpression;
-//	   AdditiveExpression* p_AdditiveExpression;
-//	   _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C* p__O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C;
-//	   _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star* p__Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star;
-//	   MultiplicativeExpression* p_MultiplicativeExpression;
-//	   _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C* p__O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C;
-//	   _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star* p__Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star;
-//	   UnaryExpression* p_UnaryExpression;
-//	   PrimaryExpression* p_PrimaryExpression;
-//	   BrackettedExpression* p_BrackettedExpression;
-//	   BuiltInCall* p_BuiltInCall;
-//	   RegexExpression* p_RegexExpression;
-//	   _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt* p__Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt;
-//	   IRIrefOrFunction* p_IRIrefOrFunction;
-//	   _QArgList_E_Opt* p__QArgList_E_Opt;
-//	   RDFLiteral* p_RDFLiteral;
-//	   _O_QGT_DTYPE_E_S_QIRIref_E_C* p__O_QGT_DTYPE_E_S_QIRIref_E_C;
-//	   _O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C* p__O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C;
-//	   _Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C_E_Opt* p__Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_QIRIref_E_C_E_Opt;
-//	   NumericLiteral* p_NumericLiteral;
-//	   NumericLiteralUnsigned* p_NumericLiteralUnsigned;
-//	   NumericLiteralPositive* p_NumericLiteralPositive;
-//	   NumericLiteralNegative* p_NumericLiteralNegative;
-//	   BooleanLiteral* p_BooleanLiteral;
-//	   String* p_String;
-//	   IRIref* p_IRIref;
-//	   PrefixedName* p_PrefixedName;
-//	   BlankNode* p_BlankNode;
-// }

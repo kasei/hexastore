@@ -6,8 +6,8 @@
 #define YYSTYPE void*
 #define YYSTYPE_IS_DECLARED
 
-#include "SPARQLParser.hh"
-#include "SPARQLScanner.hh"
+#include "SPARQLParser.h"
+#include "SPARQLScanner.h"
 
 /* This disables inclusion of unistd.h, which is not available under Visual C++
  * on Win32. The C++ scanner uses STL streams instead. */
@@ -190,7 +190,6 @@ pat_PASSED_TOKENS		(([\t\n\r ])+)|("#"([\x00-\t\x0B-\x0C\x0E-\x7F]|([\xC2-\xDF][
 {pat_IT_true}		{return IT_true;}
 {pat_IT_false}		{return IT_false;}
 {pat_IRI_REF}		{
-						// chop off the '<' and '>' from the IRI string
 						char* copy	= string_copy( &( ((char*) yytext)[1] ) );
 						copy[ strlen(copy) - 1 ]	= (char) 0;
 						yylval	= (void*) copy;

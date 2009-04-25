@@ -52,7 +52,7 @@ static int HX_INDEX_ORDER_POS[3]	= { HX_PREDICATE, HX_OBJECT, HX_SUBJECT };
 static int HX_INDEX_ORDER_OSP[3]	= { HX_OBJECT, HX_SUBJECT, HX_PREDICATE };
 static int HX_INDEX_ORDER_OPS[3]	= { HX_OBJECT, HX_PREDICATE, HX_SUBJECT };
 
-// hx_index* hx_new_index ( int a, int b, int c );
+/* hx_index* hx_new_index ( int a, int b, int c ); */
 hx_index* hx_new_index ( hx_storage_manager* s, int* index_order );
 int hx_free_index ( hx_index* index, hx_storage_manager* s );
 int hx_index_debug ( hx_index* index, hx_storage_manager* s );

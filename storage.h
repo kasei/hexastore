@@ -33,8 +33,8 @@ typedef struct {
 	int flags;
 	int fd;
 	int prot;
-	void* m;	// mmap ptr
-	off_t size;	// mmap file size
+	void* m;
+	off_t size;
 	const char* filename;
 	hx_storage_handler* freeze_handler;
 	void* freeze_arg;
