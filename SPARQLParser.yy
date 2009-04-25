@@ -198,7 +198,6 @@ extern void XXXdebug_triple( triple_t*, prologue_t* );
  /*** BEGIN SPARQL - Change the grammar rules below ***/
 
 
-
 myQuery:
 	Prologue GT_LCURLEY _QTriplesBlock_E_Opt GT_RCURLEY {
 		query_t* q		= (query_t*) calloc( 1, sizeof( query_t ) );
@@ -493,22 +492,16 @@ Object:
 
 Verb:
 	VarOrIRIref {
-		/*
-		triple_t* t;
-		node_t* object;
-		triple_set_t* set	= new_triple_set( 5 );
-		t					= (triple_t*) calloc( 1, sizeof( triple_t ) );
-		t->subject			= $1;
-		t->predicate		= NULL;
-		t->object			= NULL;
-		add_triple_to_set( set, t );
-		$$	= set;
-		*/
-		
 		$$	= $1;
 	}
 
-	| IT_a	{}
+	| IT_a	{
+		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
+		n->type			= 'N';
+		hx_node* iri	= hx_new_node_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
+		n->ptr			= (void*) iri;
+		$$	= n;
+	}
 ;
 
 TriplesNode:
