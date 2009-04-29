@@ -32,30 +32,56 @@ void yyerror (char const *s);
 #define YYSTYPE void*
 #define YYSTYPE_IS_DECLARED
 
+/**
+Types:
+
+	Nodes:
+	- 'N' for a full node,
+	- 'V' for a char* variable name
+	- 'Q' for a QName (that still needs to be expanded)
+	- 'L' for a Literal with Qname datatype
+	
+	Patterns:
+	- 'T' Triple
+	- 'B' BGP
+	- 'G' GGP
+	- 'O' Optional
+	- 'U' Union
+	
+	- 'F' Filter
+**/
+
+enum {
+	TYPE_FULL_NODE	= 'N',
+	TYPE_VARIABLE	= 'V',
+	TYPE_QNAME		= 'Q',
+	TYPE_DT_LITERAL	= 'L',
+	TYPE_TRIPLE		= 'T',
+	TYPE_BGP		= 'B',
+	TYPE_GGP		= 'G',
+	TYPE_OPT		= 'O',
+	TYPE_UNION		= 'U'
+};
+
 typedef struct {
-	/**
-	// type is either:
-	// - 'N' for a full node,
-	// - 'V' for a char* variable name
-	// - 'Q' for a QName (that still needs to be expanded)
-	// - 'L' for a Literal with Qname datatype
-	**/
 	char type;
 	void* ptr;
 	char* datatype;
 } node_t;
 
 typedef struct {
+	char type;
 	node_t* subject;
 	node_t* predicate;
 	node_t* object;
 } triple_t;
 
 typedef struct {
+	char type;
 	int allocated;
-	int triple_count;
-	triple_t** triples;
-} triple_set_t;
+	int count;
+	void** items;
+} container_t;
 
 typedef struct {
 	char* language;
@@ -80,13 +106,13 @@ typedef struct {
 
 typedef struct {
 	prologue_t* prologue;
-	triple_set_t* bgp;
+	container_t* bgp;
 } query_t;
 
 extern void* parsedPattern;
-extern triple_set_t* new_triple_set ( int size );
 extern node_t* new_dt_literal_node ( char*, char* );
-extern void add_triple_to_set( triple_set_t* set, triple_t* t );
+extern container_t* new_container ( char type, int size );
+extern void add_item_to_set( container_t* set, void* t );
 
 extern void XXXdebug_node( node_t*, prologue_t* );
 extern void XXXdebug_triple( triple_t*, prologue_t* );
@@ -202,7 +228,7 @@ myQuery:
 	Prologue GT_LCURLEY _QTriplesBlock_E_Opt GT_RCURLEY {
 		query_t* q		= (query_t*) calloc( 1, sizeof( query_t ) );
 		q->prologue		= (prologue_t*) $1;
-		q->bgp			= (triple_set_t*) $3;
+		q->bgp			= (container_t*) $3;
 		parsedPattern		= (void*) q;
 	}
 ;
@@ -284,10 +310,10 @@ TriplesBlock:
 		} else {
 			/* XXX */
 			int i;
-			triple_set_t* triples1	= (triple_set_t*) $1;
-			triple_set_t* triples2	= (triple_set_t*) $2;
-			for (i = 0; i < triples2->triple_count; i++) {
-				add_triple_to_set( triples1, triples2->triples[i] );
+			container_t* triples1	= (container_t*) $1;
+			container_t* triples2	= (container_t*) $2;
+			for (i = 0; i < triples2->count; i++) {
+				add_item_to_set( triples1, triples2->items[i] );
 			}
 			$$	= triples1;
 		}
@@ -323,14 +349,15 @@ _QTriplesBlock_E_Opt:
 TriplesSameSubject:
 	VarOrTerm PropertyListNotEmpty	{
 		int i;
-		triple_set_t* subj_triples	= (triple_set_t*) $1;
-		if (subj_triples->triple_count == 0) {
+		container_t* subj_triples	= (container_t*) $1;
+		if (subj_triples->count == 0) {
 			fprintf( stderr, "uh oh. VarOrTerm didn't return any graph triples.\n" );
 		}
-		node_t* subject	= subj_triples->triples[0]->subject;
-		triple_set_t* triples	= (triple_set_t*) $2;
-		for (i = 0; i < triples->triple_count; i++) {
-			triples->triples[i]->subject	= subject;
+		node_t* subject	= ((triple_t*) subj_triples->items[0])->subject;
+		container_t* triples	= (container_t*) $2;
+		for (i = 0; i < triples->count; i++) {
+			triple_t* t	= (triple_t*) triples->items[i];
+			t->subject	= subject;
 		}
 		$$	= triples;
 	}
@@ -343,19 +370,20 @@ TriplesSameSubject:
 
 PropertyListNotEmpty:
 	Verb ObjectList _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star	{
-		triple_set_t* triples;
-		triples	= (triple_set_t*) $2;
+		container_t* triples;
+		triples	= (container_t*) $2;
 		/* XXX */
 		int i;
 		node_t* predicate	= (node_t*) $1;
-		for (i = 0; i < triples->triple_count; i++) {
-			triples->triples[i]->predicate	= predicate;
+		for (i = 0; i < triples->count; i++) {
+			triple_t* t	= (triple_t*) triples->items[i];
+			t->predicate	= predicate;
 		}
 		if ($3 != NULL) {
 			int i;
-			triple_set_t* triples2	= (triple_set_t*) $3;
-			for (i = 0; i < triples2->triple_count; i++) {
-				add_triple_to_set( triples, triples2->triples[i] );
+			container_t* triples2	= (container_t*) $3;
+			for (i = 0; i < triples2->count; i++) {
+				add_item_to_set( triples, triples2->items[i] );
 			}
 		}
 		$$	= (void*) triples;
@@ -364,11 +392,12 @@ PropertyListNotEmpty:
 
 _O_QVerb_E_S_QObjectList_E_C:
 	Verb ObjectList {
-		triple_set_t* triples	= (triple_set_t*) $2;
+		container_t* triples	= (container_t*) $2;
 		int i;
 		node_t* predicate	= (node_t*) $1;
-		for (i = 0; i < triples->triple_count; i++) {
-			triples->triples[i]->predicate	= predicate;
+		for (i = 0; i < triples->count; i++) {
+			triple_t* t	= (triple_t*) triples->items[i];
+			t->predicate	= predicate;
 		}
 		$$	= (void*) triples;
 	}
@@ -396,16 +425,16 @@ _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star:
 	}
 
 	| _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C	{
-		triple_set_t* triples;
+		container_t* triples;
 		if ($1 == NULL) {
-			triples	= (triple_set_t*) $2;
+			triples	= (container_t*) $2;
 		} else {
-			triples	= (triple_set_t*) $1;
+			triples	= (container_t*) $1;
 			if ($2 != NULL) {
 				int i;
-				triple_set_t* triples2	= (triple_set_t*) $2;
-				for (i = 0; i < triples2->triple_count; i++) {
-					add_triple_to_set( triples, triples2->triples[i] );
+				container_t* triples2	= (container_t*) $2;
+				for (i = 0; i < triples2->count; i++) {
+					add_item_to_set( triples, triples2->items[i] );
 				}
 			}
 		}
@@ -433,20 +462,21 @@ ObjectList:
 	Object _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star	{
 		triple_t* t;
 		node_t* object;
-		triple_set_t* set;
-		triple_set_t* obj_triples;
+		container_t* set;
+		container_t* obj_triples;
 		if ($2 == NULL) {
-			set	= new_triple_set( 5 );
+			set	= new_container( TYPE_BGP, 5 );
 		} else {
-			set	= (triple_set_t*) $2;
+			set	= (container_t*) $2;
 		}
 		
-		obj_triples	= (triple_set_t*) $1;
-		object	= obj_triples->triples[0]->subject;
+		obj_triples	= (container_t*) $1;
+		object	= ((triple_t*) obj_triples->items[0])->subject;
 		
 		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
-		t->object			= object;
-		add_triple_to_set( set, t );
+		t->type		= TYPE_TRIPLE;
+		t->object	= object;
+		add_item_to_set( set, t );
 		$$	= (void*) set;
 	}
 ;
@@ -465,20 +495,21 @@ _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star:
 	| _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star _O_QGT_COMMA_E_S_QObject_E_C	{
 		triple_t* t;
 		node_t* object;
-		triple_set_t* set;
-		triple_set_t* obj_triples;
+		container_t* set;
+		container_t* obj_triples;
 		if ($1 == NULL) {
-			set	= new_triple_set( 5 );
+			set	= new_container( TYPE_BGP, 5 );
 		} else {
-			set	= (triple_set_t*) $1;
+			set	= (container_t*) $1;
 		}
 		
-		obj_triples	= (triple_set_t*) $2;
-		object	= obj_triples->triples[0]->subject;
+		obj_triples	= (container_t*) $2;
+		object		= ((triple_t*) obj_triples->items[0])->subject;
 		
 		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
-		t->object			= object;
-		add_triple_to_set( set, t );
+		t->type		= TYPE_TRIPLE;
+		t->object	= object;
+		add_item_to_set( set, t );
 		
 		$$	= set;
 	}
@@ -497,7 +528,7 @@ Verb:
 
 	| IT_a	{
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
-		n->type			= 'N';
+		n->type			= TYPE_FULL_NODE;
 		hx_node* iri	= hx_new_node_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
 		n->ptr			= (void*) iri;
 		$$	= n;
@@ -536,12 +567,13 @@ GraphNode:
 
 VarOrTerm:
 	Var {
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
@@ -563,14 +595,14 @@ VarOrIRIref:
 Var:
 	VAR1	{
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
-		n->type	= 'V';
+		n->type	= TYPE_VARIABLE;
 		n->ptr	= (void*) $1;
 		$$	= n;
 	}
 
 	| VAR2	{
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
-		n->type	= 'V';
+		n->type	= TYPE_VARIABLE;
 		n->ptr	= (void*) $1;
 		$$	= n;
 	}
@@ -578,52 +610,57 @@ Var:
 
 GraphTerm:
 	IRIref	{
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
 	| RDFLiteral	{
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
 	| NumericLiteral	{
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
 	| BooleanLiteral	{
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
 	| BlankNode {
-		triple_set_t* set	= new_triple_set( 1 );
+		container_t* set	= new_container( TYPE_BGP, 1 );
 		triple_t* t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
+		t->type				= TYPE_TRIPLE;
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_triple_to_set( set, t );
+		add_item_to_set( set, t );
 		$$	= set;
 	}
 
@@ -636,21 +673,21 @@ RDFLiteral:
 		node_t* node	= (node_t*) calloc( 1, sizeof( node_t ) );
 		if (attrs == NULL) {
 			hx_node* l	= hx_new_node_literal( (char*) $1 );
-			node->type		= 'N';
+			node->type		= TYPE_FULL_NODE;
 			node->ptr		= (void*) l;
 		} else if (attrs->language != NULL) {
 			hx_node* l	= (hx_node*) hx_new_node_lang_literal( (char*) $1, attrs->language );
-			node->type		= 'N';
+			node->type		= TYPE_FULL_NODE;
 			node->ptr		= (void*) l;
 		} else {
 			node_t* dt		= attrs->datatype;
-			if (dt->type == 'Q') {
-				node->type		= 'L';
+			if (dt->type == TYPE_QNAME) {
+				node->type		= TYPE_DT_LITERAL;
 				node->ptr		= (char*) $1;
 				node->datatype	= (char*) dt->ptr;
 			} else {
 				hx_node* l	= (hx_node*) hx_new_node_dt_literal( (char*) $1, (char*) dt->ptr );
-				node->type		= 'N';
+				node->type		= TYPE_FULL_NODE;
 				node->ptr		= (void*) l;
 			}
 		}
@@ -783,14 +820,14 @@ IRIref:
 		hx_node_string( iri, &string );
 		free( string );
 		r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= 'N';
+		r->type			= TYPE_FULL_NODE;
 		r->ptr			= iri;
 		$$	= (void*) r;
 	}
 
 	| PrefixedName	{
 		node_t* r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= 'Q';
+		r->type			= TYPE_QNAME;
 		r->ptr			= $1;
 		$$	= (void*) r;
 	}
@@ -815,7 +852,7 @@ BlankNode:
 		free( string );
 		
 		r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= 'N';
+		r->type			= TYPE_FULL_NODE;
 		r->ptr			= b;
 		$$	= (void*) r;
 	}
@@ -1653,15 +1690,15 @@ hx_bgp* parse_bgp_query ( void ) {
 	if (yyparse() == 0) {
 		int i;
 		hx_bgp* b;
-		triple_set_t* bgp;
+		container_t* bgp;
 		hx_triple** triples;
 		int counter	= -1;
 		query_t* q		= (query_t*) parsedPattern;
 		prologue_t* prologue	= q->prologue;
 		bgp	= q->bgp;
-		triples	= (hx_triple**) calloc( bgp->triple_count, sizeof( hx_triple* ) );
-		for (i = 0; i < bgp->triple_count; i++) {
-			triple_t* t		= bgp->triples[i];
+		triples	= (hx_triple**) calloc( bgp->count, sizeof( hx_triple* ) );
+		for (i = 0; i < bgp->count; i++) {
+			triple_t* t		= bgp->items[i];
 			hx_node* s	= generate_node( t->subject, prologue, &counter );
 			hx_node* p	= generate_node( t->predicate, prologue, &counter );
 			hx_node* o	= generate_node( t->object, prologue, &counter );
@@ -1675,7 +1712,7 @@ hx_bgp* parse_bgp_query ( void ) {
 		}
 		free_prologue( prologue );
 		
-		b	= hx_new_bgp( bgp->triple_count, triples );
+		b	= hx_new_bgp( bgp->count, triples );
 		return b;
 	}
 	return NULL;
@@ -1690,23 +1727,23 @@ void XXXdebug_triple( triple_t* t, prologue_t* p ) {
 }
 
 hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
-	if (n->type == 'N') {
+	if (n->type == TYPE_FULL_NODE) {
 		hx_node* node	= (hx_node*) n->ptr;
 		return hx_node_copy( node );
-	} else if (n->type == 'V') {
+	} else if (n->type == TYPE_VARIABLE) {
 		char* name	= (char*) n->ptr;
 		char* copy	= (char*) malloc( strlen( name ) + 1 );
 		hx_node* v;
 		strcpy( copy, name );
 		v	= hx_new_node_named_variable( (*counter)--, copy );
 		return v;
-	} else if (n->type == 'Q') {
+	} else if (n->type == TYPE_QNAME) {
 		char* uri	= qualify_qname( p, (char*) n->ptr );
 		if (uri == NULL)
 			return NULL;
 		hx_node* u	= hx_new_node_resource( uri );
 		return u;
-	} else if (n->type == 'L') {
+	} else if (n->type == TYPE_DT_LITERAL) {
 		char* dt	= qualify_qname( p, n->datatype );
 		if (dt == NULL)
 			return NULL;
@@ -1787,44 +1824,41 @@ void free_prologue ( prologue_t* p ) {
 	free( p );
 }
 
-triple_set_t* new_triple_set ( int size ) {
-	triple_set_t* triples	= (triple_set_t*) calloc( 1, sizeof( triple_set_t ) );
-	triples->allocated		= size;
-	triples->triple_count	= 0;
-	triples->triples		= (triple_t**) calloc( triples->allocated, sizeof( triple_t* ) );
-	return triples;
-}
-
-void add_triple_to_set( triple_set_t* set, triple_t* t ) {
-	if (set->allocated <= (set->triple_count + 1)) {
-		int i;
-		triple_t** old;
-		triple_t** newlist;
-		set->allocated	*= 2;
-		newlist	= (triple_t**) calloc( set->allocated, sizeof( triple_t* ) );
-		for (i = 0; i < set->triple_count; i++) {
-			newlist[i]	= set->triples[i];
-		}
-		old	= set->triples;
-		set->triples	= newlist;
-		free( old );
-	}
-	
-	set->triples[ set->triple_count++ ]	= t;
-}
-
 extern node_t* new_dt_literal_node ( char* string, char* dt ) {
 	hx_node* n		= (hx_node*) hx_new_node_dt_literal( string, dt );
 	node_t* node	= (node_t*) calloc( 1, sizeof( node_t ) );
-	node->type		= 'N';
+	node->type		= TYPE_FULL_NODE;
 	node->ptr		= (void*) n;
 	return node;
 }
 
 
+container_t* new_container ( char type, int size ) {
+	container_t* container	= (container_t*) calloc( 1, sizeof( container_t ) );
+	container->type			= type;
+	container->allocated	= size;
+	container->count		= 0;
+	container->items		= (void**) calloc( container->allocated, sizeof( void* ) );
+	return container;
+}
 
-
-
+void add_item_to_set( container_t* set, void* t ) {
+	if (set->allocated <= (set->count + 1)) {
+		int i;
+		void** old;
+		void** newlist;
+		set->allocated	*= 2;
+		newlist	= (void**) calloc( set->allocated, sizeof( void* ) );
+		for (i = 0; i < set->count; i++) {
+			newlist[i]	= set->items[i];
+		}
+		old	= set->items;
+		set->items	= newlist;
+		free( old );
+	}
+	
+	set->items[ set->count++ ]	= t;
+}
 
 
 
