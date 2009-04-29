@@ -271,6 +271,15 @@ static void server_run(hx_server *server)
       continue;
     }
 
+    if (strstr((char *)data, "SET AUTOCOMMIT") != NULL)
+    {
+      ret= send_version(server);
+      if (ret != DRIZZLE_RETURN_OK)
+        return;
+
+      continue;
+    }
+
     server->send_columns= true;
     server->rows= 0;
 
