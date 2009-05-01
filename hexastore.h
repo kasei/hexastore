@@ -34,7 +34,7 @@ enum {
 	RDF_ITER_FLAGS_BOUND_C	= 4
 };
 
-#define THREADED_BATCH_SIZE	5000
+#define THREADED_BATCH_SIZE	25000
 
 static const int RDF_ITER_TYPE_MASK	= 0x07;
 static const int RDF_ITER_TYPE_FFF	= 0;
@@ -65,7 +65,8 @@ typedef struct {
 
 hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map );
 hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
-hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename );
+hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* directory );
+hx_hexastore* hx_open_tchexastore ( hx_storage_manager* s, const char* directory );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
 int hx_remove_tchexastore ( hx_hexastore* hx, hx_storage_manager* s );

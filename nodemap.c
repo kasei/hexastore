@@ -47,6 +47,12 @@ hx_nodemap* hx_new_file_nodemap( const char* directory ) {
 	sprintf( n2i, "%s/node2id.tcb", directory );
 	sprintf( i2n, "%s/id2node.tcb", directory );
 	
+	tcbdbtune(m->id2node, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
+	tcbdbsetcache(m->id2node, 8192, 2048);
+
+	tcbdbtune(m->node2id, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
+	tcbdbsetcache(m->node2id, 8192, 2048);
+	
 	if(!tcbdbopen(m->id2node, i2n, BDBOWRITER | BDBOCREAT)){
 		int ecode = tcbdbecode(m->id2node);
 		fprintf(stderr, "open error: %s\n", tcbdberrmsg(ecode));

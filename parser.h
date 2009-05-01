@@ -22,7 +22,7 @@ extern "C" {
 #include "hexastore.h"
 #include "node.h"
 
-static int TRIPLES_BATCH_SIZE	= 5000;
+static int TRIPLES_BATCH_SIZE	= 100000;
 typedef void (*hx_parser_logger)( uint64_t count );
 
 typedef struct {

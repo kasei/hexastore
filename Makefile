@@ -5,7 +5,7 @@ CC			=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -ltokyocabinet -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o tcindex.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o SPARQLParser.o SPARQLScanner.o
 
-all: parse print optimize tests examples parse_query
+all: parse tcparse print tcprint optimize tests examples parse_query
 
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
@@ -13,11 +13,17 @@ server: server.c $(OBJECTS)
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
 
+tcparse: tcparse.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o tcparse tcparse.c $(OBJECTS)
+
 optimize: optimize.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o optimize optimize.c $(OBJECTS)
 
 print: print.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o print print.c $(OBJECTS)
+
+tcprint: tcprint.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o tcprint tcprint.c $(OBJECTS)
 
 hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastore_types.h variablebindings.h nodemap.h
 	$(CC) $(INC) -c hexastore.c
@@ -183,7 +189,7 @@ clean:
 	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM
-	rm -f test parse print optimize a.out server parse_query
+	rm -f test parse print optimize a.out server parse_query tcparse tcprint
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t

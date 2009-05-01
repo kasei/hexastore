@@ -32,11 +32,13 @@ hx_tcindex* hx_new_tcindex ( hx_storage_manager* s, int* index_order, const char
 	i->order[1]	= b;
 	i->order[2]	= c;
 	i->bdb = tcbdbnew();
-	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+//	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
+	tcbdbsetcache(i->bdb, 8192, 2048);
 	if(!tcbdbopen(i->bdb, filename, BDBOWRITER | BDBOCREAT)){
 		int ecode;
 		ecode = tcbdbecode(i->bdb);
-		fprintf(stderr, "tokyocabinet open error: %s\n", tcbdberrmsg(ecode));
+		fprintf(stderr, "tokyocabinet open error on %s: %s\n", filename, tcbdberrmsg(ecode));
 		hx_storage_release_block( s, i );
 		return NULL;
 	}

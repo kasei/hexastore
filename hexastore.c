@@ -7,6 +7,7 @@
 void* _hx_add_triple_threaded (void* arg);
 
 int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
+int _hx_add_triple_to_index ( hx_hexastore* hx, hx_storage_manager* st, void* index, hx_node_id s, hx_node_id p, hx_node_id o );
 
 /////////////////////
 
@@ -23,19 +24,56 @@ hx_hexastore* hx_new_hexastore ( hx_storage_manager* s ) {
 	return hx_new_hexastore_with_nodemap( s, map );
 }
 
-hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename ) {
+hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* directory ) {
+	if (mkdir( directory, S_IRWXU|S_IRGRP ) != 0) {
+		perror("Could not create directory for TCB hexastore");
+		return NULL;
+	}
+	
 	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
-	hx_nodemap* map		= hx_new_nodemap();
+	hx_nodemap* map		= hx_new_file_nodemap( directory );
+	hx->index_type		= 'T';
+	hx->map				= map;
+	hx->directory		= directory;
+	int len				= strlen( directory ) + 9;
+	
+	char *spo_fn, *sop_fn, *pso_fn, *pos_fn, *osp_fn, *ops_fn;
+	spo_fn				= (char*) malloc( len );
+	sop_fn				= (char*) malloc( len );
+	pso_fn				= (char*) malloc( len );
+	pos_fn				= (char*) malloc( len );
+	osp_fn				= (char*) malloc( len );
+	ops_fn				= (char*) malloc( len );
+	sprintf( spo_fn, "%s/spo.tcb", directory );
+	sprintf( sop_fn, "%s/sop.tcb", directory );
+	sprintf( pso_fn, "%s/pso.tcb", directory );
+	sprintf( pos_fn, "%s/pos.tcb", directory );
+	sprintf( osp_fn, "%s/osp.tcb", directory );
+	sprintf( ops_fn, "%s/ops.tcb", directory );
+	hx->spo				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_SPO, spo_fn ) );
+	hx->sop				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_SOP, sop_fn ) );
+	hx->pso				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_PSO, pso_fn ) );
+	hx->pos				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_POS, pos_fn ) );
+	hx->osp				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_OSP, osp_fn ) );
+	hx->ops				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_OPS, ops_fn ) );
+	hx->next_var		= -1;
+
+	free( spo_fn );
+	free( sop_fn );
+	free( pso_fn );
+	free( pos_fn );
+	free( osp_fn );
+	free( ops_fn );
+	return hx;
+}
+
+hx_hexastore* hx_open_tchexastore ( hx_storage_manager* s, const char* filename ) {
+	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
+	hx_nodemap* map		= hx_new_file_nodemap( filename );
 	hx->index_type		= 'T';
 	hx->map				= map;
 	hx->directory		= filename;
-	int len				= strlen( filename ) + 8;
-	
-	if (mkdir( filename, S_IRWXU|S_IRGRP ) != 0) {
-		perror("Could not create directory for TCB hexastore");
-		hx_storage_release_block( s, hx );
-		return NULL;
-	}
+	int len				= strlen( filename ) + 9;
 	
 	char *spo_fn, *sop_fn, *pso_fn, *pos_fn, *osp_fn, *ops_fn;
 	spo_fn				= (char*) malloc( len );
@@ -57,7 +95,7 @@ hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename )
 	hx->osp				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_OSP, osp_fn ) );
 	hx->ops				= hx_storage_id_from_block( s, hx_new_tcindex( s, HX_INDEX_ORDER_OPS, ops_fn ) );
 	hx->next_var		= -1;
-
+	
 	free( spo_fn );
 	free( sop_fn );
 	free( pso_fn );
@@ -65,14 +103,13 @@ hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename )
 	free( osp_fn );
 	free( ops_fn );
 	return hx;
-	
 }
 
 int hx_remove_tchexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_free_hexastore( hx, s );
 	char* filename	= hx->directory;
 	char *spo_fn, *sop_fn, *pso_fn, *pos_fn, *osp_fn, *ops_fn;
-	int len				= strlen( filename ) + 8;
+	int len				= strlen( filename ) + 9;
 	spo_fn				= (char*) malloc( len );
 	sop_fn				= (char*) malloc( len );
 	pso_fn				= (char*) malloc( len );
@@ -154,6 +191,15 @@ int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_nod
 	hx_node_id p	= hx_nodemap_add_node( map, pn );
 	hx_node_id o	= hx_nodemap_add_node( map, on );
 	return _hx_add_triple( hx, st, s, p, o );
+}
+
+int _hx_add_triple_to_index ( hx_hexastore* hx, hx_storage_manager* st, void* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	if (hx->index_type == 'I') {
+		return hx_index_add_triple( (hx_index*) index, st, s, p, o );
+	} else if (hx->index_type == 'T') {
+		hx_tcindex_add_triple( (hx_tcindex*) index, st, s, p, o );
+	}
+	return 0;
 }
 
 int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o ) {
@@ -265,9 +311,33 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 			free( triple_ids );
 		}
 	} else if (hx->index_type == 'T') {
+		hx_nodemap* map	= hx->map;
+		hx_node_id* ids	= calloc( count * 3, sizeof( hx_node_id ) );
 		for (int i = 0; i < count; i++) {
-			hx_add_triple( hx, s, triples[i].subject, triples[i].predicate, triples[i].object );
+			ids[ i*3 ]		= hx_nodemap_add_node( map, triples[i].subject );
+			ids[ i*3+1 ]	= hx_nodemap_add_node( map, triples[i].predicate );
+			ids[ i*3+2 ]	= hx_nodemap_add_node( map, triples[i].object );
+			
 		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->spo ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->sop ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->pso ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->pos ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->ops ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		for (int i = 0; i < count; i++) {
+			_hx_add_triple_to_index( hx, s, hx_storage_block_from_id( s, hx->osp ), ids[i*3], ids[i*3+1], ids[i*3+2] );
+		}
+		free( ids );
 	}
 	return 0;
 }
