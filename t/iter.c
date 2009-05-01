@@ -144,8 +144,7 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 	hx_node* v2	= hx_new_node_variable( -2 );
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
-	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj", 0 );
+	hx_variablebindings_iter* iter	= hx_get_statements_vb( hx, s, "subj", v1, "pred", v2, "obj", v3, HX_OBJECT, 0 );
 	return iter;
 }
 

@@ -21,6 +21,7 @@ extern "C" {
 #include "variablebindings.h"
 #include "nodemap.h"
 #include "index.h"
+#include "tcindex.h"
 #include "terminal.h"
 #include "vector.h"
 #include "head.h"
@@ -41,6 +42,7 @@ static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
 static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
+	char index_type;
 	hx_nodemap* map;
 	hx_storage_id_t spo;
 	hx_storage_id_t sop;
@@ -60,20 +62,9 @@ typedef struct {
 	int count;
 } hx_thread_info;
 
-typedef struct {
-	hx_storage_manager* s;
-	hx_index_iter* iter;
-	int size;
-	int free_names;
-	char** names;
-	int* triple_pos_to_index;
-	int* index_to_triple_pos;
-	char *subject, *predicate, *object;
-	hx_variablebindings* current;
-} _hx_iter_vb_info;
-
 hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map );
 hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
+hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
 
@@ -82,7 +73,9 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 
 int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
-hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position );
+// hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position );
+hx_variablebindings_iter* hx_get_statements_vb ( hx_hexastore* hx, hx_storage_manager* st, char* subj_name, hx_node* s, char* pred_name, hx_node* p, char* obj_name, hx_node* o, int order_position, int free_names );
+
 
 hx_storage_id_t hx_triples_count( hx_hexastore* hx, hx_storage_manager* s );
 hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
@@ -91,8 +84,6 @@ hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
-
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names );
 
 int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f );
 hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );

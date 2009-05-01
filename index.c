@@ -3,10 +3,17 @@
 int _hx_index_iter_prime_first_result( hx_index_iter* iter );
 int _hx_index_iter_next_head ( hx_index_iter* iter );
 int _hx_index_iter_next_vector ( hx_index_iter* iter );
-
 int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n );
 int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n );
 
+int _hx_index_iter_vb_finished ( void* iter );
+int _hx_index_iter_vb_current ( void* iter, void* results );
+int _hx_index_iter_vb_next ( void* iter );	
+int _hx_index_iter_vb_free ( void* iter );
+int _hx_index_iter_vb_size ( void* iter );
+int _hx_index_iter_vb_sorted_by (void* iter, int index );
+char** _hx_index_iter_vb_names ( void* iter );
+int _hx_index_iter_debug ( void* info, char* header, int indent );
 
 /**
 
@@ -539,4 +546,131 @@ int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
 		fprintf( stderr, "*** not a valid triple position index in call to hx_index_iter_is_sorted_by_index\n" );
 		return -1;
 	}
+}
+
+hx_variablebindings_iter* hx_new_index_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
+	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) calloc( 1, sizeof( hx_variablebindings_iter_vtable ) );
+	vtable->finished	= _hx_index_iter_vb_finished;
+	vtable->current		= _hx_index_iter_vb_current;
+	vtable->next		= _hx_index_iter_vb_next;
+	vtable->free		= _hx_index_iter_vb_free;
+	vtable->names		= _hx_index_iter_vb_names;
+	vtable->size		= _hx_index_iter_vb_size;
+	vtable->sorted_by	= _hx_index_iter_vb_sorted_by;
+	vtable->debug		= _hx_index_iter_debug;
+	
+	int size	= 0;
+	if (subj_name != NULL)
+		size++;
+	if (pred_name != NULL)
+		size++;
+	if (obj_name != NULL)
+		size++;
+	
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) calloc( 1, sizeof( _hx_index_iter_vb_info ) );
+	info->s							= s;
+	info->size						= size;
+	info->subject					= subj_name;
+	info->predicate					= pred_name;
+	info->object					= obj_name;
+	info->iter						= i;
+	info->names						= (char**) calloc( 3, sizeof( char* ) );
+	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
+	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
+	info->free_names				= free_names;
+	info->current					= NULL;
+	
+	int j	= 0;
+	if (subj_name != NULL) {
+		int idx	= j++;
+		info->names[ idx ]		= subj_name;
+		info->triple_pos_to_index[ idx ]	= 0;
+		info->index_to_triple_pos[ 0 ]		= idx;
+	}
+	
+	if (pred_name != NULL) {
+		int idx	= j++;
+		info->names[ idx ]		= pred_name;
+		info->triple_pos_to_index[ idx ]	= 1;
+		info->index_to_triple_pos[ 1 ]		= idx;
+	}
+	if (obj_name != NULL) {
+		int idx	= j++;
+		info->names[ idx ]		= obj_name;
+		info->triple_pos_to_index[ idx ]	= 2;
+		info->index_to_triple_pos[ 2 ]		= idx;
+	}
+	
+	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
+	return iter;
+}
+
+int _hx_index_iter_vb_finished ( void* data ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	hx_index_iter* iter		= (hx_index_iter*) info->iter;
+	return hx_index_iter_finished( iter );
+}
+
+int _hx_index_iter_vb_current ( void* data, void* results ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	hx_variablebindings** bindings	= (hx_variablebindings**) results;
+	if (info->current == NULL) {
+		hx_index_iter* iter		= (hx_index_iter*) info->iter;
+		hx_node_id triple[3];
+		hx_index_iter_current ( iter, &(triple[0]), &(triple[1]), &(triple[2]) );
+		hx_node_id* values	= (hx_node_id*) calloc( info->size, sizeof( hx_node_id ) );
+		for (int i = 0; i < info->size; i++) {
+			values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
+		}
+		info->current	= hx_new_variablebindings( info->size, info->names, values, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
+	}
+	*bindings	= info->current;
+	return 0;
+}
+
+int _hx_index_iter_vb_next ( void* data ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	hx_index_iter* iter		= (hx_index_iter*) info->iter;
+	info->current			= NULL;
+	return hx_index_iter_next( iter );
+}
+
+int _hx_index_iter_vb_free ( void* data ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	hx_index_iter* iter		= (hx_index_iter*) info->iter;
+	hx_free_index_iter( iter );
+	free( info->names );
+	free( info->triple_pos_to_index );
+	free( info->index_to_triple_pos );
+	if (info->free_names) {
+		free( info->subject );
+		free( info->predicate );
+		free( info->object );
+	}
+	free( info );
+	return 0;
+}
+
+int _hx_index_iter_vb_size ( void* data ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	return info->size;
+}
+
+char** _hx_index_iter_vb_names ( void* data ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	return info->names;
+}
+
+int _hx_index_iter_vb_sorted_by (void* data, int index ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	int triple_pos	= info->index_to_triple_pos[ index ];
+// 	fprintf( stderr, "*** checking if index iterator is sorted by %d (triple %s)\n", index, HX_POSITION_NAMES[triple_pos] );
+	return hx_index_iter_is_sorted_by_index( info->iter, triple_pos );
+}
+
+int _hx_index_iter_debug ( void* data, char* header, int indent ) {
+	_hx_index_iter_vb_info* info	= (_hx_index_iter_vb_info*) data;
+	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	fprintf( stderr, "%s hexastore triples iterator\n", header );
+	return 0;
 }

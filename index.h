@@ -17,6 +17,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
+#include "variablebindings.h"
 #include "head.h"
 
 typedef struct {
@@ -44,6 +45,18 @@ typedef struct {
 	int started;
 	int finished;
 } hx_index_iter;
+
+typedef struct {
+	hx_storage_manager* s;
+	hx_index_iter* iter;
+	int size;
+	int free_names;
+	char** names;
+	int* triple_pos_to_index;
+	int* index_to_triple_pos;
+	char *subject, *predicate, *object;
+	hx_variablebindings* current;
+} _hx_index_iter_vb_info;
 
 static int HX_INDEX_ORDER_SPO[3]	= { HX_SUBJECT, HX_PREDICATE, HX_OBJECT };
 static int HX_INDEX_ORDER_SOP[3]	= { HX_SUBJECT, HX_OBJECT, HX_PREDICATE };
@@ -75,6 +88,8 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 int hx_index_iter_next ( hx_index_iter* iter );
 
 int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index );
+
+hx_variablebindings_iter* hx_new_index_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names );
 
 #ifdef __cplusplus
 }

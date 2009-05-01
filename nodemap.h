@@ -5,18 +5,23 @@
 extern "C" {
 #endif
 
+#include <tcutil.h>
+#include <tcbdb.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "hexastore_types.h"
-#include "avl.h"
 #include "node.h"
 #include "storage.h"
 
-typedef struct avl_table avl;
 typedef struct {
+	char type;	// 'M' for memory, 'B' for B+-tree disk-based
 	hx_node_id next_id;
-	avl* id2node;
-	avl* node2id;
+	TCMDB* id2node;
+	TCMDB* node2id;
 } hx_nodemap;
 
 typedef struct {

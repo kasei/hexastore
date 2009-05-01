@@ -2,8 +2,8 @@
 CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast #  -Werror # -DDEBUG_INDEX_SELECTION
 CC			=	gcc $(CFLAGS)
 
-LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o SPARQLParser.o SPARQLScanner.o
+LIBS	=	-lpthread -lraptor -ltokyocabinet -L/cs/willig4/local/lib -I/cs/willig4/local/include
+OBJECTS	=	hexastore.o tcindex.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o SPARQLParser.o SPARQLScanner.o
 
 all: parse print optimize tests examples parse_query
 
@@ -24,6 +24,9 @@ hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastor
 
 index.o: index.c index.h terminal.h vector.h head.h hexastore_types.h
 	$(CC) $(INC) -c index.c
+
+tcindex.o: tcindex.c tcindex.h hexastore_types.h
+	$(CC) $(INC) -c tcindex.c
 
 terminal.o: terminal.c terminal.h hexastore_types.h
 	$(CC) $(INC) -c terminal.c
@@ -85,7 +88,7 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 
 ########
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t
+tests: t/nodemap.t t/node.t t/index.t t/tcindex.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/tciter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -100,6 +103,9 @@ t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS) tap.o
 
 t/index.t: tap.o t/index.c index.h index.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/index.t t/index.c $(OBJECTS) tap.o
+
+t/tcindex.t: tap.o t/tcindex.c tcindex.h tcindex.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/tcindex.t t/tcindex.c $(OBJECTS) tap.o
 
 t/terminal.t: tap.o t/terminal.c terminal.h terminal.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/terminal.t t/terminal.c $(OBJECTS) tap.o
@@ -118,6 +124,9 @@ t/join.t: tap.o t/join.c $(OBJECTS) tap.o
 
 t/iter.t: tap.o t/iter.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/iter.t t/iter.c $(OBJECTS) tap.o
+
+t/tciter.t: tap.o t/tciter.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/tciter.t t/tciter.c $(OBJECTS) tap.o
 
 t/bgp.t: tap.o t/bgp.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS) tap.o
