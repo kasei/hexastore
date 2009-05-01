@@ -28,7 +28,7 @@ int main ( void ) {
 	hx_node* rs			= hx_new_node_resource( "http://resultset/" );
 	hx_node* rstype		= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet" );
 	hx_node* sl			= hx_new_node_literal( "s" );
-
+	
 	{	// ALL TRIPLES
 		hx_storage_id_t total	= hx_triples_count( hx, s );
 		ok1( total == 31 );

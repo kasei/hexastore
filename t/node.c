@@ -8,9 +8,10 @@ void test_resources ( void );
 void test_bnodes ( void );
 void test_cmp ( void );
 void test_store ( void );
+void test_strings ( void );
 
 int main ( void ) {
-	plan_tests(119);
+	plan_tests(124);
 	
 	test_variables();
 	test_literals();
@@ -18,6 +19,7 @@ int main ( void ) {
 	test_bnodes();
 	test_cmp();
 	test_store();
+	test_strings();
 	
 	return exit_status();
 }
@@ -268,3 +270,24 @@ void test_store ( void ) {
 	unlink( filename );
 }
 
+void test_strings ( void ) {
+	hx_node* l2	= (hx_node*) hx_new_node_lang_literal("bar", "en-us");
+	hx_node* r1	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/XMLSchema#integer");
+	char* s	= NULL;
+	
+	hx_node_nodestr( l2, &s );
+	ok1( strcmp( s, "Lbar<en-us>" ) == 0 );
+	free(s);
+	
+	hx_node_nodestr( r1, &s );
+	ok1( strcmp( s, "Rhttp://www.w3.org/2001/XMLSchema#integer" ) == 0 );
+	free(s);
+	
+	hx_node* l2_thaw	= hx_node_strnode( "Lbar<en-us>" );
+	ok1( hx_node_value(l2_thaw) != NULL );
+	ok1( strcmp(hx_node_value(l2_thaw), "bar") == 0 );
+	ok1( strcmp(hx_node_lang((hx_node_lang_literal*) l2_thaw), "en-us") == 0 );
+	hx_free_node( l2_thaw );
+	
+//	hx_node_strnode
+}

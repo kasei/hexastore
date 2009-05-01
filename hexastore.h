@@ -43,6 +43,7 @@ static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOU
 
 typedef struct {
 	char index_type;
+	const char* directory;
 	hx_nodemap* map;
 	hx_storage_id_t spo;
 	hx_storage_id_t sop;
@@ -67,13 +68,13 @@ hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
 hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
+int hx_remove_tchexastore ( hx_hexastore* hx, hx_storage_manager* s );
 
 int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count );
 
 int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
-// hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position );
 hx_variablebindings_iter* hx_get_statements_vb ( hx_hexastore* hx, hx_storage_manager* st, char* subj_name, hx_node* s, char* pred_name, hx_node* p, char* obj_name, hx_node* o, int order_position, int free_names );
 
 

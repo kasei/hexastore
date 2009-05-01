@@ -124,7 +124,7 @@ void test_small_iter ( void ) {
 	
 	
 	hx_free_variablebindings_iter( iter, 1 );
-	hx_free_hexastore( hx, s );
+	hx_remove_tchexastore( hx, s );
 	hx_free_storage_manager( s );
 }
 

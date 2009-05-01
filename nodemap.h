@@ -17,11 +17,13 @@ extern "C" {
 #include "node.h"
 #include "storage.h"
 
+/* type is 'M' for memory, 'B' for B+-tree disk-based */
 typedef struct {
-	char type;	// 'M' for memory, 'B' for B+-tree disk-based
+	char type;
 	hx_node_id next_id;
-	TCMDB* id2node;
-	TCMDB* node2id;
+	void* id2node;
+	void* node2id;
+	char* directory;
 } hx_nodemap;
 
 typedef struct {
@@ -30,6 +32,8 @@ typedef struct {
 } hx_nodemap_item;
 
 hx_nodemap* hx_new_nodemap( void );
+hx_nodemap* hx_new_file_nodemap( const char* directory );
+int hx_remove_nodemap ( hx_nodemap* m );
 int hx_free_nodemap ( hx_nodemap* m );
 
 hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n );

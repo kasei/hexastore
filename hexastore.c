@@ -28,6 +28,7 @@ hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename )
 	hx_nodemap* map		= hx_new_nodemap();
 	hx->index_type		= 'T';
 	hx->map				= map;
+	hx->directory		= filename;
 	int len				= strlen( filename ) + 8;
 	
 	if (mkdir( filename, S_IRWXU|S_IRGRP ) != 0) {
@@ -65,6 +66,39 @@ hx_hexastore* hx_new_tchexastore ( hx_storage_manager* s, const char* filename )
 	free( ops_fn );
 	return hx;
 	
+}
+
+int hx_remove_tchexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
+	hx_free_hexastore( hx, s );
+	char* filename	= hx->directory;
+	char *spo_fn, *sop_fn, *pso_fn, *pos_fn, *osp_fn, *ops_fn;
+	int len				= strlen( filename ) + 8;
+	spo_fn				= (char*) malloc( len );
+	sop_fn				= (char*) malloc( len );
+	pso_fn				= (char*) malloc( len );
+	pos_fn				= (char*) malloc( len );
+	osp_fn				= (char*) malloc( len );
+	ops_fn				= (char*) malloc( len );
+	sprintf( spo_fn, "%s/spo.tcb", filename );
+	sprintf( sop_fn, "%s/sop.tcb", filename );
+	sprintf( pso_fn, "%s/pso.tcb", filename );
+	sprintf( pos_fn, "%s/pos.tcb", filename );
+	sprintf( osp_fn, "%s/osp.tcb", filename );
+	sprintf( ops_fn, "%s/ops.tcb", filename );
+	unlink( spo_fn );
+	unlink( sop_fn );
+	unlink( pso_fn );
+	unlink( pos_fn );
+	unlink( osp_fn );
+	unlink( ops_fn );
+	free( spo_fn );
+	free( sop_fn );
+	free( pso_fn );
+	free( pos_fn );
+	free( osp_fn );
+	free( ops_fn );
+	rmdir( filename );
+	return 0;
 }
 
 hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map ) {
@@ -364,6 +398,9 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn,
 			}
 		}
 	}
+#ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "index order after checking for duplicate variables: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
+#endif	
 	
 	// add any remaining triple positions to the index order:
 	if (i == 0) {
@@ -385,6 +422,9 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn,
 			}
 		}
 	}
+#ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "index order after adding remaining triple positions: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
+#endif	
 	
 	switch (index_order[0]) {
 		case 0:
@@ -444,30 +484,6 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn,
 	return 0;
 }
 
-// hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on, int order_position ) {
-// 	hx_node* index_ordered[3];
-// 	hx_index* index;
-// 	hx_get_ordered_index( hx, st, sn, pn, on, order_position, &index, index_ordered, NULL );
-// 	
-// 	hx_node_id s	= hx_get_node_id( hx, sn );
-// 	hx_node_id p	= hx_get_node_id( hx, pn );
-// 	hx_node_id o	= hx_get_node_id( hx, on );
-// 
-// 	if (!hx_node_is_variable( sn ) && s == 0) {
-// 		return NULL;
-// 	}
-// 	if (!hx_node_is_variable( pn ) && p == 0) {
-// 		return NULL;
-// 	}
-// 	if (!hx_node_is_variable( on ) && o == 0) {
-// 		return NULL;
-// 	}
-// 	
-// 	hx_node_id index_ordered_id[3]	= { s, p, o };
-// 	hx_index_iter* iter	= hx_index_new_iter1( index, st, index_ordered_id[0], index_ordered_id[1], index_ordered_id[2] );
-// 	return iter;
-// }
-
 hx_variablebindings_iter* hx_get_statements_vb ( hx_hexastore* hx, hx_storage_manager* st, char* subj_name, hx_node* sn, char* pred_name, hx_node* pn, char* obj_name, hx_node* on, int order_position, int free_names ) {
 	hx_node* index_ordered[3];
 	hx_index* index;
@@ -502,12 +518,12 @@ hx_variablebindings_iter* hx_get_statements_vb ( hx_hexastore* hx, hx_storage_ma
 }
 
 hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o ) {
-	{
-		int vars;
-		hx_index* index;
-		hx_node* index_ordered[3];
-		hx_get_ordered_index( hx, st, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
-
+	int vars;
+	hx_index* index;
+	hx_node* index_ordered[3];
+	hx_get_ordered_index( hx, st, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
+	
+	if (hx->index_type == 'I') {
 		hx_node_id aid	= hx_get_node_id( hx, index_ordered[0] );
 		hx_node_id bid	= hx_get_node_id( hx, index_ordered[1] );
 		hx_node_id cid	= hx_get_node_id( hx, index_ordered[2] );
@@ -558,6 +574,19 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 				hx_free_variablebindings_iter( iter, 1 );
 				return exists;
 		};
+	} else if (hx->index_type == 'T') {
+		hx_tcindex* tcindex		= index;
+		hx_node_id sid	= hx_get_node_id( hx, s );
+		hx_node_id pid	= hx_get_node_id( hx, p );
+		hx_node_id oid	= hx_get_node_id( hx, o );
+		hx_tcindex_iter* iter	= hx_tcindex_new_iter1( tcindex, st, sid, pid, oid );
+		hx_storage_id_t size	= 0;
+		while (!hx_tcindex_iter_finished(iter)) {
+			size++;
+			hx_tcindex_iter_next(iter);
+		}
+		hx_free_tcindex_iter(iter);
+		return size;
 	}
 	return 0;
 }

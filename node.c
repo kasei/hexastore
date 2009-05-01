@@ -181,6 +181,7 @@ int hx_node_variable_name ( hx_node* n, char** name ) {
 			int alloc	= 10 + 6;
 			*name	= (char*) calloc( 1, alloc );
 			if (*name == NULL) {
+				fprintf( stderr, "*** could not allocate memory for variable name\n" );
 				return 0;
 			}
 			sprintf( *name, "__var%d", n->iv );
@@ -258,17 +259,19 @@ int hx_node_string ( hx_node* n, char** str ) {
 		}
 		sprintf( *str, "_:%s", n->value );
 	} else if (hx_node_is_variable( n )) {
-		char* vname;
+		char* vname	= NULL;
 		hx_node_variable_name( n, &vname );
 		alloc	= 2 + strlen( vname );
 		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
+			fprintf( stderr, "*** could not allocate memory for variable node string\n" );
 			return 0;
 		}
 		sprintf( *str, "?%s", vname );
 		free( vname );
 	} else {
-		fprintf( stderr, "*** Unrecognized node type '%c'\n", n->type );
+		fprintf( stderr, "*** Unrecognized node type '%c' (chr %d) in hx_node_string\n", n->type, n->type );
+		*str	= NULL;
 		return 0;
 	}
 	return alloc;
@@ -293,7 +296,13 @@ int hx_node_nodestr( hx_node* n, char** str ) {
 		if (*str == NULL) {
 			return 0;
 		}
-		sprintf( *str, "L%s<%s>%s", n->value, lang, dt );
+		char* p	= *str;
+		sprintf( p, "L%s<", n->value );
+		if (lang)
+			strcat( p, lang );
+		strcat( p, ">" );
+		if (dt)
+			strcat( p, dt );
 	} else if (hx_node_is_resource( n )) {
 		alloc	= strlen(n->value) + 2;
 		*str	= (char*) calloc( 1, alloc );
@@ -309,10 +318,49 @@ int hx_node_nodestr( hx_node* n, char** str ) {
 		}
 		sprintf( *str, "B%s", n->value );
 	} else {
-		fprintf( stderr, "*** Unrecognized node type '%c'\n", n->type );
+		fprintf( stderr, "*** Unrecognized node type '%c' in hx_node_nodestr\n", n->type );
 		return 0;
 	}
 	return alloc;
+}
+
+hx_node* hx_node_strnode ( char* string ) {
+	char* p	= (char*) malloc( strlen( string ) + 1 );
+	strcpy( p, string+1 );
+	char *v, *d, *l;
+	char *lang	= NULL;
+	char *dt	= NULL;
+	switch (*string) {
+		case 'L':
+			v	= p;
+			d	= strrchr( p, '>' );
+			*(d++)	= (char) 0;
+			l	= strrchr( p, '<' );
+			*(l++)	= (char) 0;
+			if (l) {
+				lang	= (char*) malloc( strlen(l) + 1 );
+				strcpy( lang, l );
+			}
+			
+			if (d) {
+				dt	= (char*) malloc( strlen(d) + 1 );
+				strcpy( dt, d );
+			}
+			if (*lang) {
+				return hx_new_node_lang_literal( p, lang );
+			} else if (*dt) {
+				return hx_new_node_dt_literal( p, dt );
+			} else {
+				return hx_new_node_literal( p );
+			}
+		case 'R':
+			return hx_new_node_resource( p );
+		case 'B':
+			return hx_new_node_blank( p );
+		default:
+			fprintf( stderr, "*** Unrecognized node type '%c' in hx_node_strnode\n", *string );
+			return NULL;
+	};
 }
 
 int hx_node_cmp( const void* _a, const void* _b ) {
