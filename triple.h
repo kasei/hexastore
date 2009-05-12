@@ -35,6 +35,8 @@ typedef struct {
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );
 int hx_free_triple ( hx_triple* t );
 
+int hx_triple_string ( hx_triple* t, char** string );
+
 #ifdef __cplusplus
 }
 #endif

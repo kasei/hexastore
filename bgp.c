@@ -174,6 +174,38 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 	return 0;
 }
 
+int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level ) {
+	*string	= NULL;
+	int alloc	= 256;
+	char* str	= (char*) calloc( 1, alloc );
+	
+	int size	= hx_bgp_size( b );
+	if (_hx_bgp_string_concat( &str, "(bgp\n", &alloc )) return 1;
+	
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < level+1; j++) {
+			if (_hx_bgp_string_concat( &str, indent, &alloc )) return 1;
+		}
+		char *tstring;
+		hx_triple* t	= hx_bgp_triple( b, i );
+		if (hx_triple_string( t, &tstring ) != 0) {
+			return 1;
+		}
+		if (_hx_bgp_string_concat( &str, tstring, &alloc )) {
+			free( tstring );
+			return 1;
+		}
+		if (_hx_bgp_string_concat( &str, "\n", &alloc )) return 1;
+		free( tstring );
+	}
+	for (int j = 0; j < level; j++) {
+		if (_hx_bgp_string_concat( &str, indent, &alloc )) return 1;
+	}
+	if (_hx_bgp_string_concat( &str, ")\n", &alloc )) return 1;
+	*string	= str;
+	return 0;
+}
+
 int hx_bgp_debug ( hx_bgp* b ) {
 	char* string;
 	int r	= hx_bgp_string( b, &string );
@@ -377,11 +409,6 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 	}
 	return HX_SUBJECT;
 }
-
-
-
-
-
 
 void _XXX_print_triple ( hx_triple* t, uint64_t size ) {
 	hx_node* s	= t->subject;

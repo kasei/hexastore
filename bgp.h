@@ -40,6 +40,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp*, hx_hexastore*, hx_storage_ma
 
 int hx_bgp_debug ( hx_bgp* b );
 int hx_bgp_string ( hx_bgp* b, char** string );
+int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level );
 
 #ifdef __cplusplus
 }

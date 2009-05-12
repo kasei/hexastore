@@ -23,7 +23,12 @@ int main( int argc, char** argv ) {
 		fprintf( stderr, "Failed to parse query\n" );
 		return 1;
 	}
-
+	
+	char* sse;
+	hx_bgp_sse( b, &sse, "  ", 0 );
+	fprintf( stdout, sse );
+	free( sse );
+	
 	uint64_t count	= 0;
 	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, st );
 	int size		= hx_variablebindings_iter_size( iter );

@@ -70,8 +70,9 @@ SPARQLParser.c:
 SPARQLParser.h: SPARQLParser.yy
 	bison -o SPARQLParser.c SPARQLParser.yy
 
-SPARQLScanner.c:
-SPARQLScanner.h: SPARQLScanner.ll
+SPARQLScanner.h: SPARQLScanner.c SPARQLScanner.ll
+
+SPARQLScanner.c: SPARQLScanner.ll
 	flex -o SPARQLScanner.c SPARQLScanner.ll
 
 SPARQLParser.o: SPARQLParser.yy SPARQLScanner.ll SPARQLParser.h SPARQLScanner.h
