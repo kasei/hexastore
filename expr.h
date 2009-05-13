@@ -22,6 +22,8 @@ extern "C" {
 #include "node.h"
 #include "nodemap.h"
 
+static int hx_expr_debug	= 0;
+
 #define HX_EXPR_UNARY_MAX	11
 #define HX_EXPR_BINARY_MAX	25
 #define HX_EXPR_TERNARY_MAX	26

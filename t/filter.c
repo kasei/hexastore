@@ -1,5 +1,6 @@
 #include "hexastore.h"
 #include "filter.h"
+#include "expr.h"
 #include "tap.h"
 
 void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
@@ -9,32 +10,35 @@ void filter_test1 ( void );
 void filter_test2 ( void );
 void serialization_test ( void );
 
-hx_node* p1;
-hx_node* p2;
-hx_node* r1;
-hx_node* r2;
-hx_node* l1;
-hx_node* l2;
+hx_node *p1;
+hx_node *r1, *r2;
+hx_node *l1, *l2, *l3, *l4, *l5, *l6;
 
 int main ( void ) {
-	plan_tests(3);
+	plan_tests(14);
 	p1	= hx_new_node_resource( "p1" );
-	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
 	r2	= hx_new_node_resource( "r2" );
 	l1	= hx_new_node_literal( "l1" );
 	l2	= hx_new_node_literal( "l2" );
+	l3	= hx_new_node_literal( "l3" );
+	l4	= hx_new_node_literal( "l4" );
+	l5	= hx_new_node_literal( "l5" );
+	l6	= hx_new_node_literal( "l6" );
 	
 	filter_test1();
 	filter_test2();
 	serialization_test();
 	
 	hx_free_node( p1 );
-	hx_free_node( p2 );
 	hx_free_node( r1 );
 	hx_free_node( r2 );
 	hx_free_node( l1 );
 	hx_free_node( l2 );
+	hx_free_node( l3 );
+	hx_free_node( l4 );
+	hx_free_node( l5 );
+	hx_free_node( l6 );
 	
 	return exit_status();
 }
@@ -69,17 +73,18 @@ void filter_test1 ( void ) {
 		
 		hx_variablebindings_iter_next( iter );
 	}
-	ok1( counter == 2 );
+	ok1( counter == 6 );
 	hx_free_variablebindings_iter( iter, 1 );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }
 
 void filter_test2 ( void ) {
+	hx_expr_debug	= 1;
 	fprintf( stdout, "# term equal filter test\n" );
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_new_hexastore( s );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_hexastore* hx		= hx_new_hexastore( s );
+	hx_nodemap* map			= hx_get_nodemap( hx );
 	_add_data( hx, s );
 	
 	hx_node* v						= hx_new_named_variable( hx, "obj" );
@@ -87,21 +92,23 @@ void filter_test2 ( void ) {
 	hx_expr* lit_e					= hx_new_node_expr( r1 );
 	hx_expr* e						= hx_new_builtin_expr2( HX_EXPR_OP_EQUAL, v_e, lit_e );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, s, HX_OBJECT );
+	int counter	= 0;
+	
 	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, map );
 	
-	int counter	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
 		counter++;
-//		fprintf( stderr, "- loop iteration %d\n", counter );
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, map, "subj" );
-		ok1( hx_node_is_literal(obj) == 1 );
-		
-		char* string;
-		hx_variablebindings_string( b, map, &string );
-		fprintf( stderr, "<< %s >>\n", string );
-		free(string);
+		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, map, "obj" );
+		ok1( hx_node_is_resource(obj) == 1 );
+		ok1( hx_node_cmp(obj, r1) == 0 );
+		ok1( obj != r1 );
+
+		hx_node* subj	= hx_variablebindings_node_for_binding_name( b, map, "subj" );
+		ok1( hx_node_is_resource(subj) == 1 );
+		ok1( hx_node_cmp(subj, r2) == 0 );
+		ok1( subj != r2 );
 		
 		hx_variablebindings_iter_next( iter );
 	}
@@ -115,10 +122,13 @@ void serialization_test ( void ) {
 }
 
 void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
-	hx_add_triple( hx, s, r1, p1, r2 );
 	hx_add_triple( hx, s, r2, p1, r1 );
-	hx_add_triple( hx, s, r2, p2, l2 );
-	hx_add_triple( hx, s, r1, p2, l1 );
+	hx_add_triple( hx, s, r1, p1, l2 );
+	hx_add_triple( hx, s, r1, p1, l1 );
+	hx_add_triple( hx, s, r1, p1, l5 );
+	hx_add_triple( hx, s, r1, p1, l6 );
+	hx_add_triple( hx, s, r1, p1, l4 );
+	hx_add_triple( hx, s, r1, p1, l3 );
 }
 
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort ) {

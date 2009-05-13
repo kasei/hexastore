@@ -215,17 +215,17 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 				return 0;
 			}
 		} else {
-#ifdef DEBUG
-	char *e_sse, *bstring;
-	hx_expr_sse( e, &e_sse, "  ", 0 );
-	fprintf( stderr, "eval expression: %s\n", e_sse );
-	free( e_sse );
-	if (b != NULL) {
-		hx_variablebindings_string( b, map, &bstring );
-		fprintf( stderr, "- using bindings: %s\n", bstring );
-		free( bstring );
-	}
-#endif
+			if (hx_expr_debug) {	// ---------------------------------------------
+				char *e_sse, *bstring;
+				hx_expr_sse( e, &e_sse, "  ", 0 );
+				fprintf( stderr, "eval expression: %s\n", e_sse );
+				free( e_sse );
+				if (b != NULL) {
+					hx_variablebindings_string( b, map, &bstring );
+					fprintf( stderr, "- using bindings: %s\n", bstring );
+					free( bstring );
+				}
+			}
 		
 			if (e->arity == 1) {
 				hx_expr** args	= (hx_expr**) e->operands;
@@ -233,6 +233,9 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 				hx_node* value;
 				int r	= hx_expr_eval( child, b, map, &value );
 				if (r != 0) {
+					if (hx_expr_debug) {	// ---------------------------------------------
+						fprintf( stderr, "- error in sub-eval\n" );
+					}
 					return r;
 				}
 				switch (e->subtype) {
@@ -265,16 +268,16 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 					return r1 || r2;
 				}
 				
-				// -------
-				char * string;
-				fprintf( stderr, "binary op in eval:\n" );
-				hx_node_string( value1, &string );
-				fprintf( stderr, "- %s\n", string );
-				free(string);
-				hx_node_string( value2, &string );
-				fprintf( stderr, "- %s\n", string );
-				free(string);
-				// -------
+				if (hx_expr_debug) {	// ---------------------------------------------
+					char * string;
+					fprintf( stderr, "binary op in eval:\n" );
+					hx_node_string( value1, &string );
+					fprintf( stderr, "- %s\n", string );
+					free(string);
+					hx_node_string( value2, &string );
+					fprintf( stderr, "- %s\n", string );
+					free(string);
+				}
 				
 				switch (e->subtype) {
 					case HX_EXPR_OP_EQUAL:
@@ -302,11 +305,17 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 }
 
 int _true ( hx_node** result ) {
+	if (hx_expr_debug) {	// ---------------------------------------------
+		fprintf( stderr, "- expression evaluated to TRUE\n" );
+	}
 	*result	= (hx_node*) hx_new_node_dt_literal( "true", "http://www.w3.org/2001/XMLSchema#boolean" );
 	return 0;
 }
 
 int _false ( hx_node** result ) {
+	if (hx_expr_debug) {	// ---------------------------------------------
+		fprintf( stderr, "- expression evaluated to FALSE\n" );
+	}
 	*result	= (hx_node*) hx_new_node_dt_literal( "false", "http://www.w3.org/2001/XMLSchema#boolean" );
 	return 0;
 }
