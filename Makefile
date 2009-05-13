@@ -1,9 +1,9 @@
 # CFLAGS	=	-O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
-CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast #  -Werror # -DDEBUG_INDEX_SELECTION
+CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror # -DDEBUG_INDEX_SELECTION
 CC			=	gcc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o SPARQLParser.o SPARQLScanner.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o
 
 all: parse print optimize tests examples parse_query
 
@@ -49,6 +49,9 @@ variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node
 materialize.o: materialize.c materialize.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c materialize.c
 
+filter.o: filter.c filter.h hexastore_types.h node.h index.h nodemap.h
+	$(CC) $(INC) -c filter.c
+
 triple.o: triple.c triple.h hexastore_types.h
 	$(CC) $(INC) -c triple.c
 
@@ -60,6 +63,9 @@ parser.o: parser.c parser.h hexastore_types.h
 
 bgp.o: bgp.c bgp.h hexastore_types.h
 	$(CC) $(INC) -c bgp.c
+
+expr.o: expr.c expr.h hexastore_types.h
+	$(CC) $(INC) -c expr.c
 
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
@@ -86,7 +92,7 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 
 ########
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t t/filter.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -95,6 +101,9 @@ bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS) tap.o
+
+t/expr.t: tap.o t/expr.c expr.h expr.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/expr.t t/expr.c $(OBJECTS) tap.o
 
 t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/nodemap.t t/nodemap.c $(OBJECTS) tap.o
@@ -122,6 +131,9 @@ t/iter.t: tap.o t/iter.c $(OBJECTS) tap.o
 
 t/bgp.t: tap.o t/bgp.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS) tap.o
+
+t/filter.t: tap.o t/filter.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/filter.t t/filter.c $(OBJECTS) tap.o
 
 t/materialize.t: tap.o t/materialize.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/materialize.t t/materialize.c $(OBJECTS) tap.o

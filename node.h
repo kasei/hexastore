@@ -96,6 +96,7 @@ int hx_node_string ( hx_node* n, char** string );
 
 int hx_node_nodestr( hx_node* n, char** str );
 int hx_node_cmp( const void* a, const void* b );
+int hx_node_ebv ( hx_node* n );
 
 int hx_node_write( hx_node* n, FILE* f );
 hx_node* hx_node_read( FILE* f, int buffer );

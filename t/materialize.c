@@ -28,6 +28,13 @@ int main ( void ) {
 	
 	test_small_iter();
 	
+	hx_free_node( p1 );
+	hx_free_node( p2 );
+	hx_free_node( r1 );
+	hx_free_node( r2 );
+	hx_free_node( l1 );
+	hx_free_node( l2 );
+
 	return exit_status();
 }
 

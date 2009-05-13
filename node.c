@@ -346,6 +346,42 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 	return 0;
 }
 
+// returns 1 if the EBV of n is true, 0 if the EBV is false, and -1 if the EBV of n produces a type error
+int hx_node_ebv ( hx_node* n ) {
+	if (hx_node_is_dt_literal(n)) {
+		char* dt	= hx_node_dt(n);
+		if (strcmp(dt,"http://www.w3.org/2001/XMLSchema#boolean") == 0) {
+			char* value	= hx_node_value(n);
+			if (strcmp(value,"true") == 0) {
+				return 1;
+			} else {
+				return 0;
+			}
+		} else if (strcmp(dt,"http://www.w3.org/2001/XMLSchema#string") == 0) {
+			char* value	= hx_node_value(n);
+			return (strlen(value) > 0);
+		} else if (strncmp(dt,"http://www.w3.org/2001/XMLSchema#",33) == 0) {
+			char* type	= &( dt[33] );
+			// XXX need to generalize this to handle all the xsd numeric types
+			if (strcmp(type,"integer") == 0) {
+				return (hx_node_iv(n) != 0);
+			} else if (strcmp(type,"float") == 0) {
+				return (hx_node_nv(n) != 0.0);
+			} else {
+				fprintf( stderr, "*** unhandled xsd type in hx_node_ebv: %s\n", type );
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	} else if (hx_node_is_literal(n)) {
+			char* value	= hx_node_value(n);
+			return (strlen(value) > 0);
+	} else {
+		return -1;
+	}
+}
+
 int hx_node_write( hx_node* n, FILE* f ) {
 	if (n->type == '?') {
 //		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );

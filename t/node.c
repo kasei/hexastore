@@ -267,4 +267,3 @@ void test_store ( void ) {
 	}
 	unlink( filename );
 }
-
