@@ -18,11 +18,9 @@ extern "C" {
 
 #define HX_STORAGE_HEADER_SIZE	12
 #define HX_STORAGE_BLOCK_HEADER_SIZE	sizeof(uint32_t)
-#define HX_STORAGE_MMAP_NEXT_BLOCK(s)	*( (uint64_t*) (&(((uint8_t*) s->m)[4])) )
 enum {
 	HX_STORAGE_MEMORY	= 2,
 	HX_STORAGE_FILE		= 4,
-	HX_STORAGE_MMAP		= 8
 };
 
 typedef uint64_t hx_storage_id_t;
@@ -33,8 +31,6 @@ typedef struct {
 	int flags;
 	int fd;
 	int prot;
-	void* m;	// mmap ptr
-	off_t size;	// mmap file size
 	const char* filename;
 	hx_storage_handler* freeze_handler;
 	void* freeze_arg;
@@ -43,8 +39,6 @@ typedef struct {
 } hx_storage_manager;
 
 hx_storage_manager* hx_new_memory_storage_manager( void );
-hx_storage_manager* hx_new_mmap_storage_manager( const char* filename );
-hx_storage_manager* hx_open_mmap_storage_manager( const char* filename, int prot );
 hx_storage_manager* hx_new_file_storage_manager( const char* filename );
 hx_storage_manager* hx_open_file_storage_manager( const char* filename );
 
