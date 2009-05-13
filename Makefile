@@ -92,7 +92,7 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t t/filter.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -140,12 +140,6 @@ t/materialize.t: tap.o t/materialize.c $(OBJECTS) tap.o
 
 t/selectivity.t: tap.o t/selectivity.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/selectivity.t t/selectivity.c $(OBJECTS) tap.o
-
-t/selectivity-mmap.t: tap.o t/selectivity-mmap.c $(OBJECTS) tap.o
-	$(CC) $(INC) $(LIBS) -o t/selectivity-mmap.t t/selectivity-mmap.c $(OBJECTS) tap.o
-
-t/mmap.t: tap.o t/mmap.c $(OBJECTS) tap.o
-	$(CC) $(INC) $(LIBS) -o t/mmap.t t/mmap.c $(OBJECTS) tap.o
 
 ########
 
