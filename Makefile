@@ -168,7 +168,7 @@ clean:
 	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM
-	rm -f test parse print optimize a.out server
+	rm -f test parse print optimize a.out server parse_query
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
