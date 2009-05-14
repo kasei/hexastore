@@ -91,6 +91,18 @@ int hx_free_expr ( hx_expr* e ) {
 	}
 }
 
+int hx_expr_type_arity ( hx_expr_subtype_t type ) {
+	if (type <= HX_EXPR_UNARY_MAX) {
+		return 1;
+	} else if (type <= HX_EXPR_BINARY_MAX) {
+		return 2;
+	} else if (type <= HX_EXPR_TERNARY_MAX) {
+		return 3;
+	} else {
+		return -1;
+	}
+}
+
 int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level ) {
 	if (e->type == HX_EXPR_BUILTIN) {
 		if (e->subtype == HX_EXPR_OP_NODE) {

@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include "node.h"
+#include "expr.h"
 
 int yylex ( void );
 void yyerror (char const *s);
@@ -60,7 +61,8 @@ enum {
 	TYPE_BGP		= 'B',
 	TYPE_GGP		= 'G',
 	TYPE_OPT		= 'O',
-	TYPE_UNION		= 'U'
+	TYPE_UNION		= 'U',
+	TYPE_EXPR		= 'E'
 };
 
 typedef struct {
@@ -94,6 +96,11 @@ typedef struct {
 } namespace_t;
 
 typedef struct {
+	hx_expr_subtype_t op;
+	container_t* args;
+} expr_t;
+
+typedef struct {
 	int allocated;
 	int namespace_count;
 	namespace_t** namespaces;
@@ -107,13 +114,14 @@ typedef struct {
 typedef struct {
 	prologue_t* prologue;
 	container_t* bgp;
+	expr_t* filter;
 } query_t;
 
 extern void* parsedPattern;
 extern node_t* new_dt_literal_node ( char*, char* );
 extern container_t* new_container ( char type, int size );
-extern void add_item_to_set( container_t* set, void* t );
-
+extern void container_push_item( container_t* set, void* t );
+extern expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg );
 extern void XXXdebug_node( node_t*, prologue_t* );
 extern void XXXdebug_triple( triple_t*, prologue_t* );
 
@@ -225,10 +233,12 @@ extern void XXXdebug_triple( triple_t*, prologue_t* );
 
 
 myQuery:
-	Prologue GT_LCURLEY _QTriplesBlock_E_Opt GT_RCURLEY {
+	Prologue GT_LCURLEY _QTriplesBlock_E_Opt __Filter_Opt GT_RCURLEY {
 		query_t* q		= (query_t*) calloc( 1, sizeof( query_t ) );
 		q->prologue		= (prologue_t*) $1;
 		q->bgp			= (container_t*) $3;
+		q->filter	= $4;
+		
 		parsedPattern		= (void*) q;
 	}
 ;
@@ -313,7 +323,7 @@ TriplesBlock:
 			container_t* triples1	= (container_t*) $1;
 			container_t* triples2	= (container_t*) $2;
 			for (i = 0; i < triples2->count; i++) {
-				add_item_to_set( triples1, triples2->items[i] );
+				container_push_item( triples1, triples2->items[i] );
 			}
 			$$	= triples1;
 		}
@@ -383,7 +393,7 @@ PropertyListNotEmpty:
 			int i;
 			container_t* triples2	= (container_t*) $3;
 			for (i = 0; i < triples2->count; i++) {
-				add_item_to_set( triples, triples2->items[i] );
+				container_push_item( triples, triples2->items[i] );
 			}
 		}
 		$$	= (void*) triples;
@@ -434,7 +444,7 @@ _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star:
 				int i;
 				container_t* triples2	= (container_t*) $2;
 				for (i = 0; i < triples2->count; i++) {
-					add_item_to_set( triples, triples2->items[i] );
+					container_push_item( triples, triples2->items[i] );
 				}
 			}
 		}
@@ -476,7 +486,7 @@ ObjectList:
 		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->type		= TYPE_TRIPLE;
 		t->object	= object;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= (void*) set;
 	}
 ;
@@ -509,7 +519,7 @@ _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star:
 		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->type		= TYPE_TRIPLE;
 		t->object	= object;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		
 		$$	= set;
 	}
@@ -573,7 +583,7 @@ VarOrTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -616,7 +626,7 @@ GraphTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -627,7 +637,7 @@ GraphTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -638,7 +648,7 @@ GraphTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -649,7 +659,7 @@ GraphTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -660,7 +670,7 @@ GraphTerm:
 		t->subject			= (node_t*) $1;
 		t->predicate		= NULL;
 		t->object			= NULL;
-		add_item_to_set( set, t );
+		container_push_item( set, t );
 		$$	= set;
 	}
 
@@ -861,11 +871,381 @@ BlankNode:
 ;
 
 
+Filter:
+	IT_FILTER Constraint {
+		$$	= $2;
+	}
+;
+
+Constraint:
+	BrackettedExpression {
+		$$	= $1;
+	}
+
+	| BuiltInCall	{
+		$$	= $1;
+	}
+
+	| FunctionCall	{
+		$$	= $1;
+	}
+;
+
+FunctionCall:
+   IRIref ArgList	{}
+;
+
+ArgList:
+   _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C	{}
+;
+
+_O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C:
+	NIL	{}
+
+	| GT_LPAREN Expression _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star GT_RPAREN	{}
+;
+
+_O_QGT_COMMA_E_S_QExpression_E_C:
+	GT_COMMA Expression	{}
+;
+
+_Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star:
+	{}
+
+	| _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star _O_QGT_COMMA_E_S_QExpression_E_C {}
+;
+
+Expression:
+	ConditionalOrExpression	{
+		$$	= $1;
+	}
+;
+
+ConditionalOrExpression:
+	ConditionalAndExpression _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star	{
+		/* XXX fill in opt star */
+		$$	= $1;
+	}
+;
+
+_O_QGT_OR_E_S_QConditionalAndExpression_E_C:
+	GT_OR ConditionalAndExpression	{}
+;
+
+_Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star:
+	{}
+
+	| _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star _O_QGT_OR_E_S_QConditionalAndExpression_E_C	{}
+;
+
+ConditionalAndExpression:
+	ValueLogical _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star	{
+		/* XXX fill in opt star */
+		$$	= $1;
+	}
+;
+
+_O_QGT_AND_E_S_QValueLogical_E_C:
+	GT_AND ValueLogical	{}
+;
+
+_Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star:
+	{}
+
+	| _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star _O_QGT_AND_E_S_QValueLogical_E_C {}
+;
+
+ValueLogical:
+	RelationalExpression {
+		$$	= $1;
+	}
+;
+
+RelationalExpression:
+	NumericExpression _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt {
+		if ($2 == NULL) {
+			$$	= $1;
+		} else {
+			expr_t* e	= $2;
+			container_unshift_item( e->args, $1 );
+			$$	= e;
+		}
+	}
+;
+
+_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C:
+	GT_EQUAL NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_EQUAL, $2 );
+	}
+
+	| GT_NEQUAL NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_NEQUAL, $2 );
+	}
+
+	| GT_LT NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_LT, $2 );
+	}
+
+	| GT_GT NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_GT, $2 );
+	}
+
+	| GT_LE NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_LE, $2 );
+	}
+
+	| GT_GE NumericExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_GE, $2 );
+	}
+;
+
+_Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt:
+	{
+		$$	= NULL;
+	}
+
+	| _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C {
+		$$	= $1;
+	}
+;
+
+NumericExpression:
+	AdditiveExpression	{
+		$$	= $1;
+	}
+;
+
+AdditiveExpression:
+	MultiplicativeExpression _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star	{
+		if ($2 == NULL) {
+			$$	= $1;
+		} else {
+			expr_t* e	= $2;
+			container_unshift_item( e->args, $1 );
+			$$	= e;
+		}
+	}
+;
+
+_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C:
+	GT_PLUS MultiplicativeExpression {
+			$$	= new_expr_data( HX_EXPR_OP_PLUS, $2 );
+	}
+
+	| GT_MINUS MultiplicativeExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_MINUS, $2 );
+	}
+
+	| NumericLiteralPositive {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+
+	| NumericLiteralNegative {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+;
+
+_Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star:
+	{
+		$$	= NULL;
+	}
+
+	| _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C {
+		/* XXX */
+	}
+;
+
+MultiplicativeExpression:
+	UnaryExpression _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star	{
+		if ($2 == NULL) {
+			$$	= $1;
+		} else {
+			expr_t* e	= $2;
+			container_unshift_item( e->args, $1 );
+			$$	= e;
+		}
+	}
+;
+
+_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C:
+	GT_TIMES UnaryExpression {
+			$$	= new_expr_data( HX_EXPR_OP_MULT, $2 );
+	}
+
+	| GT_DIVIDE UnaryExpression	{
+			$$	= new_expr_data( HX_EXPR_OP_DIV, $2 );
+	}
+;
+
+_Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star:
+	{
+		$$	= NULL;
+	}
+
+	| _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C {
+		/* XXX */
+	}
+;
+
+UnaryExpression:
+	GT_NOT PrimaryExpression {
+		$$	= new_expr_data( HX_EXPR_OP_BANG, $2 );
+	}
+
+	| GT_PLUS PrimaryExpression	{
+		$$	= new_expr_data( HX_EXPR_OP_UPLUS, $2 );
+	}
+
+	| GT_MINUS PrimaryExpression {
+		$$	= new_expr_data( HX_EXPR_OP_UMINUS, $2 );
+	}
+
+	| PrimaryExpression	{
+		$$	= $1;
+	}
+;
+
+PrimaryExpression:
+	BrackettedExpression {
+		$$	= $1;
+	}
+
+	| BuiltInCall	{
+		$$	= $1;
+	}
+
+	| IRIrefOrFunction	{
+		$$	= $1;
+	}
+
+	| RDFLiteral {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+
+	| NumericLiteral {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+
+	| BooleanLiteral {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+
+	| Var	{
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+	}
+;
+
+BrackettedExpression:
+	GT_LPAREN Expression GT_RPAREN	{
+		$$	= $2;
+	}
+;
+
+BuiltInCall:
+	IT_STR GT_LPAREN Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_STR, $3 );
+	}
+
+	| IT_LANG GT_LPAREN Expression GT_RPAREN {
+		$$	= new_expr_data( HX_EXPR_BUILTIN_LANG, $3 );
+	}
+
+	| IT_LANGMATCHES GT_LPAREN Expression GT_COMMA Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_LANGMATCHES, $3 );
+	}
+
+	| IT_DATATYPE GT_LPAREN Expression GT_RPAREN {
+		$$	= new_expr_data( HX_EXPR_BUILTIN_DATATYPE, $3 );
+	}
+
+	| IT_BOUND GT_LPAREN Var GT_RPAREN	{
+		expr_t* e	= new_expr_data( HX_EXPR_OP_NODE, $3 );
+		$$	= new_expr_data( HX_EXPR_BUILTIN_BOUND, e );
+	}
+
+	| IT_sameTerm GT_LPAREN Expression GT_COMMA Expression GT_RPAREN {
+		expr_t* e	= new_expr_data( HX_EXPR_BUILTIN_SAMETERM, $3 );
+		container_push_item( e->args, $5 );
+		$$	= e;
+	}
+
+	| IT_isIRI GT_LPAREN Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_ISIRI, $3 );
+	}
+
+	| IT_isURI GT_LPAREN Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_ISURI, $3 );
+	}
+
+	| IT_isBLANK GT_LPAREN Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_ISBLANK, $3 );
+	}
+
+	| IT_isLITERAL GT_LPAREN Expression GT_RPAREN	{
+		$$	= new_expr_data( HX_EXPR_BUILTIN_ISLITERAL, $3 );
+	}
+
+	| RegexExpression	{
+		$$	= $1;
+	}
+;
+
+RegexExpression:
+	IT_REGEX GT_LPAREN Expression GT_COMMA Expression _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt GT_RPAREN {
+		expr_t* e	= new_expr_data( HX_EXPR_BUILTIN_REGEX, $3 );
+		container_push_item( e->args, $5 );
+		/* XXX handle optional regex flags */
+		$$	= e;
+	}
+;
+
+_Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt:
+	{
+		$$	= NULL;
+	}
+
+	| _O_QGT_COMMA_E_S_QExpression_E_C	{
+		$$	= $1;
+	}
+;
+
+IRIrefOrFunction:
+	IRIref _QArgList_E_Opt	{
+		if ($2 == NULL) {
+			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		} else {
+			/* XXX handle function calls */
+			$$	= NULL;
+		}
+	}
+;
+
+_QArgList_E_Opt:
+	{
+		$$	= NULL;
+	}
+
+	| ArgList	{
+		/* arg lists... */
+		$$	= NULL;
+	}
+;
 
 
 
 
+/* ************************************************************************* */
+__Filter_Opt:
+	{
+		$$	= NULL
+	}
+	
+	| Filter {
+		$$	= $1;
+	}
+;
 
+/* ************************************************************************* */
 
 
 // Query:
@@ -1262,63 +1642,6 @@ BlankNode:
 // }
 // ;
 // 
-// Filter:
-//	   IT_FILTER Constraint {
-//	   $$ = new Filter($1, $2);
-// }
-// ;
-// 
-// Constraint:
-//	   BrackettedExpression {
-//	   $$ = new Constraint_rule0($1);
-// }
-// 
-//	   | BuiltInCall	{
-//	   $$ = new Constraint_rule1($1);
-// }
-// 
-//	   | FunctionCall	{
-//	   $$ = new Constraint_rule2($1);
-// }
-// ;
-// 
-// FunctionCall:
-//	   IRIref ArgList	{
-//	   $$ = new FunctionCall($1, $2);
-// }
-// ;
-// 
-// ArgList:
-//	   _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C	{
-//	   $$ = new ArgList($1);
-// }
-// ;
-// 
-// _O_QGT_COMMA_E_S_QExpression_E_C:
-//	   GT_COMMA Expression	{
-//	   $$ = new _O_QGT_COMMA_E_S_QExpression_E_C($1, $2);
-// }
-// ;
-// 
-// _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star _O_QGT_COMMA_E_S_QExpression_E_C {
-//	   $$ = new _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C:
-//	   NIL	{
-//	   $$ = new _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C_rule0($1);
-// }
-// 
-//	   | GT_LPAREN Expression _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Star GT_RPAREN	{
-//	   $$ = new _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C_rule1($1, $2, $3, $4);
-// }
-// ;
 // 
 // ConstructTemplate:
 //	   GT_LCURLEY _QConstructTriples_E_Opt GT_RCURLEY	{
@@ -1358,302 +1681,6 @@ BlankNode:
 // }
 // ;
 //
-// Expression:
-//	   ConditionalOrExpression	{
-//	   $$ = new Expression($1);
-// }
-// ;
-// 
-// ConditionalOrExpression:
-//	   ConditionalAndExpression _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star	{
-//	   $$ = new ConditionalOrExpression($1, $2);
-// }
-// ;
-// 
-// _O_QGT_OR_E_S_QConditionalAndExpression_E_C:
-//	   GT_OR ConditionalAndExpression	{
-//	   $$ = new _O_QGT_OR_E_S_QConditionalAndExpression_E_C($1, $2);
-// }
-// ;
-// 
-// _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star _O_QGT_OR_E_S_QConditionalAndExpression_E_C	{
-//	   $$ = new _Q_O_QGT_OR_E_S_QConditionalAndExpression_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// ConditionalAndExpression:
-//	   ValueLogical _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star	{
-//	   $$ = new ConditionalAndExpression($1, $2);
-// }
-// ;
-// 
-// _O_QGT_AND_E_S_QValueLogical_E_C:
-//	   GT_AND ValueLogical	{
-//	   $$ = new _O_QGT_AND_E_S_QValueLogical_E_C($1, $2);
-// }
-// ;
-// 
-// _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star _O_QGT_AND_E_S_QValueLogical_E_C {
-//	   $$ = new _Q_O_QGT_AND_E_S_QValueLogical_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// ValueLogical:
-//	   RelationalExpression {
-//	   $$ = new ValueLogical($1);
-// }
-// ;
-// 
-// RelationalExpression:
-//	   NumericExpression _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt {
-//	   $$ = new RelationalExpression($1, $2);
-// }
-// ;
-// 
-// _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C:
-//	   GT_EQUAL NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule0($1, $2);
-// }
-// 
-//	   | GT_NEQUAL NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule1($1, $2);
-// }
-// 
-//	   | GT_LT NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule2($1, $2);
-// }
-// 
-//	   | GT_GT NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule3($1, $2);
-// }
-// 
-//	   | GT_LE NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule4($1, $2);
-// }
-// 
-//	   | GT_GE NumericExpression	{
-//	   $$ = new _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_rule5($1, $2);
-// }
-// ;
-// 
-// _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt:
-//	   {
-//	   $$ = new _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt_rule0();
-// }
-// 
-//	   | _O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C {
-//	   $$ = new _Q_O_QGT_EQUAL_E_S_QNumericExpression_E_Or_QGT_NEQUAL_E_S_QNumericExpression_E_Or_QGT_LT_E_S_QNumericExpression_E_Or_QGT_GT_E_S_QNumericExpression_E_Or_QGT_LE_E_S_QNumericExpression_E_Or_QGT_GE_E_S_QNumericExpression_E_C_E_Opt_rule1($1);
-// }
-// ;
-// 
-// NumericExpression:
-//	   AdditiveExpression	{
-//	   $$ = new NumericExpression($1);
-// }
-// ;
-// 
-// AdditiveExpression:
-//	   MultiplicativeExpression _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star	{
-//	   $$ = new AdditiveExpression($1, $2);
-// }
-// ;
-// 
-// _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C:
-//	   GT_PLUS MultiplicativeExpression {
-//	   $$ = new _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_rule0($1, $2);
-// }
-// 
-//	   | GT_MINUS MultiplicativeExpression	{
-//	   $$ = new _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_rule1($1, $2);
-// }
-// 
-//	   | NumericLiteralPositive {
-//	   $$ = new _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_rule2($1);
-// }
-// 
-//	   | NumericLiteralNegative {
-//	   $$ = new _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_rule3($1);
-// }
-// ;
-// 
-// _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star _O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C {
-//	   $$ = new _Q_O_QGT_PLUS_E_S_QMultiplicativeExpression_E_Or_QGT_MINUS_E_S_QMultiplicativeExpression_E_Or_QNumericLiteralPositive_E_Or_QNumericLiteralNegative_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// MultiplicativeExpression:
-//	   UnaryExpression _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star	{
-//	   $$ = new MultiplicativeExpression($1, $2);
-// }
-// ;
-// 
-// _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C:
-//	   GT_TIMES UnaryExpression {
-//	   $$ = new _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_rule0($1, $2);
-// }
-// 
-//	   | GT_DIVIDE UnaryExpression	{
-//	   $$ = new _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_rule1($1, $2);
-// }
-// ;
-// 
-// _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star _O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C {
-//	   $$ = new _Q_O_QGT_TIMES_E_S_QUnaryExpression_E_Or_QGT_DIVIDE_E_S_QUnaryExpression_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// UnaryExpression:
-//	   GT_NOT PrimaryExpression {
-//	   $$ = new UnaryExpression_rule0($1, $2);
-// }
-// 
-//	   | GT_PLUS PrimaryExpression	{
-//	   $$ = new UnaryExpression_rule1($1, $2);
-// }
-// 
-//	   | GT_MINUS PrimaryExpression {
-//	   $$ = new UnaryExpression_rule2($1, $2);
-// }
-// 
-//	   | PrimaryExpression	{
-//	   $$ = new UnaryExpression_rule3($1);
-// }
-// ;
-// 
-// PrimaryExpression:
-//	   BrackettedExpression {
-//	   $$ = new PrimaryExpression_rule0($1);
-// }
-// 
-//	   | BuiltInCall	{
-//	   $$ = new PrimaryExpression_rule1($1);
-// }
-// 
-//	   | IRIrefOrFunction	{
-//	   $$ = new PrimaryExpression_rule2($1);
-// }
-// 
-//	   | RDFLiteral {
-//	   $$ = new PrimaryExpression_rule3($1);
-// }
-// 
-//	   | NumericLiteral {
-//	   $$ = new PrimaryExpression_rule4($1);
-// }
-// 
-//	   | BooleanLiteral {
-//	   $$ = new PrimaryExpression_rule5($1);
-// }
-// 
-//	   | Var	{
-//	   $$ = new PrimaryExpression_rule6($1);
-// }
-// ;
-// 
-// BrackettedExpression:
-//	   GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BrackettedExpression($1, $2, $3);
-// }
-// ;
-// 
-// BuiltInCall:
-//	   IT_STR GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule0($1, $2, $3, $4);
-// }
-// 
-//	   | IT_LANG GT_LPAREN Expression GT_RPAREN {
-//	   $$ = new BuiltInCall_rule1($1, $2, $3, $4);
-// }
-// 
-//	   | IT_LANGMATCHES GT_LPAREN Expression GT_COMMA Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule2($1, $2, $3, $4, $5, $6);
-// }
-// 
-//	   | IT_DATATYPE GT_LPAREN Expression GT_RPAREN {
-//	   $$ = new BuiltInCall_rule3($1, $2, $3, $4);
-// }
-// 
-//	   | IT_BOUND GT_LPAREN Var GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule4($1, $2, $3, $4);
-// }
-// 
-//	   | IT_sameTerm GT_LPAREN Expression GT_COMMA Expression GT_RPAREN {
-//	   $$ = new BuiltInCall_rule5($1, $2, $3, $4, $5, $6);
-// }
-// 
-//	   | IT_isIRI GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule6($1, $2, $3, $4);
-// }
-// 
-//	   | IT_isURI GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule7($1, $2, $3, $4);
-// }
-// 
-//	   | IT_isBLANK GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule8($1, $2, $3, $4);
-// }
-// 
-//	   | IT_isLITERAL GT_LPAREN Expression GT_RPAREN	{
-//	   $$ = new BuiltInCall_rule9($1, $2, $3, $4);
-// }
-// 
-//	   | RegexExpression	{
-//	   $$ = new BuiltInCall_rule10($1);
-// }
-// ;
-// 
-// RegexExpression:
-//	   IT_REGEX GT_LPAREN Expression GT_COMMA Expression _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt GT_RPAREN {
-//	   $$ = new RegexExpression($1, $2, $3, $4, $5, $6, $7);
-// }
-// ;
-// 
-// _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt:
-//	   {
-//	   $$ = new _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt_rule0();
-// }
-// 
-//	   | _O_QGT_COMMA_E_S_QExpression_E_C	{
-//	   $$ = new _Q_O_QGT_COMMA_E_S_QExpression_E_C_E_Opt_rule1($1);
-// }
-// ;
-// 
-// IRIrefOrFunction:
-//	   IRIref _QArgList_E_Opt	{
-//	   $$ = new IRIrefOrFunction($1, $2);
-// }
-// ;
-// 
-// _QArgList_E_Opt:
-//	   {
-//	   $$ = new _QArgList_E_Opt_rule0();
-// }
-// 
-//	   | ArgList	{
-//	   $$ = new _QArgList_E_Opt_rule1($1);
-// }
-// ;
-
 
 
 %%
@@ -1674,6 +1701,7 @@ void free_prologue ( prologue_t* p );
 char* prefix_uri ( prologue_t* p, char* ns );
 char* qualify_qname ( prologue_t* p, char* qname );
 hx_node* generate_node ( node_t* n, prologue_t* p, int* counter );
+hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter );
 hx_bgp* parse_bgp_query ( void );
 hx_bgp* parse_bgp_query_string ( char* string );
 
@@ -1695,6 +1723,17 @@ hx_bgp* parse_bgp_query ( void ) {
 		int counter	= -1;
 		query_t* q		= (query_t*) parsedPattern;
 		prologue_t* prologue	= q->prologue;
+		
+		if (q->filter != NULL) {
+			fprintf( stderr, "got filter\n" );
+			hx_expr* e	= generate_expr( q->filter, prologue, &counter );
+
+			char* string;
+			hx_expr_sse( e, &string, "  ", 9 );
+			fprintf( stderr,         "filter expression: %s\n", string );
+			free( string );
+		}
+		
 		bgp	= q->bgp;
 		triples	= (hx_triple**) calloc( bgp->count, sizeof( hx_triple* ) );
 		for (i = 0; i < bgp->count; i++) {
@@ -1718,12 +1757,43 @@ hx_bgp* parse_bgp_query ( void ) {
 	return NULL;
 }
 
-/* END main */
-
 void XXXdebug_triple( triple_t* t, prologue_t* p ) {
 	fprintf( stderr, "- subject: " ); XXXdebug_node( t->subject, p );
 	fprintf( stderr, "- predicate: " ); XXXdebug_node( t->predicate, p );
 	fprintf( stderr, "- object: " ); XXXdebug_node( t->object, p );
+}
+
+hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {
+	container_t* c	= e->args;
+	if (e->op == HX_EXPR_OP_NODE) {
+		hx_node* n	= generate_node( c->items[0], p, counter );
+		return hx_new_builtin_expr1( e->op, n );
+	} else {
+		int arity		= hx_expr_type_arity( e->op );
+		if (arity == 1) {
+			expr_t* d	= c->items[0];
+			hx_expr* e1	= generate_expr( d, p, counter );
+			return hx_new_builtin_expr1( e->op, e1 );
+		} else if (arity == 2) {
+			expr_t* a	= c->items[0];
+			expr_t* b	= c->items[1];
+			hx_expr* e1	= generate_expr( a, p, counter );
+			hx_expr* e2	= generate_expr( b, p, counter );
+			return hx_new_builtin_expr2( e->op, e1, e2 );
+		} else if (arity == 3) {
+			expr_t* _a	= c->items[0];
+			expr_t* _b	= c->items[1];
+			expr_t* _c	= c->items[2];
+			hx_expr* e1	= generate_expr( _a, p, counter );
+			hx_expr* e2	= generate_expr( _b, p, counter );
+			hx_expr* e3	= generate_expr( _c, p, counter );
+			return hx_new_builtin_expr3( e->op, e1, e2, e3 );
+		} else {
+			fprintf( stderr, "*** not an implemented arity size in generate_expr: %d\n", arity );
+		}
+	}
+	fprintf( stderr, "expr type %d\n", e->op );
+	return NULL;
 }
 
 hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
@@ -1842,7 +1912,7 @@ container_t* new_container ( char type, int size ) {
 	return container;
 }
 
-void add_item_to_set( container_t* set, void* t ) {
+void container_push_item( container_t* set, void* t ) {
 	if (set->allocated <= (set->count + 1)) {
 		int i;
 		void** old;
@@ -1860,7 +1930,37 @@ void add_item_to_set( container_t* set, void* t ) {
 	set->items[ set->count++ ]	= t;
 }
 
+void container_unshift_item( container_t* set, void* t ) {
+	if (set->allocated <= (set->count + 1)) {
+		int i;
+		void** old;
+		void** newlist;
+		set->allocated	*= 2;
+		newlist	= (void**) calloc( set->allocated, sizeof( void* ) );
+		for (i = 0; i < set->count; i++) {
+			newlist[i+1]	= set->items[i];
+		}
+		old	= set->items;
+		set->items	= newlist;
+		free( old );
+	} else {
+		int i;
+		for (i = set->count; i > 0; i--) {
+			set->items[i]	= set->items[i-1];
+		}
+	}
+	
+	set->count++;
+	set->items[ 0 ]	= t;
+}
 
+expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg ) {
+	expr_t* d	= (expr_t*) calloc( 1, sizeof( expr_t ) );
+	d->op	= op;
+	d->args	= new_container( TYPE_EXPR, 3 );
+	container_push_item( d->args, arg );
+	return d;
+}
 
 
 /******************************************************************************/
