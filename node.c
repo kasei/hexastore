@@ -109,6 +109,14 @@ hx_node* hx_node_copy( hx_node* n ) {
 	} else if (hx_node_is_blank( n )) {
 		hx_node* copy	= hx_new_node_blank( n->value );
 		return copy;
+	} else if (hx_node_is_variable( n )) {
+		if (n->value == NULL) {
+			return hx_new_node_variable( n->iv );
+		} else {
+			return hx_new_node_named_variable( n->iv, n->value );
+		}
+	} else {
+		fprintf( stderr, "*** not a recognized node type in hx_node_copy\n" );
 	}
 	return NULL;
 }

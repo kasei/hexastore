@@ -1,0 +1,49 @@
+#ifndef _GRAPHPATTERN_H
+#define _GRAPHPATTERN_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdarg.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "hexastore_types.h"
+#include "hexastore.h"
+#include "expr.h"
+#include "bgp.h"
+
+typedef enum {
+	HX_GRAPHPATTERN_BGP			= 'B',
+	HX_GRAPHPATTERN_GRAPH		= 'N',
+	HX_GRAPHPATTERN_OPTIONAL	= 'O',
+	HX_GRAPHPATTERN_UNION		= 'U',
+	HX_GRAPHPATTERN_GROUP		= 'G',
+	HX_GRAPHPATTERN_FILTER		= 'F'
+} hx_graphpattern_type_t;
+
+typedef struct {
+	hx_graphpattern_type_t type;
+	int arity;
+	void* data;
+} hx_graphpattern;
+
+hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... );
+int hx_free_graphpattern ( hx_graphpattern* p );
+
+int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
