@@ -9,6 +9,7 @@ hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... ) {
 	pat->type	= type;
 	va_start(argp, type);
 	hx_graphpattern** p;
+	hx_node* n;
 	void** vp;
 	hx_bgp* bgp;
 	switch (type) {
@@ -42,7 +43,8 @@ hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... ) {
 		case HX_GRAPHPATTERN_GRAPH:
 			pat->arity	= 2;
 			vp			= calloc( 2, sizeof( void* ) );
-			vp[0]		= (void*) va_arg( argp, hx_node* );
+			n			= (void*) va_arg( argp, hx_node* );
+			vp[0]		= hx_node_copy( n );
 			vp[1]		= (void*) va_arg( argp, hx_graphpattern* );
 			pat->data	= vp;
 			break;
@@ -90,9 +92,56 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 			hx_free_graphpattern( (hx_graphpattern*) vp[1] );
 			free( vp );
 			break;
+		case HX_GRAPHPATTERN_FILTER:
+			vp	= (void**) pat->data;
+			hx_free_expr( (hx_expr*) vp[0] );
+			hx_free_graphpattern( (hx_graphpattern*) vp[1] );
+			free( vp );
+			break;
 	};
 	free( pat );
 	return 0;
+}
+
+hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hexastore* hx, hx_storage_manager* s ) {
+	int i;
+	void** vp;
+	hx_expr* e;
+	hx_graphpattern *gp		= NULL;
+	hx_graphpattern *gp2	= NULL;
+	hx_variablebindings_iter *iter, *iter2;
+	hx_graphpattern** p;
+	hx_nodemap* map	= hx_get_nodemap( hx );
+	switch (pat->type) {
+		case HX_GRAPHPATTERN_BGP:
+			return hx_bgp_execute( pat->data, hx, s );
+		case HX_GRAPHPATTERN_GROUP:
+			p		= (hx_graphpattern**) pat->data;
+			iter	= hx_graphpattern_execute( p[0], hx, s );
+			for (i = 1; i < pat->arity; i++) {
+				gp2		= (hx_graphpattern*) p[i];
+				iter2	= hx_graphpattern_execute( gp2, hx, s );
+				iter	= hx_new_mergejoin_iter( iter, iter2 );
+			}
+			return iter;
+		case HX_GRAPHPATTERN_FILTER:
+			vp		= (void**) pat->data;
+			e		= (hx_expr*) vp[0];
+			gp		= (hx_graphpattern*) vp[1];
+			iter2	= hx_graphpattern_execute( gp, hx, s );
+			iter	= hx_new_filter_iter( iter2, e, map );
+			return iter;
+		case HX_GRAPHPATTERN_GRAPH:
+			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );
+			return NULL;
+		case HX_GRAPHPATTERN_UNION:
+		case HX_GRAPHPATTERN_OPTIONAL:
+			fprintf( stderr, "*** Unimplemented graph pattern type '%c' in hx_graphpattern_execute\n", pat->type );
+			return NULL;
+		default:
+			fprintf( stderr, "*** Unrecognized graph pattern type '%c' in hx_graphpattern_execute\n", pat->type );
+			return NULL;
+	};
 }
 
 int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int level ) {

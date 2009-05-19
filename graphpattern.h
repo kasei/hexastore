@@ -40,6 +40,8 @@ typedef struct {
 hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... );
 int hx_free_graphpattern ( hx_graphpattern* p );
 
+hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore*, hx_storage_manager* );
+
 int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );
 
 #ifdef __cplusplus

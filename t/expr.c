@@ -75,6 +75,9 @@ void test_eval ( void ) {
 		ok1( value != l );
 		ok1( hx_node_cmp( l, value ) == 0 );
 		ok1( hx_node_cmp( m, value ) != 0 );
+		
+		hx_free_node(l);
+		hx_free_node(m);
 	}
 	
 	{
@@ -99,6 +102,10 @@ void test_eval ( void ) {
 		ok1( hx_node_cmp( l, value ) == 0 );
 		ok1( hx_node_cmp( m, value ) != 0 );
 		ok1( hx_node_ebv(l) == 1 );
+		
+		hx_free_node( v );
+		hx_free_node( l );
+		hx_free_node( m );
 	}
 	
 	{
@@ -123,5 +130,9 @@ void test_eval ( void ) {
 		ok1( r == 0 );
 		
 		ok1( hx_node_ebv(value) == 1 );
+		
+		hx_free_node(x);
+		hx_free_node(iri);
+		hx_free_node(lit);
 	}
 }

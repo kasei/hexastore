@@ -9,7 +9,7 @@ hx_expr* hx_new_node_expr ( hx_node* n ) {
 	e->type			= HX_EXPR_BUILTIN;
 	e->subtype		= HX_EXPR_OP_NODE;
 	e->arity		= 1;
-	e->operands		= n;
+	e->operands		= hx_node_copy(n);
 	return e;
 }
 
