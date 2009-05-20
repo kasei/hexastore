@@ -676,3 +676,23 @@ hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name ) {
 	hx_node* n	= hx_new_node_named_variable( v, name );
 	return n;
 }
+
+int hx_debug ( hx_hexastore* hx, hx_storage_manager* st ) {
+	hx_nodemap* map	= hx_get_nodemap( hx );
+	hx_node* s	= hx_new_named_variable( hx, "subj" );
+	hx_node* p	= hx_new_named_variable( hx, "pred" );
+	hx_node* o	= hx_new_named_variable( hx, "obj" );
+	hx_index_iter* titer	= hx_get_statements( hx, st, s, p, o, HX_SUBJECT );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, st, "subj", "pred", "obj", 0 );
+	int counter	= 0;
+	fprintf( stderr, "--------------------\n" );
+	while (!hx_variablebindings_iter_finished( iter )) {
+		counter++;
+		hx_variablebindings* b;
+		hx_variablebindings_iter_current( iter, &b );
+		hx_variablebindings_debug( b, map );
+		hx_variablebindings_iter_next( iter );
+	}
+	fprintf( stderr, "%d triples ---------\n" );
+	return 0;
+}

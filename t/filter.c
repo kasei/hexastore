@@ -8,7 +8,6 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 
 void filter_test1 ( void );
 void filter_test2 ( void );
-void serialization_test ( void );
 
 hx_node *p1;
 hx_node *r1, *r2;
@@ -28,7 +27,6 @@ int main ( void ) {
 	
 	filter_test1();
 	filter_test2();
-	serialization_test();
 	
 	hx_free_node( p1 );
 	hx_free_node( r1 );
@@ -116,9 +114,6 @@ void filter_test2 ( void ) {
 	hx_free_variablebindings_iter( iter, 1 );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
-}
-
-void serialization_test ( void ) {
 }
 
 void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {

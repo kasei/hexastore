@@ -254,6 +254,14 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 	}
 }
 
+int hx_graphpattern_debug ( hx_graphpattern* p ) {
+	char* string;
+	hx_graphpattern_sse( p, &string, "  ", 0 );
+	fprintf( stderr, "%s\n", string );
+	free( string );
+	return 0;
+}
+
 int _hx_graphpattern_string_concat ( char** string, char* _new, int* alloc ) {
 	int sl	= strlen(*string);
 	int nl	= strlen(_new);
