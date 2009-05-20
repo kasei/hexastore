@@ -16,7 +16,6 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "avl.h"
 #include "hexastore_types.h"
 #include "hexastore.h"
 #include "node.h"
