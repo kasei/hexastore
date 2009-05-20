@@ -49,7 +49,7 @@ int main ( void ) {
 }
 
 void eval_test1 ( void ) {
-	fprintf( stderr, "# eval test 1\n" );
+	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( s );
@@ -87,7 +87,7 @@ void eval_test1 ( void ) {
 }
 
 void eval_test2 ( void ) {
-	fprintf( stderr, "# eval test 2\n" );
+	fprintf( stdout, "# eval test 2\n" );
 	hx_expr_debug	= 1;
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( s );
