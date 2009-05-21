@@ -20,7 +20,7 @@ extern "C" {
 #define HX_STORAGE_BLOCK_HEADER_SIZE	sizeof(uint32_t)
 enum {
 	HX_STORAGE_MEMORY	= 2,
-	HX_STORAGE_FILE		= 4,
+	HX_STORAGE_FILE		= 4
 };
 
 typedef uint64_t hx_storage_id_t;

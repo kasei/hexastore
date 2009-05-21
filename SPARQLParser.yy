@@ -54,6 +54,7 @@ Types:
 **/
 
 typedef enum {
+	TYPE_NODES		= 'n',
 	TYPE_FULL_NODE	= 'N',
 	TYPE_VARIABLE	= 'V',
 	TYPE_QNAME		= 'Q',
@@ -117,12 +118,21 @@ typedef struct {
 	prologue_t* prologue;
 	container_t* bgp;
 	expr_t* filter;
-} query_t;
+} bgp_query_t;
 
-extern void* parsedPattern;
+typedef struct {
+	prologue_t* prologue;
+	container_t* gp;
+} gp_query_t;
+
+extern void* parsedBGPPattern;
+extern void* parsedPrologue;
+extern void* parsedGP;
 extern node_t* new_dt_literal_node ( char*, char* );
 extern container_t* new_container ( char type, int size );
+extern int free_container ( container_t* c, int free_contained_objects );
 extern void container_push_item( container_t* set, void* t );
+extern void container_unshift_item( container_t* set, void* t );
 extern expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg );
 extern void XXXdebug_node( node_t*, prologue_t* );
 extern void XXXdebug_triple( triple_t*, prologue_t* );
@@ -235,14 +245,21 @@ extern void XXXdebug_triple( triple_t*, prologue_t* );
 
 
 myQuery:
-	Prologue GT_LCURLEY _QTriplesBlock_E_Opt __Filter_Opt GT_RCURLEY {
-		query_t* q		= (query_t*) calloc( 1, sizeof( query_t ) );
+	Prologue WhereClause {
+		gp_query_t* q	= (gp_query_t*) calloc( 1, sizeof( gp_query_t ) );
 		q->prologue		= (prologue_t*) $1;
-		q->bgp			= (container_t*) $3;
-		q->filter		= $4;
+		q->gp			= (container_t*) $2;
 		
-		parsedPattern		= (void*) q;
+		parsedPrologue	= (void*) $1; /** XXX should remove at some point... only here to support the parse_bgp functions **/
 	}
+	
+// 	Prologue GT_LCURLEY _QTriplesBlock_E_Opt __Filter_Opt GT_RCURLEY {
+// 		bgp_query_t* q	= (bgp_query_t*) calloc( 1, sizeof( bgp_query_t ) );
+// 		q->prologue		= (prologue_t*) $1;
+// 		q->bgp			= (container_t*) $3;
+// 		q->filter		= $4;
+// 		parsedBGPPattern		= (void*) q;
+// 	}
 ;
 
 
@@ -320,13 +337,13 @@ TriplesBlock:
 		if ($2 == NULL) {
 			$$	= $1;
 		} else {
-			/* XXX */
 			int i;
 			container_t* triples1	= (container_t*) $1;
 			container_t* triples2	= (container_t*) $2;
 			for (i = 0; i < triples2->count; i++) {
 				container_push_item( triples1, triples2->items[i] );
 			}
+			free_container( triples2, 0 );
 			$$	= triples1;
 		}
 	}
@@ -360,13 +377,15 @@ _QTriplesBlock_E_Opt:
 
 TriplesSameSubject:
 	VarOrTerm PropertyListNotEmpty	{
+		node_t* subject;
+		container_t* triples;
 		int i;
 		container_t* subj_triples	= (container_t*) $1;
 		if (subj_triples->count == 0) {
 			fprintf( stderr, "uh oh. VarOrTerm didn't return any graph triples.\n" );
 		}
-		node_t* subject	= ((triple_t*) subj_triples->items[0])->subject;
-		container_t* triples	= (container_t*) $2;
+		subject	= ((triple_t*) subj_triples->items[0])->subject;
+		triples	= (container_t*) $2;
 		for (i = 0; i < triples->count; i++) {
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->subject	= subject;
@@ -382,11 +401,11 @@ TriplesSameSubject:
 
 PropertyListNotEmpty:
 	Verb ObjectList _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star	{
+		int i;
 		container_t* triples;
+		node_t* predicate	= (node_t*) $1;
 		triples	= (container_t*) $2;
 		/* XXX */
-		int i;
-		node_t* predicate	= (node_t*) $1;
 		for (i = 0; i < triples->count; i++) {
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->predicate	= predicate;
@@ -448,6 +467,7 @@ _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star:
 				for (i = 0; i < triples2->count; i++) {
 					container_push_item( triples, triples2->items[i] );
 				}
+				free_container( triples2, 0 );
 			}
 		}
 		$$	= triples;
@@ -521,6 +541,8 @@ _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star:
 		t			= (triple_t*) calloc( 1, sizeof( triple_t ) );
 		t->type		= TYPE_TRIPLE;
 		t->object	= object;
+		
+		free_container( obj_triples, 0 );
 		container_push_item( set, t );
 		
 		$$	= set;
@@ -540,8 +562,8 @@ Verb:
 
 	| IT_a	{
 		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
-		n->type			= TYPE_FULL_NODE;
 		hx_node* iri	= hx_new_node_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
+		n->type			= TYPE_FULL_NODE;
 		n->ptr			= (void*) iri;
 		$$	= n;
 	}
@@ -894,11 +916,11 @@ Constraint:
 ;
 
 FunctionCall:
-   IRIref ArgList	{}
+	IRIref ArgList	{}
 ;
 
 ArgList:
-   _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C	{}
+	_O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C	{}
 ;
 
 _O_QNIL_E_Or_QGT_LPAREN_E_S_QExpression_E_S_QGT_COMMA_E_S_QExpression_E_Star_S_QGT_RPAREN_E_C:
@@ -1237,6 +1259,7 @@ _QArgList_E_Opt:
 
 
 /* ************************************************************************* */
+/* my custum stuff: ******************************************************** */
 __Filter_Opt:
 	{
 		$$	= NULL
@@ -1274,413 +1297,311 @@ __Filter_Opt:
 // }
 // ;
 //
-// SelectQuery:
-//	   IT_SELECT _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt _O_QVar_E_Plus_Or_QGT_TIMES_E_C _QDatasetClause_E_Star WhereClause SolutionModifier	{
-//	   $$ = new SelectQuery($1, $2, $3, $4, $5, $6);
-// }
-// ;
-// 
-// _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C:
-//	   IT_DISTINCT	{
-//	   $$ = new _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_rule0($1);
-// }
-// 
-//	   | IT_REDUCED {
-//	   $$ = new _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_rule1($1);
-// }
-// ;
-// 
-// _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt:
-//	   {
-//	   $$ = new _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt_rule0();
-// }
-// 
-//	   | _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C	{
-//	   $$ = new _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt_rule1($1);
-// }
-// ;
-// 
-// _QVar_E_Plus:
-//	   Var	{
-//	   $$ = new _QVar_E_Plus_rule0($1);
-// }
-// 
-//	   | _QVar_E_Plus Var	{
-//	   $$ = new _QVar_E_Plus_rule1($1, $2);
-// }
-// ;
-// 
-// _O_QVar_E_Plus_Or_QGT_TIMES_E_C:
-//	   _QVar_E_Plus {
-//	   $$ = new _O_QVar_E_Plus_Or_QGT_TIMES_E_C_rule0($1);
-// }
-// 
-//	   | GT_TIMES	{
-//	   $$ = new _O_QVar_E_Plus_Or_QGT_TIMES_E_C_rule1($1);
-// }
-// ;
-// 
-// _QDatasetClause_E_Star:
-//	   {
-//	   $$ = new _QDatasetClause_E_Star_rule0();
-// }
-// 
-//	   | _QDatasetClause_E_Star DatasetClause	{
-//	   $$ = new _QDatasetClause_E_Star_rule1($1, $2);
-// }
-// ;
-// 
+
+SelectQuery:
+	IT_SELECT _Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt _O_QVar_E_Plus_Or_QGT_TIMES_E_C _QDatasetClause_E_Star WhereClause SolutionModifier	{
+		
+	}
+;
+
+_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C:
+	IT_DISTINCT	{}
+
+	| IT_REDUCED {}
+;
+
+_Q_O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C_E_Opt:
+	{}
+
+	| _O_QIT_DISTINCT_E_Or_QIT_REDUCED_E_C	{}
+;
+
+_QVar_E_Plus:
+	Var	{
+		container_t* set	= new_container( TYPE_NODES, 4 );
+		node_t* n			= (node_t*) $1
+		container_push_item( set, n );
+		$$	= set;
+	}
+
+	| _QVar_E_Plus Var	{
+		container_t* set	= $1;
+		node_t* n			= (node_t*) $1
+		container_push_item( set, n );
+		$$	= set;
+	}
+;
+
+_O_QVar_E_Plus_Or_QGT_TIMES_E_C:
+		_QVar_E_Plus {
+			$$	= $1;
+		}
+
+		| GT_TIMES	{
+			$$	= new_container( TYPE_NODES, 1 );
+		}
+;
+
+_QDatasetClause_E_Star:
+		{
+			$$	= NULL;
+		}
+
+		| _QDatasetClause_E_Star DatasetClause	{}
+;
+
 // ConstructQuery:
-//	   IT_CONSTRUCT ConstructTemplate _QDatasetClause_E_Star WhereClause SolutionModifier	{
-//	   $$ = new ConstructQuery($1, $2, $3, $4, $5);
-// }
+//	   IT_CONSTRUCT ConstructTemplate _QDatasetClause_E_Star WhereClause SolutionModifier	{}
 // ;
 // 
 // DescribeQuery:
-//	   IT_DESCRIBE _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C _QDatasetClause_E_Star _QWhereClause_E_Opt SolutionModifier	{
-//	   $$ = new DescribeQuery($1, $2, $3, $4, $5);
-// }
+//	   IT_DESCRIBE _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C _QDatasetClause_E_Star _QWhereClause_E_Opt SolutionModifier	{}
 // ;
 // 
 // _QVarOrIRIref_E_Plus:
-//	   VarOrIRIref	{
-//	   $$ = new _QVarOrIRIref_E_Plus_rule0($1);
-// }
+//	   VarOrIRIref	{}
 // 
-//	   | _QVarOrIRIref_E_Plus VarOrIRIref	{
-//	   $$ = new _QVarOrIRIref_E_Plus_rule1($1, $2);
-// }
+//	   | _QVarOrIRIref_E_Plus VarOrIRIref	{}
 // ;
 // 
 // _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C:
-//	   _QVarOrIRIref_E_Plus {
-//	   $$ = new _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C_rule0($1);
-// }
+//	   _QVarOrIRIref_E_Plus {}
 // 
-//	   | GT_TIMES	{
-//	   $$ = new _O_QVarOrIRIref_E_Plus_Or_QGT_TIMES_E_C_rule1($1);
-// }
+//	   | GT_TIMES	{}
 // ;
 // 
 // _QWhereClause_E_Opt:
-//	   {
-//	   $$ = new _QWhereClause_E_Opt_rule0();
-// }
+//	   {}
 // 
-//	   | WhereClause	{
-//	   $$ = new _QWhereClause_E_Opt_rule1($1);
-// }
+//	   | WhereClause	{}
 // ;
 // 
 // AskQuery:
-//	   IT_ASK _QDatasetClause_E_Star WhereClause	{
-//	   $$ = new AskQuery($1, $2, $3);
-// }
+//	   IT_ASK _QDatasetClause_E_Star WhereClause	{}
 // ;
 // 
-// DatasetClause:
-//	   IT_FROM _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C	{
-//	   $$ = new DatasetClause($1, $2);
-// }
-// ;
-// 
-// _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C:
-//	   DefaultGraphClause	{
-//	   $$ = new _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C_rule0($1);
-// }
-// 
-//	   | NamedGraphClause	{
-//	   $$ = new _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C_rule1($1);
-// }
-// ;
-// 
-// DefaultGraphClause:
-//	   SourceSelector	{
-//	   $$ = new DefaultGraphClause($1);
-// }
-// ;
-// 
-// NamedGraphClause:
-//	   IT_NAMED SourceSelector	{
-//	   $$ = new NamedGraphClause($1, $2);
-// }
-// ;
-// 
-// SourceSelector:
-//	   IRIref	{
-//	   $$ = new SourceSelector($1);
-// }
-// ;
-// 
-// WhereClause:
-//	   _QIT_WHERE_E_Opt GroupGraphPattern	{
-//	   $$ = new WhereClause($1, $2);
-// }
-// ;
-// 
-// _QIT_WHERE_E_Opt:
-//	   {
-//	   $$ = new _QIT_WHERE_E_Opt_rule0();
-// }
-// 
-//	   | IT_WHERE	{
-//	   $$ = new _QIT_WHERE_E_Opt_rule1($1);
-// }
-// ;
-// 
-// SolutionModifier:
-//	   _QOrderClause_E_Opt _QLimitOffsetClauses_E_Opt	{
-//	   $$ = new SolutionModifier($1, $2);
-// }
-// ;
-// 
-// _QOrderClause_E_Opt:
-//	   {
-//	   $$ = new _QOrderClause_E_Opt_rule0();
-// }
-// 
-//	   | OrderClause	{
-//	   $$ = new _QOrderClause_E_Opt_rule1($1);
-// }
-// ;
-// 
-// _QLimitOffsetClauses_E_Opt:
-//	   {
-//	   $$ = new _QLimitOffsetClauses_E_Opt_rule0();
-// }
-// 
-//	   | LimitOffsetClauses {
-//	   $$ = new _QLimitOffsetClauses_E_Opt_rule1($1);
-// }
-// ;
-// 
-// LimitOffsetClauses:
-//	   _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C	{
-//	   $$ = new LimitOffsetClauses($1);
-// }
-// ;
-// 
-// _QOffsetClause_E_Opt:
-//	   {
-//	   $$ = new _QOffsetClause_E_Opt_rule0();
-// }
-// 
-//	   | OffsetClause	{
-//	   $$ = new _QOffsetClause_E_Opt_rule1($1);
-// }
-// ;
-// 
-// _QLimitClause_E_Opt:
-//	   {
-//	   $$ = new _QLimitClause_E_Opt_rule0();
-// }
-// 
-//	   | LimitClause	{
-//	   $$ = new _QLimitClause_E_Opt_rule1($1);
-// }
-// ;
-// 
-// _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C:
-//	   LimitClause _QOffsetClause_E_Opt {
-//	   $$ = new _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C_rule0($1, $2);
-// }
-// 
-//	   | OffsetClause _QLimitClause_E_Opt	{
-//	   $$ = new _O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C_rule1($1, $2);
-// }
-// ;
-// 
-// OrderClause:
-//	   IT_ORDER IT_BY _QOrderCondition_E_Plus	{
-//	   $$ = new OrderClause($1, $2, $3);
-// }
-// ;
-// 
-// _QOrderCondition_E_Plus:
-//	   OrderCondition	{
-//	   $$ = new _QOrderCondition_E_Plus_rule0($1);
-// }
-// 
-//	   | _QOrderCondition_E_Plus OrderCondition {
-//	   $$ = new _QOrderCondition_E_Plus_rule1($1, $2);
-// }
-// ;
-// 
-// OrderCondition:
-//	   _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C	{
-//	   $$ = new OrderCondition_rule0($1);
-// }
-// 
-//	   | _O_QConstraint_E_Or_QVar_E_C	{
-//	   $$ = new OrderCondition_rule1($1);
-// }
-// ;
-// 
-// _O_QIT_ASC_E_Or_QIT_DESC_E_C:
-//	   IT_ASC	{
-//	   $$ = new _O_QIT_ASC_E_Or_QIT_DESC_E_C_rule0($1);
-// }
-// 
-//	   | IT_DESC	{
-//	   $$ = new _O_QIT_ASC_E_Or_QIT_DESC_E_C_rule1($1);
-// }
-// ;
-// 
-// _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C:
-//	   _O_QIT_ASC_E_Or_QIT_DESC_E_C BrackettedExpression	{
-//	   $$ = new _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C($1, $2);
-// }
-// ;
-// 
-// _O_QConstraint_E_Or_QVar_E_C:
-//	   Constraint	{
-//	   $$ = new _O_QConstraint_E_Or_QVar_E_C_rule0($1);
-// }
-// 
-//	   | Var	{
-//	   $$ = new _O_QConstraint_E_Or_QVar_E_C_rule1($1);
-// }
-// ;
-// 
-// LimitClause:
-//	   IT_LIMIT INTEGER {
-//	   $$ = new LimitClause($1, $2);
-// }
-// ;
-// 
-// OffsetClause:
-//	   IT_OFFSET INTEGER	{
-//	   $$ = new OffsetClause($1, $2);
-// }
-// ;
-// 
-// GroupGraphPattern:
-//	   GT_LCURLEY _QTriplesBlock_E_Opt _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star GT_RCURLEY	{
-//	   $$ = new GroupGraphPattern($1, $2, $3, $4);
-// }
-// ;
-// 
-// _O_QGraphPatternNotTriples_E_Or_QFilter_E_C:
-//	   GraphPatternNotTriples	{
-//	   $$ = new _O_QGraphPatternNotTriples_E_Or_QFilter_E_C_rule0($1);
-// }
-// 
-//	   | Filter {
-//	   $$ = new _O_QGraphPatternNotTriples_E_Or_QFilter_E_C_rule1($1);
-// }
-// ;
-// 
-// _QGT_DOT_E_Opt:
-//	   {
-//	   $$ = new _QGT_DOT_E_Opt_rule0();
-// }
-// 
-//	   | GT_DOT {
-//	   $$ = new _QGT_DOT_E_Opt_rule1($1);
-// }
-// ;
-// 
-// _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C:
-//	   _O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{
-//	   $$ = new _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C($1, $2, $3);
-// }
-// ;
-// 
-// _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
-//	   $$ = new _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star_rule1($1, $2);
-// }
-// ;
-//
-// GraphPatternNotTriples:
-//	   OptionalGraphPattern {
-//	   $$ = new GraphPatternNotTriples_rule0($1);
-// }
-// 
-//	   | GroupOrUnionGraphPattern	{
-//	   $$ = new GraphPatternNotTriples_rule1($1);
-// }
-// 
-//	   | GraphGraphPattern	{
-//	   $$ = new GraphPatternNotTriples_rule2($1);
-// }
-// ;
-// 
-// OptionalGraphPattern:
-//	   IT_OPTIONAL GroupGraphPattern	{
-//	   $$ = new OptionalGraphPattern($1, $2);
-// }
-// ;
-// 
-// GraphGraphPattern:
-//	   IT_GRAPH VarOrIRIref GroupGraphPattern	{
-//	   $$ = new GraphGraphPattern($1, $2, $3);
-// }
-// ;
-// 
-// GroupOrUnionGraphPattern:
-//	   GroupGraphPattern _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star	{
-//	   $$ = new GroupOrUnionGraphPattern($1, $2);
-// }
-// ;
-// 
-// _O_QIT_UNION_E_S_QGroupGraphPattern_E_C:
-//	   IT_UNION GroupGraphPattern	{
-//	   $$ = new _O_QIT_UNION_E_S_QGroupGraphPattern_E_C($1, $2);
-// }
-// ;
-// 
-// _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star:
-//	   {
-//	   $$ = new _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star_rule0();
-// }
-// 
-//	   | _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star _O_QIT_UNION_E_S_QGroupGraphPattern_E_C	{
-//	   $$ = new _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star_rule1($1, $2);
-// }
-// ;
-// 
-// 
+DatasetClause:
+		IT_FROM _O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C	{}
+;
+
+_O_QDefaultGraphClause_E_Or_QNamedGraphClause_E_C:
+		DefaultGraphClause	{}
+
+		| NamedGraphClause	{}
+;
+
+DefaultGraphClause:
+		SourceSelector	{}
+;
+
+NamedGraphClause:
+		IT_NAMED SourceSelector	{}
+;
+
+SourceSelector:
+		IRIref	{}
+;
+
+WhereClause:
+		_QIT_WHERE_E_Opt GroupGraphPattern	{
+			$$	= $2;
+		}
+;
+
+_QIT_WHERE_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| IT_WHERE	{}
+;
+
+SolutionModifier:
+		_QOrderClause_E_Opt _QLimitOffsetClauses_E_Opt	{}
+;
+
+_QOrderClause_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| OrderClause	{}
+;
+
+_QLimitOffsetClauses_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| LimitOffsetClauses {}
+;
+
+LimitOffsetClauses:
+		_O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C	{}
+;
+
+_QOffsetClause_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| OffsetClause	{}
+;
+
+_QLimitClause_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| LimitClause	{}
+;
+
+_O_QLimitClause_E_S_QOffsetClause_E_Opt_Or_QOffsetClause_E_S_QLimitClause_E_Opt_C:
+		LimitClause _QOffsetClause_E_Opt {}
+
+		| OffsetClause _QLimitClause_E_Opt	{}
+;
+
+OrderClause:
+		IT_ORDER IT_BY _QOrderCondition_E_Plus	{}
+;
+
+_QOrderCondition_E_Plus:
+		OrderCondition	{}
+
+		| _QOrderCondition_E_Plus OrderCondition {}
+;
+
+OrderCondition:
+		_O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C	{}
+
+		| _O_QConstraint_E_Or_QVar_E_C	{}
+;
+
+_O_QIT_ASC_E_Or_QIT_DESC_E_C:
+		IT_ASC	{}
+
+		| IT_DESC	{}
+;
+
+_O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C:
+		_O_QIT_ASC_E_Or_QIT_DESC_E_C BrackettedExpression	{}
+;
+
+_O_QConstraint_E_Or_QVar_E_C:
+		Constraint	{}
+
+		| Var	{}
+;
+
+LimitClause:
+		IT_LIMIT INTEGER {}
+;
+
+OffsetClause:
+		IT_OFFSET INTEGER	{}
+;
+
+GroupGraphPattern:
+		GT_LCURLEY _QTriplesBlock_E_Opt _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star GT_RCURLEY	{
+			/** XXXXXXXXXXXXXXXXXXXX **/
+			/** this is to set the BGP for the parse_bgp functions **/
+			bgp_query_t* q	= (bgp_query_t*) calloc( 1, sizeof( bgp_query_t ) );
+			q->prologue		= NULL;
+			q->bgp			= (container_t*) $2;
+			q->filter		= NULL;
+			parsedBGPPattern		= (void*) q;
+			/** XXXXXXXXXXXXXXXXXXXX **/
+			
+			
+			
+			
+		}
+;
+
+_O_QGraphPatternNotTriples_E_Or_QFilter_E_C:
+		GraphPatternNotTriples	{}
+
+		| Filter {}
+;
+
+_QGT_DOT_E_Opt:
+		{
+			$$	= NULL;
+		}
+
+		| GT_DOT {}
+;
+
+_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C:
+		_O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{}
+;
+
+_Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star:
+		{
+			$$	= NULL;
+		}
+
+		| _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
+			
+		}
+;
+
+GraphPatternNotTriples:
+		OptionalGraphPattern {}
+
+		| GroupOrUnionGraphPattern	{}
+
+		| GraphGraphPattern	{}
+;
+
+OptionalGraphPattern:
+		IT_OPTIONAL GroupGraphPattern	{}
+;
+
+GraphGraphPattern:
+		IT_GRAPH VarOrIRIref GroupGraphPattern	{}
+;
+
+GroupOrUnionGraphPattern:
+		GroupGraphPattern _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star	{}
+;
+
+_O_QIT_UNION_E_S_QGroupGraphPattern_E_C:
+		IT_UNION GroupGraphPattern	{}
+;
+
+_Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star:
+		{
+			$$	= NULL;
+		}
+
+		| _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star _O_QIT_UNION_E_S_QGroupGraphPattern_E_C	{}
+;
+
+
 // ConstructTemplate:
-//	   GT_LCURLEY _QConstructTriples_E_Opt GT_RCURLEY	{
-//	   $$ = new ConstructTemplate($1, $2, $3);
-// }
+//	   GT_LCURLEY _QConstructTriples_E_Opt GT_RCURLEY	{}
 // ;
 // 
 // _QConstructTriples_E_Opt:
-//	   {
-//	   $$ = new _QConstructTriples_E_Opt_rule0();
-// }
+//	   {}
 // 
-//	   | ConstructTriples	{
-//	   $$ = new _QConstructTriples_E_Opt_rule1($1);
-// }
+//	   | ConstructTriples	{}
 // ;
 // 
 // ConstructTriples:
-//	   TriplesSameSubject _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt	{
-//	   $$ = new ConstructTriples($1, $2);
-// }
+//	   TriplesSameSubject _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt	{}
 // ;
 // 
 // _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C:
-//	   GT_DOT _QConstructTriples_E_Opt	{
-//	   $$ = new _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C($1, $2);
-// }
+//	   GT_DOT _QConstructTriples_E_Opt	{}
 // ;
 // 
 // _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt:
-//	   {
-//	   $$ = new _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt_rule0();
-// }
+//	   {}
 // 
-//	   | _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C	{
-//	   $$ = new _Q_O_QGT_DOT_E_S_QConstructTriples_E_Opt_C_E_Opt_rule1($1);
-// }
+//	   | _O_QGT_DOT_E_S_QConstructTriples_E_Opt_C	{}
 // ;
 //
 
@@ -1697,8 +1618,9 @@ __Filter_Opt:
 #include "node.h"
 #include "bgp.h"
 
-void* parsedPattern	= NULL;
-
+void* parsedBGPPattern	= NULL;
+void* parsedGP			= NULL;
+void* parsedPrologue	= NULL;
 void free_prologue ( prologue_t* p );
 char* prefix_uri ( prologue_t* p, char* ns );
 char* qualify_qname ( prologue_t* p, char* qname );
@@ -1706,6 +1628,8 @@ hx_node* generate_node ( node_t* n, prologue_t* p, int* counter );
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter );
 hx_bgp* parse_bgp_query ( void );
 hx_bgp* parse_bgp_query_string ( char* string );
+int free_container ( container_t* c, int free_contained_objects );
+int free_node ( node_t* n );
 
 void yyerror (char const *s) {
 	fprintf (stderr, "*** %s\n", s);
@@ -1723,14 +1647,15 @@ hx_bgp* parse_bgp_query ( void ) {
 		container_t* bgp;
 		hx_triple** triples;
 		int counter	= -1;
-		query_t* q		= (query_t*) parsedPattern;
-		prologue_t* prologue	= q->prologue;
+		bgp_query_t* q		= (bgp_query_t*) parsedBGPPattern;
+		prologue_t* prologue	= parsedPrologue;
 		
 		if (q->filter != NULL) {
-			fprintf( stderr, "got filter\n" );
-			hx_expr* e	= generate_expr( q->filter, prologue, &counter );
-
+			hx_expr* e;
 			char* string;
+			fprintf( stderr, "got filter\n" );
+			
+			e	= generate_expr( q->filter, prologue, &counter );
 			hx_expr_sse( e, &string, "  ", 9 );
 			fprintf( stderr,         "filter expression: %s\n", string );
 			free( string );
@@ -1804,20 +1729,23 @@ hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
 		v	= hx_new_node_named_variable( (*counter)--, copy );
 		return v;
 	} else if (n->type == TYPE_QNAME) {
+		hx_node* u;
 		char* uri	= qualify_qname( p, (char*) n->ptr );
 		if (uri == NULL)
 			return NULL;
-		hx_node* u	= hx_new_node_resource( uri );
+		u	= hx_new_node_resource( uri );
 		return u;
 	} else if (n->type == TYPE_DT_LITERAL) {
+		char* value;
+		hx_node* l;
 		char* dt	= qualify_qname( p, n->datatype );
 		if (dt == NULL)
 			return NULL;
-		char* value	= (char*) n->ptr;
-		hx_node* l	= (hx_node*) hx_new_node_dt_literal( value, dt );
+		value	= (char*) n->ptr;
+		l	= (hx_node*) hx_new_node_dt_literal( value, dt );
 		return l;
 	} else {
-		fprintf( stderr, "*** UNRECOGNIZED node type '%c'\n", n->type );
+		fprintf( stderr, "*** UNRECOGNIZED node type '%c' in generate_node()\n", n->type );
 		return NULL;
 	}
 }
@@ -1894,6 +1822,56 @@ container_t* new_container ( char type, int size ) {
 	container->count		= 0;
 	container->items		= (void**) calloc( container->allocated, sizeof( void* ) );
 	return container;
+}
+
+int free_container ( container_t* c, int free_contained_objects ) {
+	int i;
+	switch (c->type) {
+		case TYPE_BGP:
+			if (free_contained_objects) {
+				for (i = 0; i < c->count; i++) {
+					triple_t* t	= (triple_t*) c->items[i];
+					free_node( t->subject );
+					free_node( t->predicate );
+					free_node( t->object );
+					free(t);
+				}
+			}
+			free(c->items);
+			break;
+		default:
+			fprintf( stderr, "*** unrecognized container type '%c' in free_container()\n", c->type );
+			return 1;
+	};
+	free(c);
+	return 0;
+}
+
+int free_node ( node_t* n ) {
+	if (n->type == TYPE_FULL_NODE) {
+		hx_node* node	= (hx_node*) n->ptr;
+		hx_free_node( node );
+		free(n);
+	} else if (n->type == TYPE_VARIABLE) {
+		char* name	= (char*) n->ptr;
+		if (name != NULL)
+			free(name);
+		free(n);
+	} else if (n->type == TYPE_QNAME) {
+		char* qname	= (char*) n->ptr;
+		free( qname );
+		free(n);
+	} else if (n->type == TYPE_DT_LITERAL) {
+		char* qname	= (char*) n->ptr;
+		char* dt	= (char*) n->datatype;
+		free( qname );
+		free( dt );
+		free(n);
+	} else {
+		fprintf( stderr, "*** UNRECOGNIZED node type '%c' in free_node()\n", n->type );
+		return 1;
+	}
+	return 0;
 }
 
 void container_push_item( container_t* set, void* t ) {
