@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "node.h"
 #include "expr.h"
+#include "graphpattern.h"
 
 int yylex ( void );
 void yyerror (char const *s);
@@ -52,7 +53,7 @@ Types:
 	- 'F' Filter
 **/
 
-enum {
+typedef enum {
 	TYPE_FULL_NODE	= 'N',
 	TYPE_VARIABLE	= 'V',
 	TYPE_QNAME		= 'Q',
@@ -62,24 +63,25 @@ enum {
 	TYPE_GGP		= 'G',
 	TYPE_OPT		= 'O',
 	TYPE_UNION		= 'U',
-	TYPE_EXPR		= 'E'
-};
+	TYPE_EXPR		= 'E',
+	TYPE_FILTER		= 'F'
+} hx_sparqlparser_pattern_t;
 
 typedef struct {
-	char type;
+	hx_sparqlparser_pattern_t type;
 	void* ptr;
 	char* datatype;
 } node_t;
 
 typedef struct {
-	char type;
+	hx_sparqlparser_pattern_t type;
 	node_t* subject;
 	node_t* predicate;
 	node_t* object;
 } triple_t;
 
 typedef struct {
-	char type;
+	hx_sparqlparser_pattern_t type;
 	int allocated;
 	int count;
 	void** items;
@@ -237,7 +239,7 @@ myQuery:
 		query_t* q		= (query_t*) calloc( 1, sizeof( query_t ) );
 		q->prologue		= (prologue_t*) $1;
 		q->bgp			= (container_t*) $3;
-		q->filter	= $4;
+		q->filter		= $4;
 		
 		parsedPattern		= (void*) q;
 	}
@@ -1757,12 +1759,6 @@ hx_bgp* parse_bgp_query ( void ) {
 	return NULL;
 }
 
-void XXXdebug_triple( triple_t* t, prologue_t* p ) {
-	fprintf( stderr, "- subject: " ); XXXdebug_node( t->subject, p );
-	fprintf( stderr, "- predicate: " ); XXXdebug_node( t->predicate, p );
-	fprintf( stderr, "- object: " ); XXXdebug_node( t->object, p );
-}
-
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {
 	container_t* c	= e->args;
 	if (e->op == HX_EXPR_OP_NODE) {
@@ -1823,18 +1819,6 @@ hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
 	} else {
 		fprintf( stderr, "*** UNRECOGNIZED node type '%c'\n", n->type );
 		return NULL;
-	}
-}
-
-void XXXdebug_node( node_t* n, prologue_t* p ) {
-	int counter	= -1;
-	hx_node* node	= generate_node( n, p, &counter );
-	if (node != NULL) {
-		char* string;
-		hx_node_string( node, &string );
-		fprintf( stderr, "Node: %s\n", string );
-		free( string );
-		hx_free_node( node );
 	}
 }
 
@@ -1962,25 +1946,21 @@ expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg ) {
 	return d;
 }
 
+void XXXdebug_triple( triple_t* t, prologue_t* p ) {
+	fprintf( stderr, "- subject: " ); XXXdebug_node( t->subject, p );
+	fprintf( stderr, "- predicate: " ); XXXdebug_node( t->predicate, p );
+	fprintf( stderr, "- object: " ); XXXdebug_node( t->object, p );
+}
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
+void XXXdebug_node( node_t* n, prologue_t* p ) {
+	int counter	= -1;
+	hx_node* node	= generate_node( n, p, &counter );
+	if (node != NULL) {
+		char* string;
+		hx_node_string( node, &string );
+		fprintf( stderr, "Node: %s\n", string );
+		free( string );
+		hx_free_node( node );
+	}
+}
 

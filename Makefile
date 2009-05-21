@@ -95,7 +95,7 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -146,6 +146,9 @@ t/selectivity.t: tap.o t/selectivity.c $(OBJECTS) tap.o
 
 t/graphpattern.t: tap.o t/graphpattern.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/graphpattern.t t/graphpattern.c $(OBJECTS) tap.o
+
+t/parser.t: tap.o t/parser.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/parser.t t/parser.c $(OBJECTS) tap.o
 
 ########
 
