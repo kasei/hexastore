@@ -7,11 +7,13 @@ void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 void bgp1_test ( void );
 void bgp2_test ( void );
 void bgp3_test ( void );
+void bgp_vars_test1 ( void );
+void bgp_vars_test2 ( void );
 void serialization_test ( void );
 
-hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3;
+hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3, *v1, *v2;
 int main ( void ) {
-	plan_tests(5);
+	plan_tests(14);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -20,11 +22,15 @@ int main ( void ) {
 	l1	= hx_new_node_literal( "l1" );
 	l2	= hx_new_node_literal( "l2" );
 	l3	= hx_new_node_literal( "l3" );
+	v1	= hx_new_node_named_variable( -1, "x" );
+	v2	= hx_new_node_named_variable( -2, "y" );
 	
 	bgp1_test();
 	bgp2_test();
 	bgp3_test();
 	serialization_test();
+	bgp_vars_test1();
+	bgp_vars_test2();
 	
 	hx_free_node( p1 );
 	hx_free_node( p2 );
@@ -32,6 +38,8 @@ int main ( void ) {
 	hx_free_node( r2 );
 	hx_free_node( l1 );
 	hx_free_node( l2 );
+	hx_free_node( v1 );
+	hx_free_node( v2 );
 	
 	return exit_status();
 }
@@ -100,6 +108,78 @@ void serialization_test ( void ) {
 			free( string );
 		}
 		
+		hx_free_bgp( b );
+	}
+}
+
+void bgp_vars_test1 ( void ) {
+	hx_triple t1;
+	
+	{
+		_fill_triple( &t1, r1, p1, l1 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, NULL );
+		ok1( var_count == 0 );
+		hx_free_bgp( b );
+	}
+	
+	{
+		_fill_triple( &t1, v1, p1, l1 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, NULL );
+		ok1( var_count == 1 );
+		hx_free_bgp( b );
+	}
+	
+	{
+		_fill_triple( &t1, v1, v2, l1 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, NULL );
+		ok1( var_count == 2 );
+		hx_free_bgp( b );
+	}
+	
+	{
+		_fill_triple( &t1, v1, v2, v1 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, NULL );
+		ok1( var_count == 2 );
+		hx_free_bgp( b );
+	}
+}
+
+void bgp_vars_test2 ( void ) {
+	hx_triple t1;
+	
+	{
+		hx_node** v;
+		_fill_triple( &t1, r1, v1, l1 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, &v );
+		ok1( var_count == 1 );
+		hx_node* n	= v[0];
+		ok1( hx_node_cmp(n,v1) == 0 );
+		hx_free_node(n);
+		free(v);
+		hx_free_bgp( b );
+	}
+
+	{
+		hx_node** v;
+		_fill_triple( &t1, v2, v1, v2 );
+		hx_bgp* b	= hx_new_bgp1( &t1 );
+		int var_count	= hx_bgp_variables( b, &v );
+		ok1( var_count == 2 );
+		
+		hx_node* x	= v[0];
+		ok1( hx_node_cmp(x,v1) == 0 );
+
+		hx_node* y	= v[1];
+		ok1( hx_node_cmp(y,v2) == 0 );
+		
+		hx_free_node(x);
+		hx_free_node(y);
+		free(v);
 		hx_free_bgp( b );
 	}
 }

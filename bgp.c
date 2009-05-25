@@ -7,6 +7,7 @@ int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
 int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size );
 void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size );
+	
 
 typedef struct {
 	uint64_t cost;
@@ -93,6 +94,39 @@ int hx_free_bgp ( hx_bgp* b ) {
 
 int hx_bgp_size ( hx_bgp* b ) {
 	return b->size;
+}
+
+int hx_bgp_variables ( hx_bgp* b, hx_node*** v ) {
+	int i, j;
+	int counter	= 0;
+	int uniq_count;
+	int s	= hx_bgp_size( b );
+	hx_node** vars	= (hx_node**) calloc( 3*s, sizeof( hx_node* ) );	// at most, 3*size(bgp) variables
+	for (i = 0; i < s; i++) {
+		hx_triple* t	= hx_bgp_triple( b, i );
+		if (hx_node_is_variable( t->subject )) {
+			vars[ counter++ ]	= t->subject;
+		}
+		if (hx_node_is_variable( t->predicate )) {
+			vars[ counter++ ]	= t->predicate;
+		}
+		if (hx_node_is_variable( t->object )) {
+			vars[ counter++ ]	= t->object;
+		}
+	}
+	
+	if (counter == 0) {
+		return 0;
+	}
+	
+	hx_node** uniq;
+	uniq_count	= hx_node_uniq_set( counter, vars, &uniq, 1 );
+	free( vars );
+	
+	if (v != NULL) {
+		*v	= uniq;
+	}
+	return uniq_count;
 }
 
 hx_triple* hx_bgp_triple ( hx_bgp* b, int i ) {

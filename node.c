@@ -1,6 +1,7 @@
 #include "node.h"
 
 int _hx_node_parse_datatypes ( hx_node* n );
+int _hx_node_array_cmp( const void* _a, const void* _b );
 
 hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, double nv ) {
 	hx_node* n	= (hx_node*) calloc( 1, sizeof( hx_node ) + padding );
@@ -282,6 +283,62 @@ int hx_node_string ( hx_node* n, char** str ) {
 	return alloc;
 }
 
+int hx_node_uniq_set ( int size, hx_node** set, hx_node*** v, int copy ) {
+	int i, j, uniq_count;
+	hx_node** vars	= (hx_node**) calloc( size, sizeof( hx_node* ) );
+	for (i = 0; i < size; i++) {
+		vars[i]	= set[i];
+	}
+	
+	qsort( vars, size, sizeof( hx_node* ), _hx_node_array_cmp );
+	j	= 0;
+	for (i = 1; i < size; i++) {
+		hx_node* last	= vars[j];
+		hx_node* new	= vars[i];
+		if (hx_node_cmp(last,new) != 0) {
+			vars[++j]	= new;
+		}
+	}
+	uniq_count	= j+1;
+	for (i = j+1; i < size; i++) {
+		vars[i]	= NULL;
+	}
+	
+// 	for (i = 0; i < uniq_count; i++) {
+// 		char* string;
+// 		hx_node_string( vars[i], &string );
+// 		fprintf( stderr, "uniq bgp variable: %s\n", string );
+// 		free(string);
+// 	}
+	
+	if (v != NULL) {
+		*v	= (hx_node**) calloc( uniq_count, sizeof( hx_node* ) );
+		for (i = 0; i < uniq_count; i++) {
+			if (copy) {
+				(*v)[i]	= hx_node_copy( vars[i] );
+			} else {
+				(*v)[i]	= vars[i];
+			}
+		}
+	}
+	
+	return uniq_count;
+}
+
+int hx_node_uniq_set2 ( int size1, hx_node** set1, int size2, hx_node** set2, hx_node*** v, int copy ) {
+	int i;
+	hx_node** vars	= (hx_node**) calloc( size1 + size2, sizeof( hx_node* ) );
+	for (i = 0; i < size1; i++) {
+		vars[i]	= set1[i];
+	}
+	for (i = 0; i < size2; i++) {
+		vars[size1+i]	= set2[i];
+	}
+	int r	= hx_node_uniq_set( size1 + size2, vars, v, copy );
+	free( vars );
+	return r;
+}
+
 int hx_node_nodestr( hx_node* n, char** str ) {
 	int alloc	= 0;
 	if (hx_node_is_literal( n )) {
@@ -336,20 +393,45 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 			// XXX need to deal with language and datatype literals
 			return strcmp( a->value, b->value );
 		} else if (hx_node_is_variable( a )) {
-			return (hx_node_iv( a ) - hx_node_iv( b ));
+			return (hx_node_iv( b ) - hx_node_iv( a ));
 		} else {
 			fprintf( stderr, "*** Unknown node type %c in _sparql_sort_cmp\n", a->type );
 			return 0;
 		}
 	} else {
-		if (hx_node_is_blank( a ))
+		int a_blank	= hx_node_is_blank( a );
+		int b_blank	= hx_node_is_blank( b );
+		int a_lit	= hx_node_is_literal( a );
+		int b_lit	= hx_node_is_literal( b );
+		int a_var	= hx_node_is_variable( a );
+		int b_var	= hx_node_is_variable( b );
+		int a_res	= hx_node_is_resource( a );
+		int b_res	= hx_node_is_resource( b );
+		
+		if (a_blank) {
 			return -1;
-		if (hx_node_is_literal( a ))
+		} else if (a_res) {
+			if (b_blank) {
+				return 1;
+			} else {
+				return -1;
+			}
+		} else if (a_lit) {
+			if (b_var) {
+				return -1;
+			} else {
+				return 1;
+			}
+		} else if (a_var) {
 			return 1;
-		if (hx_node_is_blank( b ))
-			return 1;
-		if (hx_node_is_literal( b ))
-			return -1;
+		} else {
+			fprintf( stderr, "*** Unrecognized node type in hx_node_cmp:\n" );
+			char* string;
+			hx_node_string( a, &string );
+			fprintf( stderr, "\t%s\n", string );
+			free(string);
+			return 0;
+		}
 	}
 	return 0;
 }
@@ -496,6 +578,12 @@ int _hx_node_parse_datatypes ( hx_node* n ) {
 	return 0;
 }
 
+/* takes two hx_node**, derefs them, and calls hx_node_cmp -- allows calling qsort on an array of hx_node*s */
+int _hx_node_array_cmp( const void* _a, const void* _b ) {
+	hx_node** a	= (hx_node**) _a;
+	hx_node** b	= (hx_node**) _b;
+	return hx_node_cmp( *a, *b );
+}
 
 //	R	- IRI resource
 //	B	- Blank node

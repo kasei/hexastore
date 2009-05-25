@@ -144,6 +144,51 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 	};
 }
 
+/* returns the number of variables referenced in the graph pattern, and sets vars to an array containing copies of those variables (must be freed by the caller) */
+int hx_graphpattern_variables ( hx_graphpattern* pat, hx_node*** vars ) {
+	int i, j, r;
+	int size1, size2, size3;
+	hx_node **set1, **set2, **set3;
+	void** vp;
+	hx_expr* e;
+	hx_graphpattern *gp		= NULL;
+	hx_graphpattern *gp2	= NULL;
+	hx_variablebindings_iter *iter, *iter2;
+	hx_graphpattern** p;
+	switch (pat->type) {
+		case HX_GRAPHPATTERN_BGP:
+			return hx_bgp_variables( pat->data, vars );
+		case HX_GRAPHPATTERN_FILTER:
+			vp		= (void**) pat->data;
+			e		= (hx_expr*) vp[0];
+			gp		= (hx_graphpattern*) vp[1];
+			return hx_graphpattern_variables( gp, vars );
+		case HX_GRAPHPATTERN_UNION:
+		case HX_GRAPHPATTERN_OPTIONAL:
+		case HX_GRAPHPATTERN_GROUP:
+			p		= (hx_graphpattern**) pat->data;
+			size1	= hx_graphpattern_variables( p[0], &set1 );
+			for (i = 1; i < pat->arity; i++) {
+				size2	= hx_graphpattern_variables( p[i], &set2 );
+				size3	= hx_node_uniq_set2( size1, set1, size2, set2, &set3, 1 );
+				for (j = 0; j < size1; j++) {
+					hx_free_node( set1[j] );
+				}
+				free( set1 );
+				set1	= set3;
+				size1	= size3;
+			}
+			if (vars != NULL) {
+				*vars	= set1;
+			}
+			return size1;
+		case HX_GRAPHPATTERN_GRAPH:
+		default:
+			fprintf( stderr, "*** Unrecognized or unimplemented graph pattern type '%c' in hx_graphpattern_variables\n", pat->type );
+			return 0;
+	};
+}
+
 int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int level ) {
 	if (pat->type == HX_GRAPHPATTERN_BGP) {
 		hx_bgp* b	= (hx_bgp*) pat->data;
