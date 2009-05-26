@@ -1,5 +1,7 @@
 #include "variablebindings.h"
 
+/* nodes must not be stack-allocated; it must be heap-allocated, and control for freeing
+   that memory is now handed off to the variablebindings code (hx_free_variablebindings) */
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names ) {
 	hx_variablebindings* b	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	b->size			= size;
@@ -37,6 +39,56 @@ int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 	free( b->nodes );
 	free( b );
 	return 0;
+}
+
+hx_variablebindings* hx_variablebindings_project ( hx_variablebindings* b, int newsize, int* columns ) {
+	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
+	c->size		= newsize;
+	c->names	= (char**) calloc( c->size, sizeof( char* ) );
+	c->nodes	= (hx_node_id*) calloc( c->size, sizeof( hx_node_id ) );
+	for (int i = 0; i < c->size; i++) {
+		int col	= columns[i];
+		if (col < 0) {
+			c->names[i]	= NULL;
+			c->nodes[i]	= 0;
+		} else {
+			char* name	= b->names[ col ];
+			char* _new	= (char*) calloc( strlen(name) + 1, sizeof( char ) );
+			strcpy( _new, name );
+			c->names[i]	= _new;
+			c->nodes[i]	= b->nodes[ col ];
+		}
+	}
+	c->free_names	= 1;
+	return c;
+}
+
+hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b, int newsize, char** names ) {
+	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
+	c->size		= newsize;
+	c->names	= (char**) calloc( c->size, sizeof( char* ) );
+	c->nodes	= (hx_node_id*) calloc( c->size, sizeof( hx_node_id ) );
+	for (int i = 0; i < c->size; i++) {
+		char* name	= names[i];
+		int col		= -1;
+		for (int j = 0; j < b->size; j++) {
+			if (strcmp(b->names[j], name) == 0) {
+				col	= j;
+				break;
+			}
+		}
+		if (col < 0 || col >= c->size) {
+			c->names[i]	= name;
+			c->nodes[i]	= 0;
+		} else {
+			char* _new	= (char*) calloc( strlen(name) + 1, sizeof( char ) );
+			strcpy( _new, name );
+			c->names[i]	= _new;
+			c->nodes[i]	= b->nodes[ col ];
+		}
+	}
+	c->free_names	= 1;
+	return c;
 }
 
 int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char** string ) {
@@ -112,7 +164,32 @@ char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column 
 }
 
 hx_node_id hx_variablebindings_node_id_for_binding ( hx_variablebindings* b, int column ) {
+	if (column >= b->size) {
+		return 0;
+	}
 	return b->nodes[ column ];
+}
+
+hx_node_id hx_variablebindings_node_id_for_binding_name ( hx_variablebindings* b, char* name ) {
+	int column	= -1;
+	for (int i = 0; i < b->size; i++) {
+		if (b->names[i] == NULL) {
+			continue;
+		}
+		if (strcmp(b->names[i], name) == 0) {
+			column	= i;
+			break;
+		}
+	}
+	if (column >= b->size) {
+		return 0;
+	}
+	if (column >= 0) {
+		hx_node_id id	= b->nodes[ column ];
+		return id;
+	} else {
+		return 0;
+	}
 }
 
 hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_nodemap* map, int column ) {
