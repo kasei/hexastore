@@ -92,6 +92,35 @@ int hx_free_bgp ( hx_bgp* b ) {
 	return 0;
 }
 
+
+hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_nodemap* map ) {
+	int size	= hx_bgp_size ( orig );
+	hx_triple** triples	= (hx_triple**) calloc( size, sizeof( hx_triple* ) );
+	for (int i = 0; i < size; i++) {
+		hx_node* nodes[3];
+		hx_triple* t	= hx_bgp_triple( orig, i );
+		nodes[0]	= t->subject;
+		nodes[1]	= t->predicate;
+		nodes[2]	= t->object;
+		
+		for (int j = 0; j < 3; j++) {
+			if (hx_node_is_variable(nodes[j])) {
+				char* name;
+				hx_node_variable_name( nodes[j], &name );
+				hx_node* n	= hx_variablebindings_node_for_binding_name( b, map, name );
+				free(name);
+				if (n != NULL) {
+					nodes[j]	= n;
+				}
+			}
+		}
+		triples[i]	= hx_new_triple( nodes[0], nodes[1], nodes[2] );
+	}
+	hx_bgp* bgp	= hx_new_bgp( size, triples );
+	free(triples);
+	return bgp;
+}
+
 int hx_bgp_size ( hx_bgp* b ) {
 	return b->size;
 }

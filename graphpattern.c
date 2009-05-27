@@ -103,6 +103,33 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 	return 0;
 }
 
+hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, hx_variablebindings* b, hx_nodemap* map ) {
+	int i;
+	void** vp;
+	hx_expr* e;
+	hx_graphpattern *gp1, *gp2;
+	switch (orig->type) {
+		case HX_GRAPHPATTERN_BGP:
+			return hx_bgp_substitute_variables( (hx_bgp*) orig->data, b, map );
+		case HX_GRAPHPATTERN_FILTER:
+			vp		= (void**) orig->data;
+			e		= (hx_expr*) vp[0];
+			gp1		= (hx_graphpattern*) vp[1];
+			return hx_new_graphpattern(
+						HX_GRAPHPATTERN_FILTER,
+						hx_expr_substitute_variables( e, b, map ),
+						hx_graphpattern_substitute_variables( gp1, b, map )
+					);
+		case HX_GRAPHPATTERN_UNION:
+		case HX_GRAPHPATTERN_OPTIONAL:
+		case HX_GRAPHPATTERN_GROUP:
+		case HX_GRAPHPATTERN_GRAPH:
+		default:
+			fprintf( stderr, "*** Unrecognized or unimplemented graph pattern type '%c' in hx_graphpattern_substitute_variables\n", orig->type );
+			return NULL;
+	}
+}
+
 hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hexastore* hx, hx_storage_manager* s ) {
 	int i;
 	void** vp;

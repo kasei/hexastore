@@ -22,6 +22,7 @@ extern "C" {
 #include "mergejoin.h"
 #include "expr.h"
 #include "bgp.h"
+#include "variablebindings.h"
 
 typedef enum {
 	HX_GRAPHPATTERN_BGP			= 'B',
@@ -40,6 +41,8 @@ typedef struct {
 
 hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... );
 int hx_free_graphpattern ( hx_graphpattern* p );
+
+hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* pat, hx_variablebindings* b, hx_nodemap* map );
 
 hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore*, hx_storage_manager* );
 

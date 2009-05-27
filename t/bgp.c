@@ -9,11 +9,13 @@ void bgp2_test ( void );
 void bgp3_test ( void );
 void bgp_vars_test1 ( void );
 void bgp_vars_test2 ( void );
+void bgp_varsub_test1 ( void );
+void bgp_varsub_test2 ( void );
 void serialization_test ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3, *v1, *v2;
 int main ( void ) {
-	plan_tests(14);
+	plan_tests(17);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -31,6 +33,8 @@ int main ( void ) {
 	serialization_test();
 	bgp_vars_test1();
 	bgp_vars_test2();
+	bgp_varsub_test1();
+	bgp_varsub_test2();
 	
 	hx_free_node( p1 );
 	hx_free_node( p2 );
@@ -181,6 +185,82 @@ void bgp_vars_test2 ( void ) {
 		hx_free_node(y);
 		free(v);
 		hx_free_bgp( b );
+	}
+}
+
+void bgp_varsub_test1 ( void ) {
+	{
+		hx_nodemap* map			= hx_new_nodemap();
+		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
+		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
+		
+		hx_triple t1;
+		_fill_triple( &t1, r1, v1, l1 );	// <r1> ?x "l1"
+		hx_bgp* bgp	= hx_new_bgp1( &t1 );
+		
+		{
+			char* names[1]			= { "x" };
+			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
+			nodes[0]				= p1_id;
+			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes, 0 );
+			
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			char* string;
+			hx_bgp_sse( c, &string, "  ", 0 );
+			ok( strcmp( string, "(bgp\n  (triple <r1> <p1> \"l1\")\n)\n" ) == 0, "expected bgp after varsub" );
+			free( string );
+			hx_free_bgp( c );
+			hx_free_variablebindings(b,0);
+		}
+		
+		{
+			char* names[1]			= { "x" };
+			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
+			nodes[0]				= p2_id;
+			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes, 0 );
+			
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			char* string;
+			hx_bgp_sse( c, &string, "  ", 0 );
+			ok( strcmp( string, "(bgp\n  (triple <r1> <p2> \"l1\")\n)\n" ) == 0, "expected bgp after varsub" );
+			free( string );
+			hx_free_bgp( c );
+			hx_free_variablebindings(b,0);
+		}
+		
+		hx_free_nodemap( map );
+		hx_free_bgp( bgp );
+	}
+}
+
+void bgp_varsub_test2 ( void ) {
+	{
+		hx_nodemap* map			= hx_new_nodemap();
+		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
+		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
+		
+		hx_triple t1;
+		_fill_triple( &t1, v1, v1, v2 );	// ?x ?x ?y
+		hx_bgp* bgp	= hx_new_bgp1( &t1 );
+		
+		{
+			char* names[2]			= { "y", "x" };
+			hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
+			nodes[0]				= p2_id;
+			nodes[1]				= p1_id;
+			hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes, 0 );
+			
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			char* string;
+			hx_bgp_sse( c, &string, "  ", 0 );
+			ok( strcmp( string, "(bgp\n  (triple <p1> <p1> <p2>)\n)\n" ) == 0, "expected bgp after varsub" );
+			free( string );
+			hx_free_bgp( c );
+			hx_free_variablebindings(b,0);
+		}
+		
+		hx_free_nodemap( map );
+		hx_free_bgp( bgp );
 	}
 }
 

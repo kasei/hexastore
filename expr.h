@@ -80,6 +80,8 @@ hx_expr* hx_new_builtin_expr2 ( hx_expr_subtype_t type, hx_expr* data1, hx_expr*
 hx_expr* hx_new_builtin_expr3 ( hx_expr_subtype_t type, hx_expr* data1, hx_expr* data2, hx_expr* data3 );
 int hx_free_expr ( hx_expr* e );
 
+hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_nodemap* map );
+
 int hx_expr_type_arity ( hx_expr_subtype_t type );
 int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level );
 int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node** result );

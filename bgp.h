@@ -38,6 +38,8 @@ hx_triple* hx_bgp_triple ( hx_bgp* b, int index );
 int hx_bgp_reorder ( hx_bgp* , hx_hexastore* , hx_storage_manager* );
 hx_variablebindings_iter* hx_bgp_execute ( hx_bgp*, hx_hexastore*, hx_storage_manager* );
 
+hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_nodemap* map );
+
 int hx_bgp_debug ( hx_bgp* b );
 int hx_bgp_string ( hx_bgp* b, char** string );
 int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level );

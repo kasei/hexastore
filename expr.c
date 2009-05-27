@@ -91,6 +91,11 @@ int hx_free_expr ( hx_expr* e ) {
 	}
 }
 
+hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_nodemap* map ) {
+	// XXX
+	return NULL;
+}
+
 int hx_expr_type_arity ( hx_expr_subtype_t type ) {
 	if (type <= HX_EXPR_UNARY_MAX) {
 		return 1;
