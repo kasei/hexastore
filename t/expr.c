@@ -6,13 +6,15 @@
 void test_serialization ( void );
 void test_constructors ( void );
 void test_eval ( void );
+void expr_varsub_test1 ( void );
 
 int main ( void ) {
-	plan_tests(19);
+	plan_tests(20);
 	
 	test_constructors();
 	test_serialization();
 	test_eval();
+	expr_varsub_test1();
 	
 	return exit_status();
 }
@@ -134,5 +136,33 @@ void test_eval ( void ) {
 		hx_free_node(x);
 		hx_free_node(iri);
 		hx_free_node(lit);
+	}
+}
+
+void expr_varsub_test1 ( void ) {
+	{
+		hx_node* p1	= hx_new_node_resource( "http://xmlns.com/foaf/0.1/name" );
+		hx_expr* v1	= hx_new_node_expr( hx_new_node_named_variable( -1, "v" ) );
+		hx_expr* e	= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, v1 );
+
+		hx_nodemap* map			= hx_new_nodemap();
+		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
+		
+		char* names[1]			= { "v" };
+		hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
+		nodes[0]				= p1_id;
+		hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes, 0 );
+
+		hx_expr* f				= hx_expr_substitute_variables( e, b, map );
+		
+		char* string;
+		hx_expr_sse( f, &string, "  ", 0 );
+		ok1( strcmp( string, "(sparql:str <http://xmlns.com/foaf/0.1/name>)" ) == 0 );
+		free( string );
+		hx_free_expr(e);
+		hx_free_expr(f);
+		
+		hx_free_variablebindings(b,0);
+		hx_free_nodemap( map );
 	}
 }

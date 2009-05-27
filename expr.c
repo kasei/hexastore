@@ -86,13 +86,57 @@ int hx_free_expr ( hx_expr* e ) {
 		free( e );
 		return 0;
 	} else {
-		fprintf( stderr, "*** non-builtin exprs not implemented yet\n" );
+		fprintf( stderr, "*** non-builtin exprs not implemented yet in hx_free_expr\n" );
 		return 1;
 	}
 }
 
 hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_nodemap* map ) {
-	// XXX
+	if (orig->subtype == HX_EXPR_OP_NODE) {
+		hx_node* n	= (hx_node*) orig->operands;
+		if (hx_node_is_variable(n)) {
+			char* name;
+			hx_node_variable_name( n, &name );
+			hx_node* m	= hx_variablebindings_node_for_binding_name( b, map, name );
+			free(name);
+			if (m != NULL) {
+				n	= m;
+			}
+		}
+		return hx_new_node_expr( n );
+	} else {
+		hx_expr** args;
+		hx_expr *e, *e2, *e3;
+		switch (orig->arity) {
+			case 1:
+				args	= (hx_expr**) orig->operands;
+				e		= args[0];
+				return hx_new_builtin_expr1( orig->subtype, hx_expr_substitute_variables(e,b,map) );
+			case 2:
+				args	= (hx_expr**) orig->operands;
+				e		= args[0];
+				e2		= args[1];
+				return hx_new_builtin_expr2(
+							orig->subtype,
+							hx_expr_substitute_variables(e,b,map),
+							hx_expr_substitute_variables(e2,b,map)
+						);
+			case 3:
+				args	= (hx_expr**) orig->operands;
+				e		= args[0];
+				e2		= args[1];
+				e3		= args[2];
+				return hx_new_builtin_expr3(
+							orig->subtype,
+							hx_expr_substitute_variables(e,b,map),
+							hx_expr_substitute_variables(e2,b,map),
+							hx_expr_substitute_variables(e3,b,map)
+						);
+			default:
+				fprintf( stderr, "*** Unrecognized or unimplemented expression type %d in hx_expr_substitute_variables\n", orig->type );
+				return NULL;
+		};
+	}
 	return NULL;
 }
 
@@ -187,7 +231,7 @@ int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level ) {
 			return 0;
 		}
 	} else {
-		fprintf( stderr, "*** non-builtin exprs not implemented yet\n" );
+		fprintf( stderr, "*** non-builtin exprs not implemented yet in hx_expr_sse\n" );
 		fprintf( stderr, "*** type == %d, subtype = %d\n", e->type, e->subtype );
 		return 1;
 	}
@@ -316,7 +360,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 			}
 		}
 	} else {
-		fprintf( stderr, "*** non-builtin exprs not implemented yet\n" );
+		fprintf( stderr, "*** non-builtin exprs not implemented yet in hx_expr_eval\n" );
 		return 1;
 	}
 }
