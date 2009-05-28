@@ -106,20 +106,21 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, hx_variablebindings* b, hx_nodemap* map ) {
 	int i;
 	void** vp;
-	hx_expr* e;
+	hx_expr *e, *e2;
 	hx_graphpattern *gp1, *gp2;
 	switch (orig->type) {
 		case HX_GRAPHPATTERN_BGP:
-			return hx_bgp_substitute_variables( (hx_bgp*) orig->data, b, map );
+			return hx_new_graphpattern(
+					HX_GRAPHPATTERN_BGP,
+					hx_bgp_substitute_variables( (hx_bgp*) orig->data, b, map )
+				);
 		case HX_GRAPHPATTERN_FILTER:
 			vp		= (void**) orig->data;
 			e		= (hx_expr*) vp[0];
+			e2		= hx_expr_substitute_variables( e, b, map );
 			gp1		= (hx_graphpattern*) vp[1];
-			return hx_new_graphpattern(
-						HX_GRAPHPATTERN_FILTER,
-						hx_expr_substitute_variables( e, b, map ),
-						hx_graphpattern_substitute_variables( gp1, b, map )
-					);
+			gp2		= hx_graphpattern_substitute_variables( gp1, b, map );
+			return hx_new_graphpattern( HX_GRAPHPATTERN_FILTER,	e2, gp2 );
 		case HX_GRAPHPATTERN_UNION:
 		case HX_GRAPHPATTERN_OPTIONAL:
 		case HX_GRAPHPATTERN_GROUP:
@@ -295,7 +296,7 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 		} else if (pat->type == HX_GRAPHPATTERN_GROUP) {
 			name	= "ggp";
 		} else {
-			fprintf( stderr, "*** unrecognized graph pattern type '%c'\n", pat->type );
+			fprintf( stderr, "*** unrecognized graph pattern type '%c' in hx_graphpattern_sse\n", pat->type );
 		}
 		
 		int alloc	= 256 + strlen(name) + 3 + (strlen(indent) * level);

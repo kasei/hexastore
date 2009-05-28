@@ -13,10 +13,11 @@ void eval_test2 ( void );
 void serialization_test ( void );
 void variable_test1 ( void );
 void variable_test2 ( void );
+void gp_varsub_test1 ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3, *l4, *l5, *l6, *v1, *v2, *v3;
 int main ( void ) {
-	plan_tests(32);
+	plan_tests(33);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -37,6 +38,7 @@ int main ( void ) {
 	eval_test2();
 	variable_test1();
 	variable_test2();
+	gp_varsub_test1();
 	
 	hx_free_node( p1 );
 	hx_free_node( p2 );
@@ -264,6 +266,37 @@ void variable_test2 ( void ) {
 	free(v);
 	
 	hx_free_graphpattern( p );
+}
+
+void gp_varsub_test1 ( void ) {
+	fprintf( stdout, "# variable substitution test\n" );
+	{
+		hx_nodemap* map			= hx_new_nodemap();
+		hx_node_id l4_id		= hx_nodemap_add_node( map, l4 );
+		hx_node_id l5_id		= hx_nodemap_add_node( map, l5 );
+		
+		hx_expr* e			= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, hx_new_node_expr(v1) );
+		hx_graphpattern* be	= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
+		hx_graphpattern* p	= hx_new_graphpattern( HX_GRAPHPATTERN_FILTER, e, be );
+		
+		{
+			char* names[1]			= { "x" };
+			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
+			nodes[0]				= l4_id;
+			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes, 0 );
+			
+			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, map );
+			char* string;
+			hx_graphpattern_sse( q, &string, "  ", 0 );
+			ok( strcmp( string, "(filter\n  (sparql:str \"l4\")\n  (bgp\n    (triple ?y <p1> \"l1\")\n    (triple ?y <p2> \"l4\")\n  )\n)\n" ) == 0, "expected graphpattern after varsub" );
+			free( string );
+			hx_free_graphpattern( q );
+			hx_free_variablebindings(b,0);
+		}
+		
+		hx_free_graphpattern( p );
+		hx_free_nodemap( map );
+	}
 }
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
