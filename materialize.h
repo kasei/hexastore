@@ -50,6 +50,9 @@ int _hx_materialize_cmp_bindings ( const void* _a, const void* _b );
 int _hx_materialize_cmp_bindings_column ( const void* _a, const void* _b );
 
 hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* iter );
+hx_variablebindings_iter* hx_new_materialize_iter_with_data ( int size, char** _names, int length, hx_variablebindings** bindings );
+
+int hx_materialize_reset_iter ( hx_variablebindings_iter* iter );
 int hx_materialize_sort_iter_by_column ( hx_variablebindings_iter* iter, int index );
 int hx_materialize_sort_iter ( hx_variablebindings_iter* iter );
 

@@ -124,6 +124,48 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	return miter;
 }
 
+hx_variablebindings_iter* hx_new_materialize_iter_with_data ( int size, char** _names, int length, hx_variablebindings** bindings ) {
+	char** names	= (char**) calloc( size, sizeof( char* ) );
+	int sorted_by	= -1;
+	for (int i = 0; i < size; i++) {
+		char* _new	= (char*) calloc( strlen( _names[i] ) + 1, sizeof( char ) );
+		strcpy( _new, _names[i] );
+		names[i]	= _new;
+	}
+	
+	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	vtable->finished	= _hx_materialize_iter_vb_finished;
+	vtable->current		= _hx_materialize_iter_vb_current;
+	vtable->next		= _hx_materialize_iter_vb_next;
+	vtable->free		= _hx_materialize_iter_vb_free;
+	vtable->names		= _hx_materialize_iter_vb_names;
+	vtable->size		= _hx_materialize_iter_vb_size;
+	vtable->sorted_by	= _hx_materialize_iter_sorted_by;
+	vtable->debug		= _hx_materialize_debug;
+	
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) calloc( 1, sizeof( _hx_materialize_iter_vb_info ) );
+	info->started	= 1;
+	info->finished	= 0;
+	info->size		= size;
+	info->index		= 0;
+	info->sorted_by	= sorted_by;
+	
+	info->names		= names;
+	info->iter		= NULL;
+	info->length	= length;
+	info->bindings	= bindings;
+	
+	hx_variablebindings_iter* miter	= hx_variablebindings_new_iter( vtable, (void*) info );
+	return miter;
+}
+
+int hx_materialize_reset_iter ( hx_variablebindings_iter* iter ) {
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
+	info->finished	= 0;
+	info->index		= 0;
+	return 0;
+}
+
 int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 	if (info->started == 0) {
 		info->started	= 1;
