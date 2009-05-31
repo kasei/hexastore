@@ -3,7 +3,7 @@ CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -gg
 CC			=	gcc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
 
 all: parse print optimize tests examples parse_query
 
@@ -73,6 +73,9 @@ storage.o: storage.c storage.h hexastore_types.h
 graphpattern.o: graphpattern.c graphpattern.h hexastore_types.h
 	$(CC) $(INC) -c graphpattern.c
 
+project.o: project.c project.h hexastore_types.h
+	$(CC) $(INC) -c project.c
+
 ########
 
 SPARQLParser.c:
@@ -95,7 +98,7 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -152,6 +155,9 @@ t/parser.t: tap.o t/parser.c $(OBJECTS) tap.o
 
 t/variablebindings.t: tap.o t/variablebindings.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/variablebindings.t t/variablebindings.c $(OBJECTS) tap.o
+
+t/project.t: tap.o t/project.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/project.t t/project.c $(OBJECTS) tap.o
 
 ########
 

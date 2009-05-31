@@ -298,5 +298,6 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 		hx_variablebindings_string( info->bindings[i], NULL, &string );
 		fprintf( stderr, "%s%s  [%d] %s\n", indent, header, i, string );
 	}
+	free(indent);
 	return 0;
 }
