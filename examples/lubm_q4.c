@@ -7,7 +7,6 @@
 // }
 
 #include <stdio.h>
-#include <pthread.h>
 #include "hexastore.h"
 #include "mergejoin.h"
 #include "node.h"

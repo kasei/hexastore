@@ -33,3 +33,46 @@ int hx_triple_string ( hx_triple* t, char** string ) {
 	free( o );
 	return 0;
 }
+
+uint64_t hx_triple_hash_on_node ( hx_triple* t, hx_node_position_t pos, hx_hash_function* func ) {
+	hx_hash_function* hashfunc	= (func == NULL) ? hx_triple_hash_string : func;
+	hx_node* n;
+	switch (pos) {
+		case HX_SUBJECT:
+			n	= t->subject;
+			break;
+		case HX_PREDICATE:
+			n	= t->predicate;
+			break;
+		case HX_OBJECT:
+			n	= t->object;
+			break;
+		default:
+			fprintf( stderr, "unrecognized triple node position %d in hx_triple_hash_on_node\n", pos );
+	};
+	char* string;
+	hx_node_string( n, &string );
+	uint64_t h	= hashfunc( string );
+	free(string);
+	return h;
+}
+
+uint64_t hx_triple_hash ( hx_triple* t, hx_hash_function* func ) {
+	uint64_t s	= hx_triple_hash_on_node( t, HX_SUBJECT, func );
+	uint64_t p	= hx_triple_hash_on_node( t, HX_PREDICATE, func );
+	uint64_t o	= hx_triple_hash_on_node( t, HX_OBJECT, func );
+	return s^p^o;
+}
+
+uint64_t hx_triple_hash_string ( char* s ) {
+	uint64_t h	= 0;
+	int len	= strlen(s);
+	for (int i = 0; i < len; i++) {
+		unsigned char ki	= (unsigned char) s[i];
+		uint64_t highorder	= h & 0xfffffffff8000000;	// extract high-order 37 bits from h
+		h	= h << 37;									// shift h left by 37 bits
+		h	= h ^ (highorder >> 27);					// move the highorder 37 bits to the low-order end and XOR into h
+		h = h ^ ki;										// XOR h and ki
+	}
+	return h;
+}

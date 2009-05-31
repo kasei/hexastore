@@ -27,11 +27,11 @@ extern "C" {
 #include "storage.h"
 #include "triple.h"
 
-enum {
+typedef enum {
 	RDF_ITER_FLAGS_BOUND_A	= 1,
 	RDF_ITER_FLAGS_BOUND_B	= 2,
 	RDF_ITER_FLAGS_BOUND_C	= 4
-};
+} hx_iter_flag_t;
 
 #define THREADED_BATCH_SIZE	5000
 

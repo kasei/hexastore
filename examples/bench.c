@@ -10,7 +10,6 @@
 
 #include <time.h>
 #include <stdio.h>
-#include <pthread.h>
 #include "hexastore.h"
 #include "variablebindings.h"
 #include "mergejoin.h"

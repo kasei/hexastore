@@ -37,6 +37,13 @@ int hx_free_triple ( hx_triple* t );
 
 int hx_triple_string ( hx_triple* t, char** string );
 
+typedef uint64_t hx_hash_function ( char* s );
+
+uint64_t hx_triple_hash_on_node ( hx_triple* t, hx_node_position_t pos, hx_hash_function* func );
+uint64_t hx_triple_hash ( hx_triple* t, hx_hash_function* func );
+
+uint64_t hx_triple_hash_string ( char* s );
+
 #ifdef __cplusplus
 }
 #endif

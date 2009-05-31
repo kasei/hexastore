@@ -18,11 +18,14 @@ extern "C" {
 typedef int64_t hx_node_id;
 typedef hx_node_id list_size_t;
 
-#define HX_SUBJECT		0
-#define HX_PREDICATE	1
-#define HX_OBJECT		2
+typedef enum {
+	HX_SUBJECT		= 0,
+	HX_PREDICATE	= 1,
+	HX_OBJECT		= 2,
+	HX_GRAPH		= 4
+} hx_node_position_t;
 
-static char* HX_POSITION_NAMES[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
+static char* HX_POSITION_NAMES[4]	= { "SUBJECT", "PREDICATE", "OBJECT", "GRAPH" };
 
 #ifdef __cplusplus
 }
