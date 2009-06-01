@@ -15,7 +15,10 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef HAVE_LIBPTHREAD
 #include <pthread.h>
+#endif
 
 #include "hexastore_types.h"
 #include "variablebindings.h"

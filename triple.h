@@ -15,7 +15,6 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 
 #include "hexastore_types.h"
 #include "node.h"

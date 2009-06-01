@@ -96,10 +96,13 @@ int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_n
 }
 
 int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count ) {
+#ifdef HAVE_LIBPTHREAD
 	if (count < THREADED_BATCH_SIZE) {
+#endif
 		for (int i = 0; i < count; i++) {
 			hx_add_triple( hx, s, triples[i].subject, triples[i].predicate, triples[i].object );
 		}
+#ifdef HAVE_LIBPTHREAD
 	} else {
 		hx_triple_id* triple_ids	= (hx_triple_id*) calloc( count, sizeof( hx_triple_id ) );
 		for (int i = 0; i < count; i++) {
@@ -174,6 +177,7 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 		free( threads );
 		free( triple_ids );
 	}
+#endif
 	return 0;
 }
 
