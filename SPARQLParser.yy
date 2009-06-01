@@ -249,7 +249,7 @@ myQuery:
 		gp_query_t* q	= (gp_query_t*) calloc( 1, sizeof( gp_query_t ) );
 		q->prologue		= (prologue_t*) $1;
 		q->gp			= (container_t*) $2;
-		
+		parsedGP		= q;
 		parsedPrologue	= (void*) $1; /** XXX should remove at some point... only here to support the parse_bgp functions **/
 	}
 	
@@ -1409,10 +1409,7 @@ WhereClause:
 ;
 
 _QIT_WHERE_E_Opt:
-		{
-			$$	= NULL;
-		}
-
+		{}
 		| IT_WHERE	{}
 ;
 
@@ -1480,7 +1477,6 @@ OrderCondition:
 
 _O_QIT_ASC_E_Or_QIT_DESC_E_C:
 		IT_ASC	{}
-
 		| IT_DESC	{}
 ;
 
@@ -1490,28 +1486,38 @@ _O_QIT_ASC_E_Or_QIT_DESC_E_S_QBrackettedExpression_E_C:
 
 _O_QConstraint_E_Or_QVar_E_C:
 		Constraint	{}
-
 		| Var	{}
 ;
 
 LimitClause:
-		IT_LIMIT INTEGER {}
+		IT_LIMIT INTEGER {
+			$$	= $2;
+		}
 ;
 
 OffsetClause:
-		IT_OFFSET INTEGER	{}
+		IT_OFFSET INTEGER	{
+			$$	= $2;
+		}
 ;
 
 GroupGraphPattern:
 		GT_LCURLEY _QTriplesBlock_E_Opt _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star GT_RCURLEY	{
+			container_t* bgp	= (container_t*) $2;
+			container_t* set	= new_container( TYPE_GGP, 5 );
+			container_push_item( set, bgp );
+			$$	= set;
+			
 			/** XXXXXXXXXXXXXXXXXXXX **/
 			/** this is to set the BGP for the parse_bgp functions **/
 			bgp_query_t* q	= (bgp_query_t*) calloc( 1, sizeof( bgp_query_t ) );
 			q->prologue		= NULL;
-			q->bgp			= (container_t*) $2;
+			q->bgp			= bgp;
 			q->filter		= NULL;
 			parsedBGPPattern		= (void*) q;
 			/** XXXXXXXXXXXXXXXXXXXX **/
+			
+			
 			
 			
 			
@@ -1626,13 +1632,43 @@ char* prefix_uri ( prologue_t* p, char* ns );
 char* qualify_qname ( prologue_t* p, char* qname );
 hx_node* generate_node ( node_t* n, prologue_t* p, int* counter );
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter );
+hx_bgp* generate_bgp ( container_t* bgp, prologue_t* p, int* counter );
+hx_graphpattern* generate_graphpattern ( container_t* bgp, prologue_t* p, int* counter );
+
 hx_bgp* parse_bgp_query ( void );
 hx_bgp* parse_bgp_query_string ( char* string );
+
+hx_graphpattern* parse_query ( void );
+hx_graphpattern* parse_query_string ( char* string );
+
 int free_container ( container_t* c, int free_contained_objects );
 int free_node ( node_t* n );
 
 void yyerror (char const *s) {
 	fprintf (stderr, "*** %s\n", s);
+}
+
+hx_graphpattern* parse_query ( void ) {
+	if (yyparse() == 0) {
+		int i;
+		hx_graphpattern* g;
+		container_t* graphpattern;
+		hx_triple** triples;
+		int counter	= -1;
+		gp_query_t* q			= (gp_query_t*) parsedGP;
+		prologue_t* prologue	= q->prologue;
+		
+		hx_graphpattern* pat	= generate_graphpattern( q->gp, prologue, &counter );
+		free_prologue( prologue );
+		
+		return pat;
+	}
+	return NULL;
+}
+
+hx_graphpattern* parse_query_string ( char* string ) {
+	yy_scan_string( string );
+	return parse_query();
 }
 
 hx_bgp* parse_bgp_query_string ( char* string ) {
@@ -1642,14 +1678,11 @@ hx_bgp* parse_bgp_query_string ( char* string ) {
 
 hx_bgp* parse_bgp_query ( void ) {
 	if (yyparse() == 0) {
-		int i;
 		hx_bgp* b;
 		container_t* bgp;
-		hx_triple** triples;
 		int counter	= -1;
-		bgp_query_t* q		= (bgp_query_t*) parsedBGPPattern;
+		bgp_query_t* q			= (bgp_query_t*) parsedBGPPattern;
 		prologue_t* prologue	= parsedPrologue;
-		
 		if (q->filter != NULL) {
 			hx_expr* e;
 			char* string;
@@ -1661,27 +1694,55 @@ hx_bgp* parse_bgp_query ( void ) {
 			free( string );
 		}
 		
-		bgp	= q->bgp;
-		triples	= (hx_triple**) calloc( bgp->count, sizeof( hx_triple* ) );
-		for (i = 0; i < bgp->count; i++) {
-			triple_t* t		= bgp->items[i];
-			hx_node* s	= generate_node( t->subject, prologue, &counter );
-			hx_node* p	= generate_node( t->predicate, prologue, &counter );
-			hx_node* o	= generate_node( t->object, prologue, &counter );
-			hx_triple* triple;
-			if (s == NULL || p == NULL || o == NULL) {
-				fprintf( stderr, "Got NULL node in triple: (%p, %p, %p)\n", (void*) s, (void*) p, (void*) o );
-				return NULL;
-			}
-			triple	= hx_new_triple( s, p, o );
-			triples[i]	= triple;
-		}
+		b	= generate_bgp( q->bgp, prologue, &counter );
 		free_prologue( prologue );
-		
-		b	= hx_new_bgp( bgp->count, triples );
 		return b;
 	}
 	return NULL;
+}
+
+hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* counter ) {
+	int i;
+	hx_bgp* b;
+	hx_graphpattern** patterns;
+	hx_sparqlparser_pattern_t type	= gp->type;
+
+	switch (type) {
+		case TYPE_GGP:
+			patterns	= (hx_graphpattern**) calloc( gp->count, sizeof( hx_graphpattern* ) );
+			for (i = 0; i < gp->count; i++) {
+				patterns[i]	= generate_graphpattern( gp->items[i], p, counter );
+			}
+			return hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
+		case TYPE_BGP:
+			b	= generate_bgp( gp, p, counter );
+			return hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
+		default:
+			fprintf( stderr, "*** Unimplemented graphpattern type %c in generate_graphpattern\n", type );
+			return NULL;
+	};
+	
+	return NULL;
+}
+
+hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, int* counter ) {
+	int i;
+	hx_triple** triples	= (hx_triple**) calloc( bgp->count, sizeof( hx_triple* ) );
+	for (i = 0; i < bgp->count; i++) {
+		triple_t* t		= bgp->items[i];
+		hx_node* s	= generate_node( t->subject, prologue, counter );
+		hx_node* p	= generate_node( t->predicate, prologue, counter );
+		hx_node* o	= generate_node( t->object, prologue, counter );
+		hx_triple* triple;
+		if (s == NULL || p == NULL || o == NULL) {
+			fprintf( stderr, "Got NULL node in triple: (%p, %p, %p)\n", (void*) s, (void*) p, (void*) o );
+			return NULL;
+		}
+		triple	= hx_new_triple( s, p, o );
+		triples[i]	= triple;
+	}
+	
+	return hx_new_bgp( bgp->count, triples );
 }
 
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {

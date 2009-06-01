@@ -64,6 +64,24 @@ hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... ) {
 	return pat;
 }
 
+hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size, void* ptr ) {
+	int i;
+	hx_graphpattern* pat	= (hx_graphpattern*) calloc( 1, sizeof( hx_graphpattern ) );
+	pat->type	= type;
+	hx_graphpattern** p;
+	hx_node* n;
+	void** vp;
+	hx_bgp* bgp;
+	pat->arity	= size;
+	hx_graphpattern** patterns	= (hx_graphpattern**) ptr;
+	p			= calloc( pat->arity, sizeof( hx_graphpattern* ) );
+	for (i = 0; i < size; i++) {
+		p[i]	= patterns[i];
+	}
+	pat->data	= p;
+	return pat;
+}
+
 int hx_free_graphpattern ( hx_graphpattern* pat ) {
 	int i;
 	void** vp;

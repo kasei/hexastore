@@ -1,5 +1,5 @@
 #include "hexastore.h"
-#include "bgp.h"
+#include "graphpattern.h"
 #include "tap.h"
 
 extern hx_bgp* parse_bgp_query ( void );
@@ -9,7 +9,7 @@ void serialization_test ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3;
 int main ( void ) {
-	plan_tests(2);
+	plan_tests(3);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -53,5 +53,16 @@ void serialization_test ( void ) {
 			free( string );
 		}
 		hx_free_bgp( b );
+	}
+
+	{
+		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+		{
+			char* string;
+			hx_graphpattern_sse( g, &string, "  ", 0 );
+			ok( strcmp( string, "(ggp\n  (bgp\n    (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)\n  )\n)\n" ) == 0, "expected ggp sse, space indent" );
+			free( string );
+		}
+		hx_free_graphpattern( g );
 	}
 }
