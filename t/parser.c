@@ -9,7 +9,7 @@ void serialization_test ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3;
 int main ( void ) {
-	plan_tests(3);
+	plan_tests(5);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -60,7 +60,29 @@ void serialization_test ( void ) {
 		{
 			char* string;
 			hx_graphpattern_sse( g, &string, "  ", 0 );
-			ok( strcmp( string, "(ggp\n  (bgp\n    (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)\n  )\n)\n" ) == 0, "expected ggp sse, space indent" );
+			ok( strcmp( string, "(ggp\n  (bgp\n    (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)\n  )\n)\n" ) == 0, "expected ggp sse" );
+			free( string );
+		}
+		hx_free_graphpattern( g );
+	}
+
+	{
+		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+		{
+			char* string;
+			hx_graphpattern_sse( g, &string, "  ", 2 );
+			ok( strcmp( string, "(ggp\n      (bgp\n        (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)\n      )\n    )\n" ) == 0, "expected ggp sse" );
+			free( string );
+		}
+		hx_free_graphpattern( g );
+	}
+
+	{
+		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p a foaf:Person ; foaf:name ?name . FILTER isBLANK(?p) }" );
+		{
+			char* string;
+			hx_graphpattern_sse( g, &string, "  ", 0 );
+			ok( strcmp( string, "(filter\n  (sparql:isblank ?p)\n  (ggp\n    (bgp\n      (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)\n      (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)\n    )\n  )\n)\n" ) == 0, "expected ggp with filter sse" );
 			free( string );
 		}
 		hx_free_graphpattern( g );

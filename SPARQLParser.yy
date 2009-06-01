@@ -133,7 +133,7 @@ extern container_t* new_container ( char type, int size );
 extern int free_container ( container_t* c, int free_contained_objects );
 extern void container_push_item( container_t* set, void* t );
 extern void container_unshift_item( container_t* set, void* t );
-extern expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg );
+extern expr_t* new_expr_data ( hx_expr_subtype_t op, void* arg );
 extern void XXXdebug_node( node_t*, prologue_t* );
 extern void XXXdebug_triple( triple_t*, prologue_t* );
 
@@ -897,7 +897,9 @@ BlankNode:
 
 Filter:
 	IT_FILTER Constraint {
-		$$	= $2;
+		container_t* set	= new_container( TYPE_FILTER, 1 );
+		container_push_item( set, $2 );
+		$$	= set;
 	}
 ;
 
@@ -1506,7 +1508,17 @@ GroupGraphPattern:
 			container_t* bgp	= (container_t*) $2;
 			container_t* set	= new_container( TYPE_GGP, 5 );
 			container_push_item( set, bgp );
+			
 			$$	= set;
+			if ($3 != NULL) {
+				container_t* nottriples	= (container_t*) $3;
+				if (nottriples->type == TYPE_FILTER) {
+					container_t* filter	= nottriples;
+					container_push_item( filter, set );
+					$$	= filter;
+				}
+			}
+			
 			
 			/** XXXXXXXXXXXXXXXXXXXX **/
 			/** this is to set the BGP for the parse_bgp functions **/
@@ -1526,21 +1538,27 @@ GroupGraphPattern:
 ;
 
 _O_QGraphPatternNotTriples_E_Or_QFilter_E_C:
-		GraphPatternNotTriples	{}
+		GraphPatternNotTriples	{
+			$$	= $1;
+		}
 
-		| Filter {}
+		| Filter {
+			$$	= $1;
+		}
 ;
 
 _QGT_DOT_E_Opt:
-		{
-			$$	= NULL;
-		}
-
+		{}
 		| GT_DOT {}
 ;
 
 _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C:
-		_O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{}
+		_O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{
+			$$	= $1;
+			if ($3 != NULL) {
+				/* XXX */
+			}
+		}
 ;
 
 _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star:
@@ -1549,7 +1567,8 @@ _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Op
 		}
 
 		| _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
-			
+			$$	= $2;
+			/* XXX handle the stuff in $1 */
 		}
 ;
 
@@ -1704,7 +1723,9 @@ hx_bgp* parse_bgp_query ( void ) {
 hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* counter ) {
 	int i;
 	hx_bgp* b;
+	hx_expr* e;
 	hx_graphpattern** patterns;
+	hx_graphpattern *pat;
 	hx_sparqlparser_pattern_t type	= gp->type;
 
 	switch (type) {
@@ -1717,6 +1738,10 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* co
 		case TYPE_BGP:
 			b	= generate_bgp( gp, p, counter );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
+		case TYPE_FILTER:
+			e	= generate_expr( gp->items[0], p, counter );
+			pat	= generate_graphpattern( gp->items[1], p, counter );
+			return hx_new_graphpattern( HX_GRAPHPATTERN_FILTER, e, pat );
 		default:
 			fprintf( stderr, "*** Unimplemented graphpattern type %c in generate_graphpattern\n", type );
 			return NULL;
@@ -1977,7 +2002,7 @@ void container_unshift_item( container_t* set, void* t ) {
 	set->items[ 0 ]	= t;
 }
 
-expr_t* new_expr_data ( hx_expr_subtype_t op, hx_expr* arg ) {
+expr_t* new_expr_data ( hx_expr_subtype_t op, void* arg ) {
 	expr_t* d	= (expr_t*) calloc( 1, sizeof( expr_t ) );
 	d->op	= op;
 	d->args	= new_container( TYPE_EXPR, 3 );

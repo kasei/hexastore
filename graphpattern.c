@@ -236,17 +236,19 @@ int hx_graphpattern_variables ( hx_graphpattern* pat, hx_node*** vars ) {
 }
 
 int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int level ) {
+	int i;
+	char* indent1	= calloc( 1, strlen(indent) * level + 1 );
+	char* indent2	= calloc( 1, strlen(indent) * (level+1) + 1 );
+	for (i = 0; i < level; i++) {
+		strcat( indent1, indent );
+		strcat( indent2, indent );
+	}
+	strcat( indent2, indent );
+	
 	if (pat->type == HX_GRAPHPATTERN_BGP) {
 		hx_bgp* b	= (hx_bgp*) pat->data;
 		return hx_bgp_sse( b, string, indent, level );
 	} else if (pat->type == HX_GRAPHPATTERN_GRAPH || pat->type == HX_GRAPHPATTERN_FILTER) {
-		int i;
-		char* myindent	= calloc( 1, strlen(indent) * (level+1) + 1 );
-		for (i = 0; i < level+1; i++) {
-			strcat( myindent, indent );
-		}
-		
-		
 		void** vp	= pat->data;
 		int alloc	= 256 + 15 + (strlen(indent) * level);
 		char* str	= (char*) calloc( 1, alloc );
@@ -261,27 +263,35 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 			hx_expr* e	= (hx_expr*) vp[0];
 			hx_expr_sse( e, &es, indent, level+1 );
 			snprintf( str, alloc, "(filter\n" );
-			if (_hx_graphpattern_string_concat( &str, myindent, &alloc )) {
+			if (_hx_graphpattern_string_concat( &str, indent2, &alloc )) {
 				free( es );
 				free( str );
+				free(indent1);
+				free(indent2);
 				return 1;
 			}
 			if (_hx_graphpattern_string_concat( &str, es, &alloc )) {
 				free( es );
 				free( str );
+				free(indent1);
+				free(indent2);
 				return 1;
 			}
 			if (_hx_graphpattern_string_concat( &str, "\n", &alloc )) {
 				free( es );
 				free( str );
+				free(indent1);
+				free(indent2);
 				return 1;
 			}
 			free( es );
 		}
 		
 		char* gps;
-		if (_hx_graphpattern_string_concat( &str, myindent, &alloc )) {
+		if (_hx_graphpattern_string_concat( &str, indent2, &alloc )) {
 			free( str );
+			free(indent1);
+			free(indent2);
 			return 1;
 		}
 		
@@ -289,23 +299,26 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 		if (_hx_graphpattern_string_concat( &str, gps, &alloc )) {
 			free( gps );
 			free( str );
+			free(indent1);
+			free(indent2);
 			return 1;
 		}
 		free(gps);
+		if (_hx_graphpattern_string_concat( &str, indent1, &alloc )) {
+			free( str );
+			free(indent1);
+			free(indent2);
+			return 1;
+		}
 		if (_hx_graphpattern_string_concat( &str, ")\n", &alloc )) {
 			free( str );
+			free(indent1);
+			free(indent2);
 			return 1;
 		}
 		*string	= str;
-		return 0;
 	} else {
-		int i;
 		char* name;
-		char* myindent	= calloc( 1, strlen(indent) * (level+1) + 1 );
-		for (i = 0; i < level+1; i++) {
-			strcat( myindent, indent );
-		}
-		
 		int arity	= pat->arity;
 		if (pat->type == HX_GRAPHPATTERN_OPTIONAL) {
 			name	= "optional";
@@ -323,8 +336,10 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 		hx_graphpattern** p	= (hx_graphpattern**) pat->data;
 		for (i = 0; i < arity; i++) {
 			char* gps;
-			if (_hx_graphpattern_string_concat( &str, myindent, &alloc )) {
+			if (_hx_graphpattern_string_concat( &str, indent2, &alloc )) {
 				free( str );
+				free(indent1);
+				free(indent2);
 				return 1;
 			}
 			
@@ -332,17 +347,30 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 			if (_hx_graphpattern_string_concat( &str, gps, &alloc )) {
 				free( gps );
 				free( str );
+				free(indent1);
+				free(indent2);
 				return 1;
 			}
 			free(gps);
 		}
+		if (_hx_graphpattern_string_concat( &str, indent1, &alloc )) {
+			free( str );
+			free(indent1);
+			free(indent2);
+			return 1;
+		}
 		if (_hx_graphpattern_string_concat( &str, ")\n", &alloc )) {
 			free( str );
+			free(indent1);
+			free(indent2);
 			return 1;
 		}
 		*string	= str;
-		return 0;
 	}
+	
+	free(indent1);
+	free(indent2);
+	return 0;
 }
 
 int hx_graphpattern_debug ( hx_graphpattern* p ) {
