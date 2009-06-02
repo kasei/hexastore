@@ -697,6 +697,6 @@ int hx_debug ( hx_hexastore* hx, hx_storage_manager* st ) {
 		hx_variablebindings_debug( b, map );
 		hx_variablebindings_iter_next( iter );
 	}
-	fprintf( stderr, "%d triples ---------\n" );
+	fprintf( stderr, "%d triples ---------\n", counter );
 	return 0;
 }

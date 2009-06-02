@@ -439,7 +439,7 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 // returns 1 if the EBV of n is true, 0 if the EBV is false, and -1 if the EBV of n produces a type error
 int hx_node_ebv ( hx_node* n ) {
 	if (hx_node_is_dt_literal(n)) {
-		char* dt	= hx_node_dt(n);
+		char* dt	= hx_node_dt( (hx_node_dt_literal*) n );
 		if (strcmp(dt,"http://www.w3.org/2001/XMLSchema#boolean") == 0) {
 			char* value	= hx_node_value(n);
 			if (strcmp(value,"true") == 0) {

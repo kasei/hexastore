@@ -1774,7 +1774,7 @@ hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {
 	container_t* c	= e->args;
 	if (e->op == HX_EXPR_OP_NODE) {
 		hx_node* n	= generate_node( c->items[0], p, counter );
-		return hx_new_builtin_expr1( e->op, n );
+		return hx_new_node_expr( n );
 	} else {
 		int arity		= hx_expr_type_arity( e->op );
 		if (arity == 1) {

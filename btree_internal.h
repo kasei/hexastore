@@ -14,8 +14,10 @@ extern "C" {
 // #define BRANCHING_SIZE	4
 */
 
-static uint32_t HX_BTREE_NODE_ROOT	= 1;
-static uint32_t HX_BTREE_NODE_LEAF	= 2;
+typedef enum {
+	HX_BTREE_NODE_ROOT	= 1,
+	HX_BTREE_NODE_LEAF	= 2
+} hx_btree_node_type;
 
 #define hx_btree_node_has_flag(s,node,flag)	(((node->flags & flag) > 0) ? 1 : 0)
 
