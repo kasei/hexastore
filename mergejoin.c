@@ -214,8 +214,8 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	char** bnames	= hx_variablebindings_iter_names( _rhs );
 	int lhs_index	= -1;
 	int rhs_index	= -1;
+	int set	= 0;
 	for (int i = 0; i < asize; i++) {
-		int set	= 0;
 		for (int j = 0; j < bsize; j++) {
 			if (strcmp( anames[i], bnames[j] ) == 0) {
 				lhs_index	= i;
@@ -227,6 +227,13 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 		if (set == 1)
 			break;
 	}
+	
+	if (set == 0) {
+		// no shared variables were found.
+		// return NULL since mergejoin isn't meant for handling cartesian joins
+		return NULL;
+	}
+	
 //	fprintf( stderr, "joining A(%s) X B(%s)\n", anames[ lhs_index ], bnames[ rhs_index ] );
 	
 	hx_variablebindings_iter* lhs	= hx_variablebindings_sort_iter( _lhs, lhs_index );

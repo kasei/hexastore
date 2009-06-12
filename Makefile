@@ -3,7 +3,7 @@ CFLAGS		= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -gg
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o rendezvousjoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
 
 all: parse print optimize tests examples parse_query
 
@@ -45,6 +45,9 @@ mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 
 rendezvousjoin.o: rendezvousjoin.c rendezvousjoin.h hexastore_types.h variablebindings.h
 	$(CC) $(INC) -c rendezvousjoin.c
+
+nestedloopjoin.o: nestedloopjoin.c nestedloopjoin.h hexastore_types.h variablebindings.h
+	$(CC) $(INC) -c nestedloopjoin.c
 
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
