@@ -1,9 +1,9 @@
 # CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
 CFLAGS		= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CC			= gcc $(CFLAGS)
+CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o rendezvousjoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
 
 all: parse print optimize tests examples parse_query
 
@@ -42,6 +42,9 @@ nodemap.o: nodemap.c nodemap.h avl.h hexastore_types.h
 
 mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 	$(CC) $(INC) -c mergejoin.c
+
+rendezvousjoin.o: rendezvousjoin.c rendezvousjoin.h hexastore_types.h variablebindings.h
+	$(CC) $(INC) -c rendezvousjoin.c
 
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
@@ -106,6 +109,8 @@ libhx.o: $(OBJECTS)
 tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
+
+mpi: examples/mpi
 
 bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 
@@ -193,6 +198,9 @@ examples/lubm8_6m: examples/lubm8_6m.c libhx.o
 examples/lubm16_6m: examples/lubm16_6m.c libhx.o
 	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c libhx.o
 
+examples/mpi: examples/mpi.c libhx.o
+	$(CC) $(INC) $(LIBS) -o examples/mpi examples/mpi.c libhx.o
+
 ########
 
 avl.o: avl.c avl.h hexastore_types.h
@@ -202,11 +210,11 @@ tap.o: tap.c tap.h
 	$(CC) $(INC) -c tap.c
 
 clean:
-	rm -f examples/lubm_q[489] examples/bench examples/knows
+	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm7_6m examples/lubm7_6m.dSYM
 	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
-	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM
+	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f test parse print optimize a.out server parse_query
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
