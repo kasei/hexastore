@@ -5,7 +5,18 @@
 #include "node.h"
 #include "bgp.h"
 
-void distribute_triples ( hx_hexastore* hx );
+typedef struct {
+	int allocated;
+	int count;
+	hx_node_id* items;
+} triple_set_t;
+triple_set_t* new_triple_set ( int size );
+int free_triple_set ( triple_set_t* c, int free_contained_objects );
+void triple_set_push_item( triple_set_t* set, hx_node_id t );
+void triple_set_unshift_item( triple_set_t* set, hx_node_id t );
+
+int distribute_triples ( hx_hexastore* hx, hx_storage_manager* s );
+int receive_triples ( hx_hexastore* hx, hx_storage_manager* s );
 
 int main ( int argc, char** argv ) {
 	int mysize, myrank;
@@ -27,10 +38,10 @@ int main ( int argc, char** argv ) {
 		fprintf( stderr, "Finished loading hexastore...\n" );
 		
 		// send triples to the right nodes
-		distribute_triples( hx );
+		distribute_triples( hx, s );
 	} else {
 		hx					= hx_new_hexastore( s );
-		
+		receive_triples( hx, s );
 	}
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
@@ -42,7 +53,6 @@ int main ( int argc, char** argv ) {
 	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
 	hx_node* name		= hx_new_node_resource("http://xmlns.com/foaf/0.1/name");
 	hx_node* person		= hx_new_node_resource("http://xmlns.com/foaf/0.1/Person");
-	
 	
 // 	hx_triple* triples[3];
 // 	triples[0]	= hx_new_triple( x, knows, y );
@@ -95,7 +105,7 @@ int main ( int argc, char** argv ) {
 // 		hx_free_triple( triples[i] );
 // 	}
 // 	hx_free_bgp( b );
-
+	
 	hx_free_node( x );
 	hx_free_node( y );
 	hx_free_node( z );
@@ -110,11 +120,138 @@ int main ( int argc, char** argv ) {
 	return 0;
 }
 
-void distribute_triples ( hx_hexastore* hx ) {
+int distribute_triples ( hx_hexastore* hx, hx_storage_manager* st ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
+	hx_node* s	= hx_new_variable( hx );
+	hx_node* p	= hx_new_variable( hx );
+	hx_node* o	= hx_new_variable( hx );
+	hx_index_iter* iter	= hx_get_statements( hx, st, s, p, o, HX_SUBJECT );
 	
+	int counter	= 0;
+	int *triple_counts	= calloc( mysize, sizeof( int ) );
+	hx_node_id nodes[3];
+	while (!hx_index_iter_finished(iter)) {
+		hx_index_iter_current ( iter, &(nodes[0]), &(nodes[1]), &(nodes[2]) );
+		int hash	= (nodes[0] ^ nodes[1] ^ nodes[2]) % mysize;
+		
+		if (hash > 0) {
+			// if the triple hashes to a node other than this (master) node, send it out
+//			fprintf( stderr, "sending triple { %d, %d, %d } to node %d\n", (int) nodes[0], (int) nodes[1], (int) nodes[2], hash );
+			int rc	= MPI_Send( nodes, 3 * sizeof(hx_node_id), MPI_BYTE, hash, 1, MPI_COMM_WORLD );
+			triple_counts[hash]++;
+		} else {
+			// do something with the triple to keep it on this node
+			counter++;
+		}
+		hx_index_iter_next(iter);
+	}
 	
+// 	fprintf( stderr, "master handled %d triples\n", counter );
+// 	fprintf( stderr, "broadcasting end-of-stream triple\n" );
+	fprintf( stdout, "node %d recieved %d triples\n", myrank, counter );
+	for (int i = 1; i < mysize; i++) {
+		nodes[0]	= (hx_node_id) 0;
+		nodes[1]	= (hx_node_id) triple_counts[i];
+		int rc	= MPI_Send( nodes, 3 * sizeof(hx_node_id), MPI_BYTE, i, 1, MPI_COMM_WORLD );
+	}
+	hx_free_index_iter(iter);
+	return counter;
+}
+
+int receive_triples ( hx_hexastore* hx, hx_storage_manager* st ) {
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	int total	= -1;
+	int counter	= 0;
+	while (counter != total) {
+		MPI_Status status;
+		hx_node_id nodes[3];
+		int rc	= MPI_Recv(nodes, 3 * sizeof(hx_node_id), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
+//		fprintf( stderr, "node %d got triple: { %d, %d, %d }\n", myrank, (int) nodes[0], (int) nodes[1], (int) nodes[2] );
+		if (nodes[0] == (hx_node_id) 0) {
+			// this is the end-of-stream marker.
+			// nodes[1] contains the number of triples we've been sent.
+			fprintf( stdout, "node %d recieved end-of-stream marker with %d expected triples (currently got %d)\n", myrank, (int) nodes[1], counter );
+			total	= nodes[1];
+		} else {
+			counter++;
+		}
+	}
+	return counter;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+triple_set_t* new_triple_set ( int size ) {
+	triple_set_t* container	= (triple_set_t*) calloc( 1, sizeof( triple_set_t ) );
+	container->allocated	= size;
+	container->count		= 0;
+	container->items		= (hx_node_id*) calloc( container->allocated, sizeof( void* ) );
+	return container;
+}
+
+int free_triple_set ( triple_set_t* c, int free_contained_objects ) {
+	free(c->items);
+	free(c);
+	return 0;
+}
+
+void triple_set_push_item( triple_set_t* set, hx_node_id t ) {
+	if (set->allocated <= (set->count + 1)) {
+		int i;
+		hx_node_id* old;
+		hx_node_id* newlist;
+		set->allocated	*= 2;
+		newlist	= (hx_node_id*) calloc( set->allocated, sizeof( hx_node_id ) );
+		for (i = 0; i < set->count; i++) {
+			newlist[i]	= set->items[i];
+		}
+		old	= set->items;
+		set->items	= newlist;
+		free( old );
+	}
+	
+	set->items[ set->count++ ]	= t;
+}
+
+void triple_set_unshift_item( triple_set_t* set, hx_node_id t ) {
+	if (set->allocated <= (set->count + 1)) {
+		int i;
+		hx_node_id* old;
+		hx_node_id* newlist;
+		set->allocated	*= 2;
+		newlist	= (hx_node_id*) calloc( set->allocated, sizeof( hx_node_id ) );
+		for (i = 0; i < set->count; i++) {
+			newlist[i+1]	= set->items[i];
+		}
+		old	= set->items;
+		set->items	= newlist;
+		free( old );
+	} else {
+		int i;
+		for (i = set->count; i > 0; i--) {
+			set->items[i]	= set->items[i-1];
+		}
+	}
+	
+	set->count++;
+	set->items[ 0 ]	= t;
 }
