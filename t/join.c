@@ -22,7 +22,7 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ), int expect );
 
 int main ( void ) {
-	plan_tests(20 + 7 + 1);
+	plan_tests(20 + 14 + 2);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );

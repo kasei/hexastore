@@ -17,9 +17,10 @@ hx_node* l1;
 hx_node* l2;
 
 void vb_test1 ( void );
+void vb_freezethaw_test ( void );
 
 int main ( void ) {
-	plan_tests(19);
+	plan_tests(24);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
@@ -28,6 +29,7 @@ int main ( void ) {
 	l2	= hx_new_node_literal( "l2" );
 	
 	vb_test1();
+	vb_freezethaw_test();
 	
 	hx_free_node( p1 );
 	hx_free_node( p2 );
@@ -102,4 +104,27 @@ void vb_test1 ( void ) {
 		hx_free_variablebindings(b,0);
 		hx_free_variablebindings(p,0);
 	}
+}
+
+void vb_freezethaw_test ( void ) {
+	fprintf( stdout, "# testing hx_variablebindings_freeze / hx_variablebindings_thaw\n" );
+	char* names[2]			= { "subj", "pred" };
+	hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
+	nodes[0]				= 1;
+	nodes[1]				= 7;
+	hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes, 0 );
+	
+	int len;
+	char* frozen			= hx_variablebindings_freeze( b, &len );
+	
+	hx_variablebindings* thawed	= hx_variablebindings_thaw( frozen, len );
+	
+	ok1( hx_variablebindings_size(thawed) == 2 );
+	ok1( hx_variablebindings_node_id_for_binding(thawed,0) == 1 );
+	ok1( hx_variablebindings_node_id_for_binding(thawed,1) == 7 );
+	ok1( hx_variablebindings_node_id_for_binding_name(thawed,"pred") == 7 );
+	ok1( hx_variablebindings_node_id_for_binding_name(thawed,"subj") == 1 );
+	
+	hx_free_variablebindings(b,0);
+	hx_free_variablebindings(thawed,1);
 }
