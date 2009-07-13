@@ -62,6 +62,7 @@ async_mpi_session* async_mpi_session_create(void* buf, int count, MPI_Datatype d
 		ses->comm = comm;
 		ses->request = request;
 		ses->flags = flags;
+		ses->state = ASYNC_MPI_STATE_SEND_OR_RECV;
 	}
 	return ses;
 }
@@ -187,7 +188,7 @@ enum async_status async_mpi(void* session) {
 			return ASYNC_FAILURE;
 		}
 		default: {
-			printf("UNHANDLED CASE!\n");
+			printf("UNHANDLED CASE! (ses state: %d\n", ses->state);
 			return ASYNC_FAILURE;
 		}
 	}
