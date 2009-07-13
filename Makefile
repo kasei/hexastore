@@ -3,7 +3,7 @@ CFLAGS		= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -gg
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o mpi_safealloc.o async_mpi.o async_des.o
 
 all: parse print optimize tests examples parse_query
 
@@ -81,6 +81,15 @@ graphpattern.o: graphpattern.c graphpattern.h hexastore_types.h
 
 project.o: project.c project.h hexastore_types.h
 	$(CC) $(INC) -c project.c
+
+mpi_safealloc.o: mpi_safealloc.c mpi_safealloc.h
+	$(CC) $(INC) -c mpi_safealloc.c
+
+async_mpi.o: async_mpi.c async_mpi.h mpi_safealloc.h async.h
+	$(CC) $(INC) -c async_mpi.c
+
+async_des.o: async_des.c async_des.h async_mpi.h mpi_safealloc.h
+	$(CC) $(INC) -c async_des.c
 
 ########
 
