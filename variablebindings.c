@@ -352,6 +352,49 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	return b;
 }
 
+hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len ) {
+	char* p	= ptr;
+	int size;
+	memcpy( &size, p, sizeof( int ) );
+	p	+= sizeof( int );
+	char** names	= (char**) calloc( size, sizeof( char* ) );
+	for (int i = 0; i < size; i++) {
+		int name_len	= strlen(p);
+		char* name		= (char*) calloc( name_len + 1, sizeof( char ) );
+		strcpy( name, p );
+		names[i]		= name;
+		p				+= name_len + 1;
+	}
+	hx_node_id* nodes	= calloc( size, sizeof( hx_node_id ) );
+	for (int i = 0; i < size; i++) {
+		memcpy( &( nodes[i] ), p, sizeof( hx_node_id ) );
+		p				+= sizeof( hx_node_id );
+	}
+	return hx_new_variablebindings( size, names, nodes, 1 );
+}
+
+char* hx_variablebindings_freeze( hx_variablebindings* b, int* len ) {
+	int names_length	= 0;
+	int* name_lengths	= calloc( b->size, sizeof( int ) );
+	for (int i = 0; i < b->size; i++) {
+		name_lengths[i]	= strlen( b->names[i] );
+		names_length	+= name_lengths[i] + 1;
+	}
+	*len		= sizeof(int) + (names_length * sizeof(char)) + (sizeof(hx_node_id) * b->size);
+	char* ptr	= (char*) calloc( 1, *len );
+	char* p		= ptr;
+	memcpy( p, &( b->size ), sizeof( int ) );
+	p			+= sizeof( int );
+	for (int i = 0; i < b->size; i++) {
+		memcpy( p, b->names[i], name_lengths[i] + 1 );
+		p		+= name_lengths[i] + 1;
+	}
+	for (int i = 0; i < b->size; i++) {
+		memcpy( p, &( b->nodes[i] ), sizeof( hx_node_id ) );
+		p		+= sizeof( hx_node_id );
+	}
+	return ptr;
+}
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );

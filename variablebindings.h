@@ -72,6 +72,9 @@ hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_
 char** hx_variablebindings_names ( hx_variablebindings* b );
 int hx_variablebindings_cmp ( void* a, void* b );
 
+hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len );
+char* hx_variablebindings_freeze( hx_variablebindings* b, int* len );
+
 hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right );
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void );
