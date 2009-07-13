@@ -177,6 +177,9 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	m->next_id	= next_id;
 	for (int i = 0; i < used; i++) {
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
+		if (item == NULL) {
+			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
+		}
 		if ((read = fread( &( item->id ), sizeof( hx_node_id ), 1, f )) == 0) {
 			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
 		}

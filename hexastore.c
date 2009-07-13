@@ -13,7 +13,7 @@ int _hx_iter_vb_sorted_by (void* iter, int index );
 int _hx_iter_debug ( void* info, char* header, int indent );
 
 char** _hx_iter_vb_names ( void* iter );
-int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
+
 
 /////////////////////
 
@@ -72,10 +72,10 @@ int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_nod
 	hx_node_id s	= hx_nodemap_add_node( map, sn );
 	hx_node_id p	= hx_nodemap_add_node( map, pn );
 	hx_node_id o	= hx_nodemap_add_node( map, on );
-	return _hx_add_triple( hx, st, s, p, o );
+	return hx_add_triple_id( hx, st, s, p, o );
 }
 
-int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o ) {
+int hx_add_triple_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_terminal* t;
 	{
 		int added	= hx_index_add_triple_terminal( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st, s, p, o, &t );

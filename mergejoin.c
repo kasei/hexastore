@@ -241,6 +241,9 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	
 	
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	if (vtable == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_mergejoin_iter\n" );
+	}
 	vtable->finished	= _hx_mergejoin_iter_vb_finished;
 	vtable->current		= _hx_mergejoin_iter_vb_current;
 	vtable->next		= _hx_mergejoin_iter_vb_next;

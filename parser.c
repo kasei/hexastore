@@ -159,6 +159,9 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 		case RAPTOR_IDENTIFIER_TYPE_ORDINAL:
 			needs_free	= 1;
 			value		= (char*) malloc( 64 );
+			if (value == NULL) {
+				fprintf( stderr, "*** malloc failed in _hx_parser_node\n" );
+			}
 			sprintf( value, "http://www.w3.org/1999/02/22-rdf-syntax-ns#_%d", *((int*) node) );
 			newnode		= hx_new_node_resource( value );
 			node_type	= 'R';

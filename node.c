@@ -17,6 +17,9 @@ hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, 
 	
 	if (value != NULL) {
 		n->value	= (char*) malloc( strlen( value ) + 1 );
+		if (n->value == NULL) {
+			fprintf( stderr, "*** malloc failed in _hx_new_node\n" );
+		}
 		strcpy( n->value, value );
 	}
 	return n;
@@ -53,6 +56,9 @@ hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->lang		= (char*) malloc( strlen( lang ) + 1 );
 	if (n->lang == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_node_lang_literal\n" );
+	}
+	if (n->lang == NULL) {
 		free( n->value );
 		free( n );
 		return NULL;
@@ -66,6 +72,9 @@ hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 	int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->dt		= (char*) malloc( strlen( dt ) + 1 );
+	if (n->dt == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_node_dt_literal\n" );
+	}
 	if (n->dt == NULL) {
 		free( n->value );
 		free( n );
@@ -83,6 +92,9 @@ hx_node* hx_node_copy( hx_node* n ) {
 			int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
 			hx_node_lang_literal* copy	= (hx_node_lang_literal*) _hx_new_node( 'G', d->value, padding, HX_NODE_NONE, 0, 0.0 );
 			copy->lang		= (char*) malloc( strlen( d->lang ) + 1 );
+			if (copy->lang == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_copy\n" );
+			}
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -94,6 +106,9 @@ hx_node* hx_node_copy( hx_node* n ) {
 			int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 			hx_node_dt_literal* copy	= (hx_node_dt_literal*) _hx_new_node( 'D', d->value, padding, HX_NODE_NONE, 0, 0.0 );
 			copy->dt		= (char*) malloc( strlen( d->dt ) + 1 );
+			if (copy->dt == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_copy\n" );
+			}
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -195,6 +210,9 @@ int hx_node_variable_name ( hx_node* n, char** name ) {
 			sprintf( *name, "__var%d", n->iv );
 		} else {
 			*name	= (char*) malloc( strlen( n->value ) + 1 );
+			if (*name == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_variable_name\n" );
+			}
 			strcpy( *name, n->value );
 		}
 	} else {

@@ -388,6 +388,9 @@ int _hx_graphpattern_string_concat ( char** string, char* _new, int* alloc ) {
 		*alloc	*= 2;
 		char* newstring	= (char*) malloc( *alloc );
 		if (newstring == NULL) {
+			fprintf( stderr, "*** malloc failed in _hx_graphpattern_string_concat\n" );
+		}
+		if (newstring == NULL) {
 			fprintf( stderr, "*** could not allocate memory for graphpattern string\n" );
 			return 1;
 		}

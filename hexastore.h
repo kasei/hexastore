@@ -80,6 +80,7 @@ hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
 
+int hx_add_triple_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count );
 

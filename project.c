@@ -2,6 +2,9 @@
 
 hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter, int size, char** names ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	if (vtable == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_project_iter\n" );
+	}
 	vtable->finished	= _hx_project_iter_vb_finished;
 	vtable->current		= _hx_project_iter_vb_current;
 	vtable->next		= _hx_project_iter_vb_next;
@@ -99,6 +102,9 @@ int _hx_project_iter_sorted_by ( void* data, int index ) {
 int _hx_project_debug ( void* data, char* header, int _indent ) {
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) data;
 	char* indent	= (char*) malloc( _indent + 1 );
+	if (indent == NULL) {
+		fprintf( stderr, "*** malloc failed in _hx_project_debug\n" );
+	}
 	char* p			= indent;
 	for (int i = 0; i < _indent; i++) *(p++) = ' ';
 	*p	= (char) 0;

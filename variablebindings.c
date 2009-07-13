@@ -100,6 +100,9 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		hx_node_id id	= b->nodes[ i ];
 		if (map == NULL) {
 			char* number	= (char*) malloc( 20 );
+			if (number == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_variablebindings_string\n" );
+			}
 			sprintf( number, "%d", (int) id );
 			nodestrs[i]	= number;
 		} else {
@@ -109,6 +112,9 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		len	+= strlen( nodestrs[i] ) + 2 + strlen(b->names[i]) + 1;
 	}
 	*string	= (char*) malloc( len );
+	if (*string == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_string\n" );
+	}
 	char* p			= *string;
 	if (*string == NULL) {
 		free( id );
@@ -398,6 +404,9 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, int* len ) {
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
+	if (iter == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_new_empty_iter\n" );
+	}
 	iter->vtable		= NULL;
 	iter->ptr			= NULL;
 	return iter;
@@ -405,6 +414,9 @@ hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
+	if (iter == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_new_iter\n" );
+	}
 	iter->vtable		= vtable;
 	iter->ptr			= ptr;
 	return iter;

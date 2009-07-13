@@ -169,7 +169,7 @@ int _hx_bgp_string_concat ( char** string, char* _new, int* alloc ) {
 		*alloc	*= 2;
 		char* newstring	= (char*) malloc( *alloc );
 		if (newstring == NULL) {
-			fprintf( stderr, "*** could not allocate memory for bgp string\n" );
+			fprintf( stderr, "*** malloc failed in _hx_bgp_string_concat\n" );
 			return 1;
 		}
 		strcpy( newstring, *string );

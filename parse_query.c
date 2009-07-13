@@ -67,6 +67,9 @@ int main( int argc, char** argv ) {
 		}
 		
 		char* query	= malloc( st.st_size + 1 );
+		if (query == NULL) {
+			fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
+		}
 		fread(query, st.st_size, 1, f);
 		query[ st.st_size ]	= 0;
 		b	= parse_bgp_query_string( query );

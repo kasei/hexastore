@@ -82,6 +82,9 @@ int main (int argc, char** argv) {
 char* node_string ( const char* nodestr ) {
 	int len			= strlen( nodestr ) + 1 + 2;
 	char* string	= (char*) malloc( len );
+	if (string == NULL) {
+		fprintf( stderr, "*** malloc failed in optimize.c:node_string\n" );
+	}
 	const char* value		= &(nodestr[1]);
 	switch (*nodestr) {
 		case 'R':

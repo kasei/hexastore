@@ -13,6 +13,35 @@ int hx_free_triple ( hx_triple* t ) {
 	return 0;
 }
 
+int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string ) {
+	hx_node* subj	= hx_nodemap_get_node( map, t->subject );
+	hx_node* pred	= hx_nodemap_get_node( map, t->predicate );
+	hx_node* obj	= hx_nodemap_get_node( map, t->object );
+	
+	int len	= 12; // "(triple * * *)"
+	char *s, *p, *o;
+	hx_node_string( subj, &s );
+	hx_node_string( pred, &p );
+	hx_node_string( obj, &o );
+	len	+= strlen( s );
+	len	+= strlen( p );
+	len	+= strlen( o );
+	
+	*string	= malloc( len );
+	if (*string == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_triple_id_string\n" );
+	}
+	if (*string == NULL) {
+		return 1;
+	}
+	snprintf( *string, len, "(triple %s %s %s)", s, p, o );
+	free( s );
+	free( p );
+	free( o );
+	return 0;
+	
+}
+
 int hx_triple_string ( hx_triple* t, char** string ) {
 	int len	= 12; // "(triple * * *)"
 	char *s, *p, *o;
@@ -24,6 +53,9 @@ int hx_triple_string ( hx_triple* t, char** string ) {
 	len	+= strlen( o );
 	
 	*string	= malloc( len );
+	if (*string == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_triple_string\n" );
+	}
 	if (*string == NULL) {
 		return 1;
 	}
