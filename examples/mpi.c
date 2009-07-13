@@ -19,63 +19,15 @@ typedef struct {
 	
 int send_handler(async_mpi_session* ses, void* args);
 int recv_handler(async_mpi_session* ses, void* args);
+int distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
 
 int main ( int argc, char** argv ) {
-	int mysize, myrank;
 	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( st );
-	
-	hx_nodemap* map		= NULL;
-	hx_index_iter* iter	= NULL;
-	if (myrank == 0) {
-		const char* filename	= argv[1];
-		FILE* f	= fopen( filename, "r" );
-		if (f == NULL) {
-			perror( "Failed to open hexastore file for reading: " );
-			MPI_Abort(MPI_COMM_WORLD, 1);
-		}
-		hx_hexastore* source_data	= hx_read( st, f, 0 );
-		fprintf( stderr, "Finished loading hexastore...\n" );
-		map			= hx_get_nodemap( source_data );
-		hx_node* s	= hx_new_variable( hx );
-		hx_node* p	= hx_new_variable( hx );
-		hx_node* o	= hx_new_variable( hx );
-		iter		= hx_get_statements( source_data, st, s, p, o, HX_SUBJECT );
-	}
-	
-	send_args_t send_args;
-	send_args.hx		= hx;
-	send_args.st		= st;
-	send_args.iter		= iter;
-	send_args.map		= map;
-	
-	recv_args_t recv_args;
-	recv_args.hx	= hx;
-	recv_args.st	= st;
-	
-	int msg_size			= 3 * sizeof(hx_node_id);
-	int num_sends			= (myrank == 0) ? 4 : 0;
-	async_des_session* ses	= async_des_session_create(num_sends, &send_handler, &send_args, 20, &recv_handler, &recv_args, msg_size);
-	
-//	fprintf( stderr, "beginning async IO\n" );
-	while(async_des(ses) == ASYNC_PENDING) {
-		// continue until finished
-	}
-//	fprintf( stderr, "done with async IO\n" );
-	
-	if (myrank == 0) {
-		hx_free_index_iter(iter);
-	}
-	
-	int size	= (int) hx_triples_count( hx, st );
-	fprintf( stderr, "node %d has %d triples\n", myrank, size );
-	async_des_session_destroy(ses);
-	
-	
+	distribute_triples_from_file( hx, st, argv[1] );
+
 /**	
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
@@ -155,8 +107,59 @@ int main ( int argc, char** argv ) {
 	return 0;
 }
 
+int distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename ) {
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	hx_nodemap* map		= NULL;
+	hx_index_iter* iter	= NULL;
+	if (myrank == 0) {
+		FILE* f	= fopen( filename, "r" );
+		if (f == NULL) {
+			perror( "Failed to open hexastore file for reading: " );
+			MPI_Abort(MPI_COMM_WORLD, 1);
+		}
+		hx_hexastore* source_data	= hx_read( st, f, 0 );
+		fprintf( stderr, "Finished loading hexastore...\n" );
+		map			= hx_get_nodemap( source_data );
+		hx_node* s	= hx_new_variable( hx );
+		hx_node* p	= hx_new_variable( hx );
+		hx_node* o	= hx_new_variable( hx );
+		iter		= hx_get_statements( source_data, st, s, p, o, HX_SUBJECT );
+	}
+	
+	send_args_t send_args;
+	send_args.hx		= hx;
+	send_args.st		= st;
+	send_args.iter		= iter;
+	send_args.map		= map;
+	
+	recv_args_t recv_args;
+	recv_args.hx	= hx;
+	recv_args.st	= st;
+	
+	int msg_size			= 3 * sizeof(hx_node_id);
+	int num_sends			= (myrank == 0) ? 4 : 0;
+	async_des_session* ses	= async_des_session_create(num_sends, &send_handler, &send_args, 20, &recv_handler, &recv_args, msg_size);
+	
+//	fprintf( stderr, "beginning async IO\n" );
+	while (async_des(ses) == ASYNC_PENDING) {
+		// continue until finished
+	}
+//	fprintf( stderr, "done with async IO\n" );
+	
+	if (myrank == 0) {
+		hx_free_index_iter(iter);
+	}
+	
+	int size	= (int) hx_triples_count( hx, st );
+	fprintf( stderr, "node %d has %d triples\n", myrank, size );
+	async_des_session_destroy(ses);
+	
+	return 1;
+}
 
-// int distribute_triples ( hx_hexastore* hx, hx_storage_manager* st, async_des_session* ses ) {
 int send_handler(async_mpi_session* ses, void* args) {
 	send_args_t* send_args	= (send_args_t*) args;
 	hx_hexastore* hx		= send_args->hx;
@@ -208,7 +211,6 @@ int send_handler(async_mpi_session* ses, void* args) {
 	return 0;
 }
 
-// int receive_triples ( hx_hexastore* hx, hx_storage_manager* st, async_des_session* ses ) {
 int recv_handler(async_mpi_session* ses, void* args) {
 	recv_args_t* recv_args	= (recv_args_t*) args;
 	hx_hexastore* hx		= recv_args->hx;
