@@ -39,7 +39,6 @@ int hx_free_index ( hx_index* i, hx_storage_manager* st ) {
 	return 0;
 }
 
-// XXX replace the use of ->used, etc. with iterators (preserves abstraction)
 int hx_index_debug ( hx_index* index, hx_storage_manager* st ) {
 	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	fprintf(
@@ -231,7 +230,7 @@ hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_storage_manager* st, hx_
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
 	
-//	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
+// 	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
 	
 	if (iter->node_mask_b == iter->node_mask_a && iter->node_mask_a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );

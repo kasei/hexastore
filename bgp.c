@@ -1,7 +1,6 @@
 #include "bgp.h"
 #include "mergejoin.h"
 
-void _XXX_print_triple ( hx_triple* t, uint64_t size );
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
@@ -289,7 +288,6 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* st ) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
 		s[i].cost		= hx_count_statements( hx, st, t->subject, t->predicate, t->object );
-//		_XXX_print_triple( t, s[i].cost );
 		if (s[i].cost == 0) {
 			fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
 			// there are no triples for this pattern, so no sense in continuing
@@ -471,18 +469,4 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 		}
 	}
 	return HX_SUBJECT;
-}
-
-void _XXX_print_triple ( hx_triple* t, uint64_t size ) {
-	hx_node* s	= t->subject;
-	hx_node* p	= t->predicate;
-	hx_node* o	= t->object;
-	char *ss, *sp, *so;
-	hx_node_string( s, &ss );
-	hx_node_string( p, &sp );
-	hx_node_string( o, &so );
-	fprintf( stderr, "%10lu\t{ %s %s %s }\n", (unsigned long) size, ss, sp, so );
-	free( ss );
-	free( sp );
-	free( so );
 }

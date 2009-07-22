@@ -63,12 +63,6 @@ void project_test1 ( void ) {
 		ok1( !hx_variablebindings_iter_finished( iter ) );
 		
 		hx_variablebindings_iter_current( iter, &b );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[1] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect 1 variable binding for the projected result
 			int size	= hx_variablebindings_size( b );
@@ -93,12 +87,6 @@ void project_test1 ( void ) {
 		}
 	
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[2] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -110,12 +98,6 @@ void project_test1 ( void ) {
 		}
 		
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[3] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -129,12 +111,6 @@ void project_test1 ( void ) {
 		}
 		
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[4] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
