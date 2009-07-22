@@ -4,18 +4,25 @@
 #include "node.h"
 #include "bgp.h"
 #include "parallel.h"
+#include "materialize.h"
 
-int distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
+hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
 
 int main ( int argc, char** argv ) {
 	MPI_Init(&argc, &argv);
+
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( st );
-	distribute_triples_from_file( hx, st, argv[1] );
-
-/**	
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_hexastore* source	= distribute_triples_from_file( hx, st, argv[1] );
+	
+	hx_nodemap* map		= NULL;
+	if (source) {
+		map				= hx_get_nodemap( source );
+	}
 	
 	hx_node* x			= hx_new_named_variable( hx, "x" );
 	hx_node* y			= hx_new_named_variable( hx, "y" );
@@ -25,6 +32,49 @@ int main ( int argc, char** argv ) {
 	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
 	hx_node* name		= hx_new_node_resource("http://xmlns.com/foaf/0.1/name");
 	hx_node* person		= hx_new_node_resource("http://xmlns.com/foaf/0.1/Person");
+	
+	hx_node_id nameid	= 0;
+	
+	if (myrank == 0) {
+		nameid	= hx_nodemap_get_node_id( map, name );
+		fprintf( stderr, "id of foaf:name node: %d (on node %d)\n", (int) nameid, myrank );
+	}
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Bcast(&nameid,sizeof(hx_node_id),MPI_BYTE,0,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+	hx_variablebindings_iter* iter	= NULL;
+	if (nameid == 0) {
+		fprintf( stderr, "foaf:name doesn't exist on node: %d\n", myrank );
+	} else {
+		fprintf( stderr, "foaf:name is node id %d on node: %d\n", (int) nameid, myrank );
+		hx_index* index;
+		hx_node_id index_ordered[3];
+		int order_position	= HX_OBJECT;
+		hx_get_ordered_index_id( hx, st, -1, nameid, -2, order_position, &index, index_ordered, NULL );
+		hx_index_iter* titer	= hx_index_new_iter1( index, st, -1, nameid, -2 );
+		iter	= hx_new_iter_variablebindings( titer, st, "p", NULL, "name", 0 );
+		fprintf( stderr, "node %d distributing triples from iterator %p\n", myrank, (void*) iter );
+	}
+	
+// 	for (int i = 0; i < mysize; i++) {
+// 		if (myrank == i) {
+// 			char* header	= calloc( 20, sizeof(char) );
+// 			sprintf( header, "node %d>", myrank );
+// 			if (iter) {
+// 				hx_variablebindings_iter_debug( iter, header, 0 );
+// 			} else {
+// 				fprintf( stderr, "%s no results\n", header );
+// 			}
+// 			free(header);
+// 		}
+// 		if (MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD )) {
+// 			fprintf( stderr, "*** Barrier failed on node %d\n", myrank );
+// 		}
+// 	}
+	
+	hx_parallel_distribute_variablebindings( st, iter );
 	
 // 	hx_triple* triples[3];
 // 	triples[0]	= hx_new_triple( x, knows, y );
@@ -85,7 +135,6 @@ int main ( int argc, char** argv ) {
 	hx_free_node( person );
 	hx_free_node( knows );
 	hx_free_node( name );
-	**/
 	
 	hx_free_hexastore( hx, st );
 	hx_free_storage_manager( st );
@@ -93,7 +142,7 @@ int main ( int argc, char** argv ) {
 	return 0;
 }
 
-int distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename ) {
+hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -108,10 +157,13 @@ int distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, con
 			MPI_Abort(MPI_COMM_WORLD, 1);
 		}
 		source	= hx_read( st, f, 0 );
+		map		= hx_get_nodemap( source );
+//		hx_nodemap_debug( map );
 		fprintf( stderr, "Finished loading hexastore...\n" );
 	}
 	
+	MPI_Barrier( MPI_COMM_WORLD );
 	hx_parallel_distribute_triples_from_hexastore( 0, source, st, hx );
-	return 1;
+	return source;
 }
 
