@@ -1,4 +1,5 @@
 #include "parallel.h"
+#include "triple.h"
 
 typedef struct {
 	int rank;
@@ -14,6 +15,7 @@ typedef struct {
 } hx_parallel_recv_triples_args_t;
 
 typedef struct {
+	int count;
 	hx_storage_manager* st;
 	hx_variablebindings_iter* iter;
 } hx_parallel_send_vb_args_t;
@@ -70,12 +72,11 @@ int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, 
 	}
 	
 	if (myrank == rank) {
-		hx_nodemap_debug( map );
 		hx_free_index_iter(source);
 	}
 	
 	int size	= (int) hx_triples_count( destination, st );
-	fprintf( stderr, "node %d has %d triples\n", myrank, size );
+// 	fprintf( stderr, "node %d has %d triples\n", myrank, size );
 	async_des_session_destroy(ses);
 	
 	return 1;
@@ -147,7 +148,7 @@ int _hx_parallel_recv_triples_handler(async_mpi_session* ses, void* args) {
 	return 1;
 }
 
-int hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter ) {
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -155,67 +156,102 @@ int hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variabl
 	hx_parallel_send_vb_args_t send_args;
 	send_args.st			= st;
 	send_args.iter			= iter;
-
+	send_args.count			= 0;
+		
 	hx_parallel_recv_vb_args_t recv_args;
 	
 	async_des_session* ses	= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 20, &_hx_parallel_recv_vb_handler, &recv_args, -1);
 	
-	while (async_des(ses) == ASYNC_PENDING) {
+	int i	= 0;
+	// while (async_des(ses) == ASYNC_PENDING) {
+// 		fprintf( stderr, "loop iteration %d on node %d\n", i++, myrank );
+// 		fprintf( stderr, "node %d: Message count %d\n", myrank, ses->msg_count );
 		// continue until finished
+	//}
+	
+	enum async_status astat;
+	do {
+			astat = async_des(ses);
+	} while(astat == ASYNC_PENDING);
+	
+	if(astat == ASYNC_FAILURE) {
+		fprintf(stderr, "ASYNC_FAILURE while distributing var bindings.\n");
 	}
 	
-	hx_free_variablebindings_iter( iter, 0 );
+// 	fprintf( stderr, "%d: Message count %d\n", myrank, ses->msg_count );
+// 	fprintf( stderr, "node %d finished async loop\n", myrank );
+	
+	if (iter != NULL) {
+		hx_free_variablebindings_iter( iter, 0 );
+	}
 	
 	async_des_session_destroy(ses);
 	
-	return 1;
-}
-int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
-	hx_parallel_send_vb_args_t* send_args	= (hx_parallel_send_vb_args_t*) args;
-	hx_storage_manager* st			= send_args->st;
-	hx_variablebindings_iter* iter	= send_args->iter;
+	// XXX this should be the materialized iterator with the variablebindings collected in the recv handler:
+	hx_variablebindings_iter* r	= hx_new_materialize_iter_with_data( 0, NULL, 0, NULL );	
 	
+	return r;
+}
+
+int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
+// 	fprintf( stderr, "node %d entered send handler\n", myrank );
+	hx_parallel_send_vb_args_t* send_args	= (hx_parallel_send_vb_args_t*) args;
+	hx_storage_manager* st			= send_args->st;
+	hx_variablebindings_iter* iter	= send_args->iter;
+	
+	if (iter == NULL) {
+		return 0;
+	}
+	
 	while (!hx_variablebindings_iter_finished(iter)) {
+// 		fprintf( stderr, "node %d iter loop\n", myrank );
 		int len;
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
 		char* buffer	= hx_variablebindings_freeze( b, &len );
 		int size		= hx_variablebindings_size( b );
 		
-		hx_variablebindings_debug( b, NULL );
-		
-		int hash		= 0;
-		for (int i = 0; i < size; i++) {
-			int node_id	= hx_variablebindings_node_id_for_binding( b, i );
-			hash	= (hash + node_id) % myrank;
-		}
-		
-//		fprintf( stderr, "- sending variable bindings to node %d\n", hash );
-		async_mpi_session_reset3(ses, buffer, len, hash, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
+		// hx_variablebindings_debug( b, NULL );
+
+		char* string;
+		hx_variablebindings_string( b, NULL, &string );
+		uint64_t hash	= hx_triple_hash_string( string );
+		int node		= hash % mysize;
+// 		fprintf( stderr, "--- hash = %llu (%d)\n", hash, node );
+
+// 		fprintf( stderr, "- sending variable bindings to node %d\n", node );
+		send_args->count++;
+		fprintf( stderr, "node %d sending variable bindings %s with length %d to node %d\n", myrank, string, len, node );
+		async_mpi_session_reset3(ses, buffer, len, node, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
+		free(string);
 		hx_variablebindings_iter_next(iter);
 		hx_free_variablebindings( b, 0 );
+// 		fprintf( stderr, "node %d send handler sucessfully freed variablebindings\n", myrank );
 		return 1;
 	}
 	
+//	fprintf( stderr, "*** node %d sent %d variable bindings so far\n", myrank, send_args->count );
 	return 0;
 }
 
 int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
-	hx_parallel_recv_vb_args_t* recv_args	= (hx_parallel_recv_vb_args_t*) args;
-	
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
+// 	fprintf( stderr, "node %d entered recv handler\n", myrank );
+	hx_parallel_recv_vb_args_t* recv_args	= (hx_parallel_recv_vb_args_t*) args;
+	
 	char* string;
 	hx_variablebindings* b	= hx_variablebindings_thaw( ses->buf, ses->count );	
 	hx_variablebindings_string( b, NULL, &string );
-	fprintf( stderr, "node %d got variable bindings: %s\n", myrank, string );
+// 	fprintf( stderr, "node %d got variable bindings %s from %d\n", myrank, string, ses->peer );
 	free(string);
-	
+	hx_free_variablebindings( b, 1 );
+// 	fprintf( stderr, "node %d recv handler sucessfully freed variablebindings\n", myrank );
 	return 1;
 }
