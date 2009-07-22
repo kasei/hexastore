@@ -666,7 +666,19 @@ int _hx_iter_vb_sorted_by (void* data, int index ) {
 int _hx_iter_debug ( void* data, char* header, int indent ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
-	fprintf( stderr, "%s hexastore triples iterator\n", header );
+	hx_index_iter* iter	= info->iter;
+	fprintf( stderr, "%s hexastore triples iterator (%p)\n", header, (void*) iter );
+	int counter	= 0;
+	fprintf( stderr, "%s ------------------------\n", header );
+	while (!hx_index_iter_finished( iter )) {
+		counter++;
+		hx_node_id triple[3];
+		hx_index_iter_current( iter, &(triple[0]), &(triple[1]), &(triple[2]) );
+		fprintf( stderr, "%s triple: { %d %d %d }\n", header, (int) triple[0], (int) triple[1], (int) triple[2] );
+		hx_index_iter_next( iter );
+	}
+	fprintf( stderr, "%s --- %5d triples ------\n", header, counter );
+	
 	return 0;
 }
 
