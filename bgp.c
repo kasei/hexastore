@@ -470,3 +470,44 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 	}
 	return HX_SUBJECT;
 }
+
+hx_node_id* hx_bgp_thaw_ids ( char* ptr, int* len ) {
+	hx_node_id* buf	= (hx_node_id*) ptr;
+	int size		= (int) buf[0];
+	*len			= size * 3;		// size is the number of triples, not nodes
+	hx_node_id* ids	= (hx_node_id*) calloc( 3*size, sizeof( hx_node_id ) );
+	for (int i = 0; i < size*3; i++) {
+		ids[i]	= buf[i+1];
+	}
+	return ids;
+}
+
+hx_node_id _hx_bgp_get_node_id ( hx_nodemap* map, hx_node* node ) {
+	if (hx_node_is_variable(node)) {
+		return (hx_node_id) hx_node_iv(node);
+	} else {
+		return hx_nodemap_get_node_id( map, node );
+	}
+}
+
+char* hx_bgp_freeze( hx_bgp* b, int* len, hx_nodemap* map ) {
+	int size		= hx_bgp_size(b);
+	int _len		= (1 + (3 * size)) * sizeof( hx_node_id );
+	*len			= _len;
+	hx_node_id* buf	= (hx_node_id*) calloc( 1, _len );
+	buf[0]			= size;				// the first slot is the size of the bgp
+	hx_node_id* ptr	= &( buf[1] );	// the rest is a set of node IDs, in triple groups
+	for (int i = 0; i < size; i++) {
+		hx_triple* t	= b->triples[i];
+		hx_node_id s	= _hx_bgp_get_node_id( map, t->subject );
+		hx_node_id p	= _hx_bgp_get_node_id( map, t->predicate );
+		hx_node_id o	= _hx_bgp_get_node_id( map, t->object );
+		ptr[ i*3 ]		= s;
+		ptr[ i*3 + 1 ]	= p;
+		ptr[ i*3 + 2 ]	= o;
+	}
+	
+	return (char*) buf;
+}
+
+// 		nameid	= 

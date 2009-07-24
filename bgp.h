@@ -44,6 +44,10 @@ int hx_bgp_debug ( hx_bgp* b );
 int hx_bgp_string ( hx_bgp* b, char** string );
 int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level );
 
+hx_node_id* hx_bgp_thaw_ids ( char* ptr, int* len );
+char* hx_bgp_freeze( hx_bgp* b, int* len, hx_nodemap* map );
+
+
 #ifdef __cplusplus
 }
 #endif
