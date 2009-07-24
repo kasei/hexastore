@@ -6,6 +6,7 @@
 #include "parallel.h"
 #include "materialize.h"
 
+extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
 
 int main ( int argc, char** argv ) {
@@ -24,25 +25,56 @@ int main ( int argc, char** argv ) {
 		map				= hx_get_nodemap( source );
 	}
 	
-	hx_node* x			= hx_new_named_variable( hx, "x" );
-	hx_node* y			= hx_new_named_variable( hx, "y" );
-	hx_node* z			= hx_new_named_variable( hx, "z" );
+// 	hx_node* x			= hx_new_named_variable( hx, "x" );
+// 	hx_node* y			= hx_new_named_variable( hx, "y" );
+// 	hx_node* z			= hx_new_named_variable( hx, "z" );
+// 	
+// 	hx_node* type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+// 	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
+// 	hx_node* name		= hx_new_node_resource("http://xmlns.com/foaf/0.1/name");
+// 	hx_node* person		= hx_new_node_resource("http://xmlns.com/foaf/0.1/Person");
+// 	
+// 	hx_node_id nameid	= 0;
 	
-	hx_node* type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
-	hx_node* name		= hx_new_node_resource("http://xmlns.com/foaf/0.1/name");
-	hx_node* person		= hx_new_node_resource("http://xmlns.com/foaf/0.1/Person");
 	
-	hx_node_id nameid	= 0;
+	hx_bgp* b			= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+	int triple_count	= hx_bgp_size(b);
+	int node_count		= triple_count * 3;
+	hx_node_id* triples	= (hx_node_id*) calloc( node_count, sizeof( hx_node_id ) );
 	
+	// parse triples from ~SPARQL syntax, and place the node IDs into the triples[] buffer
 	if (myrank == 0) {
-		nameid	= hx_nodemap_get_node_id( map, name );
-		fprintf( stderr, "id of foaf:name node: %d (on node %d)\n", (int) nameid, myrank );
+		int len;
+		char* bfreeze		= hx_bgp_freeze( b, &len, map );
+		hx_node_id* _ptr	= (hx_node_id*) bfreeze;
+		hx_node_id* ptr		= &( _ptr[1] );
+		
+		for (int i = 0; i < 3; i++) {
+			triples[i]	= ptr[i];
+		}
 	}
 	
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Bcast(&nameid,sizeof(hx_node_id),MPI_BYTE,0,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
+	// now broadcast the triples[] buffer to all nodes, so everyone can execute the query
+	MPI_Bcast(triples,sizeof(hx_node_id)*3,MPI_BYTE,0,MPI_COMM_WORLD);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	hx_node_id nameid	= triples[1];
+	free( triples );
+	fprintf( stderr, "id of foaf:name node: %d (on node %d)\n", (int) nameid, myrank );
+	
+	
+	
+	
+// 	MPI_Barrier(MPI_COMM_WORLD);
+// 	MPI_Bcast(&nameid,sizeof(hx_node_id),MPI_BYTE,0,MPI_COMM_WORLD);
+// 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	hx_variablebindings_iter* iter	= NULL;
 	if (nameid == 0) {
@@ -128,13 +160,13 @@ int main ( int argc, char** argv ) {
 // 	}
 // 	hx_free_bgp( b );
 	
-	hx_free_node( x );
-	hx_free_node( y );
-	hx_free_node( z );
-	hx_free_node( type );
-	hx_free_node( person );
-	hx_free_node( knows );
-	hx_free_node( name );
+// 	hx_free_node( x );
+// 	hx_free_node( y );
+// 	hx_free_node( z );
+// 	hx_free_node( type );
+// 	hx_free_node( person );
+// 	hx_free_node( knows );
+// 	hx_free_node( name );
 	
 	hx_free_hexastore( hx, st );
 	hx_free_storage_manager( st );
