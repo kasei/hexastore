@@ -17,6 +17,10 @@ int _hx_materialize_iter_vb_finished ( void* data ) {
 		_hx_materialize_prime_results( info );
 	}
 	
+	if (info->index >= info->length) {
+		info->finished	= 1;
+	}
+	
 //	fprintf( stderr, "- finished == %d\n", info->finished );
 	return info->finished;
 }
