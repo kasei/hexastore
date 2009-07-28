@@ -1643,16 +1643,22 @@ _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star:
 #include "node.h"
 #include "bgp.h"
 
+typedef struct {
+	char* name;
+	int id;
+	void* next;
+} hx_sparqlparser_variable_map_list;
+
 void* parsedBGPPattern	= NULL;
 void* parsedGP			= NULL;
 void* parsedPrologue	= NULL;
 void free_prologue ( prologue_t* p );
 char* prefix_uri ( prologue_t* p, char* ns );
 char* qualify_qname ( prologue_t* p, char* qname );
-hx_node* generate_node ( node_t* n, prologue_t* p, int* counter );
-hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter );
-hx_bgp* generate_bgp ( container_t* bgp, prologue_t* p, int* counter );
-hx_graphpattern* generate_graphpattern ( container_t* bgp, prologue_t* p, int* counter );
+hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
+hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
+hx_bgp* generate_bgp ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
+hx_graphpattern* generate_graphpattern ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
 
 hx_bgp* parse_bgp_query ( void );
 hx_bgp* parse_bgp_query_string ( char* string );
@@ -1673,11 +1679,16 @@ hx_graphpattern* parse_query ( void ) {
 		hx_graphpattern* g;
 		container_t* graphpattern;
 		hx_triple** triples;
-		int counter	= -1;
+		
+		hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
+		vmap->id	= 0;
+		vmap->name	= "";
+		vmap->next	= NULL;
+		
 		gp_query_t* q			= (gp_query_t*) parsedGP;
 		prologue_t* prologue	= q->prologue;
 		
-		hx_graphpattern* pat	= generate_graphpattern( q->gp, prologue, &counter );
+		hx_graphpattern* pat	= generate_graphpattern( q->gp, prologue, vmap );
 		free_prologue( prologue );
 		
 		return pat;
@@ -1699,7 +1710,12 @@ hx_bgp* parse_bgp_query ( void ) {
 	if (yyparse() == 0) {
 		hx_bgp* b;
 		container_t* bgp;
-		int counter	= -1;
+
+		hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
+		vmap->id	= 0;
+		vmap->name	= "";
+		vmap->next	= NULL;
+		
 		bgp_query_t* q			= (bgp_query_t*) parsedBGPPattern;
 		prologue_t* prologue	= parsedPrologue;
 		if (q->filter != NULL) {
@@ -1707,20 +1723,20 @@ hx_bgp* parse_bgp_query ( void ) {
 			char* string;
 			fprintf( stderr, "got filter\n" );
 			
-			e	= generate_expr( q->filter, prologue, &counter );
+			e	= generate_expr( q->filter, prologue, vmap );
 			hx_expr_sse( e, &string, "  ", 9 );
 			fprintf( stderr,         "filter expression: %s\n", string );
 			free( string );
 		}
 		
-		b	= generate_bgp( q->bgp, prologue, &counter );
+		b	= generate_bgp( q->bgp, prologue, vmap );
 		free_prologue( prologue );
 		return b;
 	}
 	return NULL;
 }
 
-hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* counter ) {
+hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	int i;
 	hx_bgp* b;
 	hx_expr* e;
@@ -1732,15 +1748,15 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* co
 		case TYPE_GGP:
 			patterns	= (hx_graphpattern**) calloc( gp->count, sizeof( hx_graphpattern* ) );
 			for (i = 0; i < gp->count; i++) {
-				patterns[i]	= generate_graphpattern( gp->items[i], p, counter );
+				patterns[i]	= generate_graphpattern( gp->items[i], p, vmap );
 			}
 			return hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
 		case TYPE_BGP:
-			b	= generate_bgp( gp, p, counter );
+			b	= generate_bgp( gp, p, vmap );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
 		case TYPE_FILTER:
-			e	= generate_expr( gp->items[0], p, counter );
-			pat	= generate_graphpattern( gp->items[1], p, counter );
+			e	= generate_expr( gp->items[0], p, vmap );
+			pat	= generate_graphpattern( gp->items[1], p, vmap );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_FILTER, e, pat );
 		default:
 			fprintf( stderr, "*** Unimplemented graphpattern type %c in generate_graphpattern\n", type );
@@ -1750,14 +1766,14 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, int* co
 	return NULL;
 }
 
-hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, int* counter ) {
+hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, hx_sparqlparser_variable_map_list* vmap ) {
 	int i;
 	hx_triple** triples	= (hx_triple**) calloc( bgp->count, sizeof( hx_triple* ) );
 	for (i = 0; i < bgp->count; i++) {
 		triple_t* t		= bgp->items[i];
-		hx_node* s	= generate_node( t->subject, prologue, counter );
-		hx_node* p	= generate_node( t->predicate, prologue, counter );
-		hx_node* o	= generate_node( t->object, prologue, counter );
+		hx_node* s	= generate_node( t->subject, prologue, vmap );
+		hx_node* p	= generate_node( t->predicate, prologue, vmap );
+		hx_node* o	= generate_node( t->object, prologue, vmap );
 		hx_triple* triple;
 		if (s == NULL || p == NULL || o == NULL) {
 			fprintf( stderr, "Got NULL node in triple: (%p, %p, %p)\n", (void*) s, (void*) p, (void*) o );
@@ -1770,30 +1786,30 @@ hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, int* counter ) {
 	return hx_new_bgp( bgp->count, triples );
 }
 
-hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {
+hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	container_t* c	= e->args;
 	if (e->op == HX_EXPR_OP_NODE) {
-		hx_node* n	= generate_node( c->items[0], p, counter );
+		hx_node* n	= generate_node( c->items[0], p, vmap );
 		return hx_new_node_expr( n );
 	} else {
 		int arity		= hx_expr_type_arity( e->op );
 		if (arity == 1) {
 			expr_t* d	= c->items[0];
-			hx_expr* e1	= generate_expr( d, p, counter );
+			hx_expr* e1	= generate_expr( d, p, vmap );
 			return hx_new_builtin_expr1( e->op, e1 );
 		} else if (arity == 2) {
 			expr_t* a	= c->items[0];
 			expr_t* b	= c->items[1];
-			hx_expr* e1	= generate_expr( a, p, counter );
-			hx_expr* e2	= generate_expr( b, p, counter );
+			hx_expr* e1	= generate_expr( a, p, vmap );
+			hx_expr* e2	= generate_expr( b, p, vmap );
 			return hx_new_builtin_expr2( e->op, e1, e2 );
 		} else if (arity == 3) {
 			expr_t* _a	= c->items[0];
 			expr_t* _b	= c->items[1];
 			expr_t* _c	= c->items[2];
-			hx_expr* e1	= generate_expr( _a, p, counter );
-			hx_expr* e2	= generate_expr( _b, p, counter );
-			hx_expr* e3	= generate_expr( _c, p, counter );
+			hx_expr* e1	= generate_expr( _a, p, vmap );
+			hx_expr* e2	= generate_expr( _b, p, vmap );
+			hx_expr* e3	= generate_expr( _c, p, vmap );
 			return hx_new_builtin_expr3( e->op, e1, e2, e3 );
 		} else {
 			fprintf( stderr, "*** not an implemented arity size in generate_expr: %d\n", arity );
@@ -1803,7 +1819,32 @@ hx_expr* generate_expr ( expr_t* e, prologue_t* p, int* counter ) {
 	return NULL;
 }
 
-hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
+int variable_id_with_name ( hx_sparqlparser_variable_map_list* vmap, char* name ) {
+	int current_id	= 0;
+	
+	hx_sparqlparser_variable_map_list* p	= vmap;
+	hx_sparqlparser_variable_map_list* last	= p;
+	while (p != NULL) {
+		current_id	= p->id;
+		char* n		= p->name;
+		if (strcmp(n,name) == 0) {
+			return p->id;
+		}
+		last	= p;
+		p		= (hx_sparqlparser_variable_map_list*) p->next;
+	}
+	
+	--current_id;
+	
+	hx_sparqlparser_variable_map_list* new	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof( hx_sparqlparser_variable_map_list ) );
+	new->name	= name;
+	new->id		= current_id;
+	new->next	= NULL;
+	last->next	= new;
+	return current_id;
+}
+
+hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	if (n->type == TYPE_FULL_NODE) {
 		hx_node* node	= (hx_node*) n->ptr;
 		return hx_node_copy( node );
@@ -1812,7 +1853,8 @@ hx_node* generate_node ( node_t* n, prologue_t* p, int* counter ) {
 		char* copy	= (char*) malloc( strlen( name ) + 1 );
 		hx_node* v;
 		strcpy( copy, name );
-		v	= hx_new_node_named_variable( (*counter)--, copy );
+		int id	= variable_id_with_name( vmap, copy );
+		v	= hx_new_node_named_variable( id, copy );
 		return v;
 	} else if (n->type == TYPE_QNAME) {
 		hx_node* u;
@@ -2017,8 +2059,12 @@ void XXXdebug_triple( triple_t* t, prologue_t* p ) {
 }
 
 void XXXdebug_node( node_t* n, prologue_t* p ) {
-	int counter	= -1;
-	hx_node* node	= generate_node( n, p, &counter );
+	hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
+	vmap->id	= 0;
+	vmap->name	= "";
+	vmap->next	= NULL;
+	
+	hx_node* node	= generate_node( n, p, vmap );
 	if (node != NULL) {
 		char* string;
 		hx_node_string( node, &string );
