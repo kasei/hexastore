@@ -5,9 +5,203 @@
 #include "bgp.h"
 #include "parallel.h"
 #include "materialize.h"
+#include "nestedloopjoin.h"
+
+static int DEBUG_NODE	= -1;
 
 extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
+int distribute_bgp ( int root, hx_bgp** b, hx_nodemap* map, hx_node_id** triple_nodes, char*** variable_names, int* maxiv );
+
+hx_variablebindings_iter* _hx_parallel_variablebindings_iter_for_triple ( int triple, hx_parallel_execution_context* ctx, hx_hexastore* hx, int node_count, hx_node_id* triple_nodes, char** node_names ) {
+	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	hx_index* index;
+	hx_node_id index_ordered[3];
+	int order_position	= HX_OBJECT;
+	hx_get_ordered_index_id( hx, ctx->storage, triple_nodes[(3*triple)+0], triple_nodes[(3*triple)+1], triple_nodes[(3*triple)+2], order_position, &index, index_ordered, NULL );
+	hx_index_iter* titer	= hx_index_new_iter1( index, ctx->storage, triple_nodes[(3*triple)+0], triple_nodes[(3*triple)+1], triple_nodes[(3*triple)+2] );
+	
+	char* names[3];
+	for (int i = 0; i < 3; i++) {
+		char* n	= node_names[ (3*triple) + i ];
+		if (n != NULL) {
+			int len	= strlen(n);
+			names[i]	= (char*) calloc( len + 1, sizeof( char ) );
+			strcpy( names[i], n );
+		} else {
+			names[i]	= NULL;
+		}
+	}
+	
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, ctx->storage, names[0], names[1], names[2], 0 );
+	return iter;
+}
+
+// int _hx_parallel_variablebindings_iter_shared_columns( hx_node_id* triple_nodes, char** node_names, char** variable_names, int maxiv, int lhs_triple, int rhs_triple, char*** columns ) {
+// 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+// 	
+// 	int* shared	= (int*) calloc( maxiv, sizeof( int ) );
+// 	
+// // 	if (myrank == DEBUG_NODE) fprintf( stderr, "names for lhs:\n" );	// XXX
+// 	
+// 	int lhs_start	= 3 * lhs_triple;
+// 	for (int i = lhs_start; i < 3+lhs_start; i++) {
+// 		if (triple_nodes[i] < 0) {
+// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );	// XXX
+// 			shared[ -1 * triple_nodes[i] ]++;
+// 		}
+// 	}
+// 
+// // 	if (myrank == DEBUG_NODE) fprintf( stderr, "names for rhs:\n" );	// XXX
+// 	int rhs_start	= 3 * rhs_triple;
+// 	for (int i = rhs_start; i < 3+rhs_start; i++) {
+// 		if (triple_nodes[i] < 0) {
+// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );	// XXX
+// 			shared[ -1 * triple_nodes[i] ]++;
+// 		}
+// 	}
+// 	
+// 	int shared_count	= 0;
+// 	for (int i = 0; i <= maxiv; i++) {
+// 		if (shared[i] == 2) {
+// 			shared_count++;
+// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "variable is shared: %s\n", variable_names[i] );	// XXX
+// 		}
+// 	}
+// 	
+// 	int j		= 0;
+// 	*columns	= (char**) calloc( shared_count, sizeof( char* ) );
+// //	fprintf( stderr, "node %d allocated column array %p\n", myrank, *columns );
+// 	
+// 	for (int i = 0; i <= maxiv; i++) {
+// 		if (shared[i] == 2) {
+// 			(*columns)[ j++ ]	= variable_names[i];
+// 		}
+// 	}
+// 	
+// 	return shared_count;
+// }
+
+int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes, char** node_names, char** variable_names, int maxiv, hx_variablebindings_iter* lhs, int rhs_triple, char*** columns ) {
+	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	int* shared	= (int*) calloc( maxiv, sizeof( int ) );
+	
+// 	fprintf( stderr, "names for lhs:\n" );
+// 	
+// 	int lhs_start	= 3 * lhs_triple;
+// 	for (int i = lhs_start; i < 3+lhs_start; i++) {
+// 		if (triple_nodes[i] < 0) {
+// 			fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );
+// 			shared[ -1 * triple_nodes[i] ]++;
+// 		}
+// 	}
+
+// 	fprintf( stderr, "names for rhs:\n" );
+	int rhs_start	= 3 * rhs_triple;
+	for (int i = rhs_start; i < 3+rhs_start; i++) {
+		if (triple_nodes[i] < 0) {
+// 			fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );
+			shared[ -1 * triple_nodes[i] ]++;
+		}
+	}
+	
+	int lhs_size		= hx_variablebindings_iter_size( lhs );
+// 	fprintf( stderr, "(%d total) names for lhs:\n", lhs_size );
+	char** lhs_names	= hx_variablebindings_iter_names( lhs );
+	for (int i = 0; i < lhs_size; i++) {
+		char* lhs_name	= lhs_names[i];
+// 		fprintf( stderr, "- %s\n", lhs_name );
+		for (int j = 0; j <= maxiv; j++) {
+			if (variable_names[j] != NULL) {
+// 				fprintf( stderr, "\tchecking with existing RHS variable %s\n", variable_names[j] );
+				if (strcmp(variable_names[j], lhs_name) == 0) {
+					shared[j]++;
+				}
+			}
+		}
+	}
+	
+	int shared_count	= 0;
+	for (int i = 0; i <= maxiv; i++) {
+		if (shared[i] == 2) {
+			shared_count++;
+// 			fprintf( stderr, "variable is shared: %s\n", variable_names[i] );
+		}
+	}
+	
+	int j		= 0;
+	*columns	= (char**) calloc( shared_count, sizeof( char* ) );
+//	fprintf( stderr, "node %d allocated column array %p\n", myrank, *columns );
+	
+	for (int i = 0; i <= maxiv; i++) {
+		if (shared[i] == 2) {
+			(*columns)[ j++ ]	= variable_names[i];
+		}
+	}
+	
+	return shared_count;
+}
+
+hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_hexastore* hx, int triple_count, hx_node_id* triple_nodes, char** variable_names, int maxiv ) {
+	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	int node_count	= triple_count * 3;
+	// create node_names[] that maps node positions in the BGP (blocks of 3 nodes per triple) to the name of the variable node in that position (NULL if not a variable)
+	char** node_names	= (char**) calloc( node_count, sizeof( char* ) );
+	for (int i = 0; i < node_count; i++) {
+		if (triple_nodes[i] < 0) {
+			node_names[i]	= variable_names[ -1 * triple_nodes[i] ];
+		} else {
+			node_names[i]	= NULL;
+		}
+	}
+	
+	hx_variablebindings_iter* lhs		= _hx_parallel_variablebindings_iter_for_triple( 0, ctx, hx, node_count, triple_nodes, node_names );
+	
+	for (int j = 1; j < triple_count; j++) {
+		/**********************************************************************/
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (myrank == 0) {
+			fprintf( stderr, "Performing join #%d\n", j );
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		/**********************************************************************/
+		
+
+
+		char** columns						= NULL;
+		hx_variablebindings_iter* rhs		= _hx_parallel_variablebindings_iter_for_triple( j, ctx, hx, node_count, triple_nodes, node_names );
+		int shared_count					= _hx_parallel_variablebindings_iter_shared_columns2( triple_nodes, node_names, variable_names, maxiv, lhs, j, &columns );
+		
+		
+		
+		/**********************************************************************/
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (myrank == 0) {
+			for (int i = 0; i < shared_count; i++) {
+				fprintf( stderr, "- shared column: '%s'\n", columns[i] );
+			}
+			fprintf( stderr, "\n" );
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		/**********************************************************************/
+		
+		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx->storage, lhs, shared_count, columns );
+		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx->storage, rhs, shared_count, columns );
+		lhs								= hx_new_nestedloopjoin_iter( lhsr, rhsr );
+		
+		fprintf( stderr, "************* triple count %d\n", triple_count );
+		
+		break;
+// 		fprintf( stderr, "node %d freeing column array %p\n", myrank, columns );
+// 		free(columns);
+	}
+	
+// 	fprintf( stderr, "node %d returning results iterator %p\n", myrank, (void*) lhsr );
+	return lhs;
+}
 
 int main ( int argc, char** argv ) {
 	MPI_Init(&argc, &argv);
@@ -16,157 +210,47 @@ int main ( int argc, char** argv ) {
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
+	hx_nodemap* map			= NULL;
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( st );
 	hx_hexastore* source	= distribute_triples_from_file( hx, st, argv[1] );
-	
-	hx_nodemap* map		= NULL;
 	if (source) {
-		map				= hx_get_nodemap( source );
+		map					= hx_get_nodemap( source );
 	}
 	
-// 	hx_node* x			= hx_new_named_variable( hx, "x" );
-// 	hx_node* y			= hx_new_named_variable( hx, "y" );
-// 	hx_node* z			= hx_new_named_variable( hx, "z" );
-// 	
-// 	hx_node* type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-// 	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
-// 	hx_node* name		= hx_new_node_resource("http://xmlns.com/foaf/0.1/name");
-// 	hx_node* person		= hx_new_node_resource("http://xmlns.com/foaf/0.1/Person");
-// 	
-// 	hx_node_id nameid	= 0;
+	hx_parallel_execution_context ctx;
+	ctx.storage	= st;
+	ctx.root	= 0;
 	
+	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name ; foaf:nick ?nick . ?d foaf:maker ?p }" );
 	
-	hx_bgp* b			= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
-	int triple_count	= hx_bgp_size(b);
-	int node_count		= triple_count * 3;
-	hx_node_id* triples	= (hx_node_id*) calloc( node_count, sizeof( hx_node_id ) );
+	int triple_count			= hx_bgp_size(b);
+	int node_count				= triple_count * 3;
 	
-	// parse triples from ~SPARQL syntax, and place the node IDs into the triples[] buffer
-	if (myrank == 0) {
-		int len;
-		char* bfreeze		= hx_bgp_freeze( b, &len, map );
-		hx_node_id* _ptr	= (hx_node_id*) bfreeze;
-		hx_node_id* ptr		= &( _ptr[1] );
-		
-		for (int i = 0; i < 3; i++) {
-			triples[i]	= ptr[i];
+	hx_node_id* triple_nodes;
+	char** variable_names;
+	int maxiv;
+	distribute_bgp( 0, &b, map, &triple_nodes, &variable_names, &maxiv );
+
+	if (myrank == DEBUG_NODE) {
+		for (int i = 0; i <= maxiv; i++) {
+			fprintf( stderr, "variable map slot %d: '%s'\n", i, variable_names[i] );
 		}
 	}
+
+	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( &ctx, hx, triple_count, triple_nodes, variable_names, maxiv );
 	
-	// now broadcast the triples[] buffer to all nodes, so everyone can execute the query
-	MPI_Bcast(triples,sizeof(hx_node_id)*3,MPI_BYTE,0,MPI_COMM_WORLD);
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	hx_node_id nameid	= triples[1];
-	free( triples );
-	fprintf( stderr, "id of foaf:name node: %d (on node %d)\n", (int) nameid, myrank );
-	
-	
-	
-	
-// 	MPI_Barrier(MPI_COMM_WORLD);
-// 	MPI_Bcast(&nameid,sizeof(hx_node_id),MPI_BYTE,0,MPI_COMM_WORLD);
-// 	MPI_Barrier(MPI_COMM_WORLD);
-	
-	hx_variablebindings_iter* iter	= NULL;
-	if (nameid == 0) {
-		fprintf( stderr, "foaf:name doesn't exist on node: %d\n", myrank );
-	} else {
-		fprintf( stderr, "foaf:name is node id %d on node: %d\n", (int) nameid, myrank );
-		hx_index* index;
-		hx_node_id index_ordered[3];
-		int order_position	= HX_OBJECT;
-		hx_get_ordered_index_id( hx, st, -1, nameid, -2, order_position, &index, index_ordered, NULL );
-		hx_index_iter* titer	= hx_index_new_iter1( index, st, -1, nameid, -2 );
-		iter	= hx_new_iter_variablebindings( titer, st, "p", NULL, "name", 0 );
-		fprintf( stderr, "node %d distributing triples from iterator %p\n", myrank, (void*) iter );
+	if (iter) {
+		while (!hx_variablebindings_iter_finished( iter )) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			fprintf( stderr, ">>>>>>>>>>>>> node %d got result: ", myrank );
+			hx_variablebindings_debug( b, NULL );
+			hx_free_variablebindings( b, 1 );
+			hx_variablebindings_iter_next( iter );
+		}
+		hx_free_variablebindings_iter( iter, 1 );
 	}
-	
-// 	for (int i = 0; i < mysize; i++) {
-// 		if (myrank == i) {
-// 			char* header	= calloc( 20, sizeof(char) );
-// 			sprintf( header, "node %d>", myrank );
-// 			if (iter) {
-// 				hx_variablebindings_iter_debug( iter, header, 0 );
-// 			} else {
-// 				fprintf( stderr, "%s no results\n", header );
-// 			}
-// 			free(header);
-// 		}
-// 		if (MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD )) {
-// 			fprintf( stderr, "*** Barrier failed on node %d\n", myrank );
-// 		}
-// 	}
-	
-	hx_parallel_distribute_variablebindings( st, iter );
-	
-// 	hx_triple* triples[3];
-// 	triples[0]	= hx_new_triple( x, knows, y );
-// 	triples[1]	= hx_new_triple( y, name, z );
-// 	triples[2]	= hx_new_triple( x, type, person );
-// 	
-// 	hx_bgp* b	= hx_new_bgp( 2, triples );
-// 	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
-// 	if (iter == NULL) {
-// 		return 1;
-// 	}
-// 	
-// 	int size		= hx_variablebindings_iter_size( iter );
-// 	char** names	= hx_variablebindings_iter_names( iter );
-// 	int xi, yi, zi;
-// 	for (int i = 0; i < size; i++) {
-// 		if (strcmp(names[i], "x") == 0) {
-// 			xi	= i;
-// 		} else if (strcmp(names[i], "y") == 0) {
-// 			yi	= i;
-// 		} else if (strcmp(names[i], "z") == 0) {
-// 			zi	= i;
-// 		}
-// 	}
-// 	
-// 	while (!hx_variablebindings_iter_finished( iter )) {
-// 		hx_variablebindings* b;
-// 		hx_variablebindings_iter_current( iter, &b );
-// 		hx_node_id xid	= hx_variablebindings_node_id_for_binding ( b, xi );
-// 		hx_node_id yid	= hx_variablebindings_node_id_for_binding ( b, yi );
-// 		hx_node_id zid	= hx_variablebindings_node_id_for_binding ( b, zi );
-// 		hx_node* x		= hx_nodemap_get_node( map, xid );
-// 		hx_node* y		= hx_nodemap_get_node( map, yid );
-// 		hx_node* z		= hx_nodemap_get_node( map, zid );
-// 		
-// 		char *xs, *ys, *zs;
-// 		hx_node_string( x, &xs );
-// 		hx_node_string( y, &ys );
-// 		hx_node_string( z, &zs );
-// 		printf( "%s\t%s\t%s\n", xs, ys, zs );
-// 		free( xs );
-// 		free( ys );
-// 		free( zs );
-// 		
-// 		hx_free_variablebindings( b, 1 );
-// 		hx_variablebindings_iter_next( iter );
-// 	}
-// 	hx_free_variablebindings_iter( iter, 1 );
-// 	for (int i = 0; i < 3; i++) {
-// 		hx_free_triple( triples[i] );
-// 	}
-// 	hx_free_bgp( b );
-	
-// 	hx_free_node( x );
-// 	hx_free_node( y );
-// 	hx_free_node( z );
-// 	hx_free_node( type );
-// 	hx_free_node( person );
-// 	hx_free_node( knows );
-// 	hx_free_node( name );
 	
 	hx_free_hexastore( hx, st );
 	hx_free_storage_manager( st );
@@ -199,3 +283,77 @@ hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manage
 	return source;
 }
 
+int distribute_bgp ( int root, hx_bgp** b, hx_nodemap* map, hx_node_id** triple_nodes, char*** variable_names, int* maxiv ) {
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	int triple_count			= hx_bgp_size(*b);
+	int node_count				= triple_count * 3;
+	hx_node_id* _triple_nodes	= (hx_node_id*) calloc( node_count, sizeof( hx_node_id ) );
+	hx_node** variables			= NULL;
+	int variable_count			= 0;
+	
+	// parse triples from ~SPARQL syntax, and place the node IDs into the _triple_nodes[] buffer
+	if (myrank == root) {
+		int len;
+		char* bfreeze		= hx_bgp_freeze( *b, &len, map );
+		hx_node_id* _ptr	= (hx_node_id*) bfreeze;
+		hx_node_id* ptr		= &( _ptr[1] );
+		
+		for (int i = 0; i < node_count; i++) {
+			_triple_nodes[i]	= ptr[i];
+		}
+		
+		int* is_variable	= (int*) calloc( node_count, sizeof( int ) );
+		for (int i = 0; i < node_count; i++) {
+			if (_triple_nodes[i] < 0) {
+				is_variable[i]	= 1;
+			}
+		}
+		for (int i = 0; i < node_count; i++) {
+			if (is_variable[i]) {
+				variable_count++;
+			}
+		}
+		variables	= (hx_node**) calloc( variable_count, sizeof( hx_node* ) );
+		int j	= 0;
+		for (int i = 0; i < node_count; i++) {
+			hx_triple* t	= hx_bgp_triple( *b, (i/3) );
+			char* string;
+			hx_triple_string ( t, &string );
+
+			if (is_variable[i]) {
+				hx_node* node	= NULL;
+				switch (i % 3) {
+					case 0:
+// 						fprintf( stderr, "variable is subject of %s\n", string );
+						node	= t->subject;
+						break;
+					case 1:
+// 						fprintf( stderr, "variable is predicate of %s\n", string );
+						node	= t->predicate;
+						break;
+					case 2:
+// 						fprintf( stderr, "variable is object of %s\n", string );
+						node	= t->object;
+						break;
+					default:
+						fprintf( stderr, "*** uh oh.\n" );
+						exit(1);
+				};
+				free(string);
+				variables[ j++ ]	= node;
+			}
+		}
+	}
+	
+	// broadcast the mapping from variable number to variable name to all processes
+	*variable_names	= hx_parallel_broadcast_variables(variables, variable_count, maxiv);	
+	
+	// now broadcast the _triple_nodes[] buffer to all nodes, so everyone can execute the query
+	MPI_Bcast(_triple_nodes,sizeof(hx_node_id)*node_count,MPI_BYTE,0,MPI_COMM_WORLD);
+	*triple_nodes	= _triple_nodes;
+	
+	return 0;
+}
