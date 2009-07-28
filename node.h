@@ -13,6 +13,7 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include "mpi.h"
 
 #include "hexastore_types.h"
 
@@ -101,6 +102,7 @@ int hx_node_cmp( const void* a, const void* b );
 int hx_node_ebv ( hx_node* n );
 
 int hx_node_write( hx_node* n, FILE* f );
+int hx_node_write_mpi( hx_node* n, MPI_File f );
 hx_node* hx_node_read( FILE* f, int buffer );
 
 #ifdef __cplusplus

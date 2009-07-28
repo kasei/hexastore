@@ -190,6 +190,35 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	return m;
 }
 
+int hx_nodemap_write_mpi ( hx_nodemap* m, MPI_File f ) {
+	int flag = 0;
+	MPI_Status status;
+	MPIO_Request request;
+	
+	size_t used	= avl_count( m->id2node );
+	int len			= 1 + sizeof( size_t ) + sizeof( hx_node_id );
+	char* header	= calloc( len, 1 );
+	header[0]	= 'M';
+	memcpy( &(header[1]), &used, sizeof( size_t ) );
+	memcpy( &(header[1 + sizeof(size_t)]), &( m->next_id ), sizeof( hx_node_id ) );
+	MPI_File_iwrite_shared(f, header, len, MPI_BYTE, &request);
+	do {
+		MPIO_Test(&request, &flag, &status);
+	} while(!flag);
+	free(header);
+	
+	struct avl_traverser iter;
+	avl_t_init( &iter, m->id2node );
+	hx_nodemap_item* item;
+	
+	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+		MPI_File_write_shared(f, &( item->id ), sizeof( hx_node_id ), MPI_BYTE, &status);
+		hx_node_write_mpi( item->node, f );
+	}
+	
+	return 0;
+}
+
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	size_t count	= avl_count( map->id2node );
 	hx_node** node_handles	= (hx_node**) calloc( count, sizeof( hx_node* ) );

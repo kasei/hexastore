@@ -573,6 +573,40 @@ hx_node* hx_node_read( FILE* f, int buffer ) {
 	
 }
 
+int hx_node_write_mpi ( hx_node* n, MPI_File f ) {
+	int flag = 0;
+	MPI_Status status;
+	MPIO_Request request;
+	
+	if (n->type == '?') {
+//		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
+		return 1;
+	}
+	
+	MPI_File_write_shared(f, "N", 1, MPI_BYTE, &status);
+	MPI_File_write_shared(f, &(n->type), 1, MPI_BYTE, &status);
+	
+	size_t len	= (size_t) strlen( n->value );
+	MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+	MPI_File_write_shared(f, n->value, strlen(n->value), MPI_BYTE, &status);
+	
+	if (hx_node_is_literal( n )) {
+		if (hx_node_is_lang_literal( n )) {
+			hx_node_lang_literal* l	= (hx_node_lang_literal*) n;
+			size_t len	= strlen( l->lang );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, l->lang, strlen(l->lang), MPI_BYTE, &status);
+		}
+		if (hx_node_is_dt_literal( n )) {
+			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
+			size_t len	= strlen( d->dt );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, d->dt, strlen(d->dt), MPI_BYTE, &status);
+		}
+	}
+	return 0;
+}
+
 int _hx_node_parse_datatypes ( hx_node* n ) {
 	if (!hx_node_is_dt_literal(n)) {
 		return 1;
