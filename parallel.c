@@ -18,10 +18,14 @@ typedef struct {
 	int count;
 	hx_storage_manager* st;
 	hx_variablebindings_iter* iter;
+	int shared_columns;
+	char** shared_names;
 } hx_parallel_send_vb_args_t;
 
 typedef struct {
-	void* padding;
+	int allocated;
+	int used;
+	hx_variablebindings** buffer;
 } hx_parallel_recv_vb_args_t;
 
 int _hx_parallel_send_triples_handler (async_mpi_session* ses, void* args);
@@ -148,21 +152,26 @@ int _hx_parallel_recv_triples_handler(async_mpi_session* ses, void* args) {
 	return 1;
 }
 
-hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter ) {
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter, int shared_columns, char** shared_names ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 	hx_parallel_send_vb_args_t send_args;
-	send_args.st			= st;
-	send_args.iter			= iter;
-	send_args.count			= 0;
+	send_args.st				= st;
+	send_args.iter				= iter;
+	send_args.count				= 0;
+	send_args.shared_columns	= shared_columns;
+	send_args.shared_names		= shared_names;
 		
 	hx_parallel_recv_vb_args_t recv_args;
+	recv_args.allocated			= 0;
+	recv_args.used				= 0;
+	recv_args.buffer			= NULL;
 	
-	async_des_session* ses	= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 20, &_hx_parallel_recv_vb_handler, &recv_args, -1);
+	async_des_session* ses		= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 20, &_hx_parallel_recv_vb_handler, &recv_args, -1);
 	
-	int i	= 0;
+//	int i	= 0;
 	// while (async_des(ses) == ASYNC_PENDING) {
 // 		fprintf( stderr, "loop iteration %d on node %d\n", i++, myrank );
 // 		fprintf( stderr, "node %d: Message count %d\n", myrank, ses->msg_count );
@@ -171,24 +180,33 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_m
 	
 	enum async_status astat;
 	do {
-			astat = async_des(ses);
-	} while(astat == ASYNC_PENDING);
+		astat = async_des(ses);
+	} while (astat == ASYNC_PENDING);
 	
-	if(astat == ASYNC_FAILURE) {
+	if (astat == ASYNC_FAILURE) {
 		fprintf(stderr, "ASYNC_FAILURE while distributing var bindings.\n");
 	}
 	
 // 	fprintf( stderr, "%d: Message count %d\n", myrank, ses->msg_count );
 // 	fprintf( stderr, "node %d finished async loop\n", myrank );
 	
+	int size		= hx_variablebindings_iter_size(iter);
+	char** names	= hx_variablebindings_iter_names(iter);
+	char** newnames	= (char**) calloc( size, sizeof( char* ) );
+	for (int i = 0; i < size; i++) {
+		char* name		= names[i];
+		int len			= strlen(name);
+		char* newname	= (char*) calloc( len + 1, sizeof( char ) );
+		strcpy( newname, name );
+		newnames[i]		= newname;
+	}
+	hx_variablebindings_iter* r	= hx_new_materialize_iter_with_data( size, newnames, recv_args.used, recv_args.buffer );	
+	
 	if (iter != NULL) {
 		hx_free_variablebindings_iter( iter, 0 );
 	}
 	
 	async_des_session_destroy(ses);
-	
-	// XXX this should be the materialized iterator with the variablebindings collected in the recv handler:
-	hx_variablebindings_iter* r	= hx_new_materialize_iter_with_data( 0, NULL, 0, NULL );	
 	
 	return r;
 }
@@ -216,11 +234,22 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		int size		= hx_variablebindings_size( b );
 		
 		// hx_variablebindings_debug( b, NULL );
-
+		
+		
+		uint64_t hash	= 0;
+		for (int i = 0; i < send_args->shared_columns; i++) {
+			fprintf( stderr, "hashing on shared name %s\n", send_args->shared_names[i] );
+			hx_node_id id	= hx_variablebindings_node_id_for_binding_name( b, send_args->shared_names[i] );
+			hash			+= id;
+		}
+		
 		char* string;
 		hx_variablebindings_string( b, NULL, &string );
-		uint64_t hash	= hx_triple_hash_string( string );
+		
+// 		uint64_t hash	= hx_triple_hash_string( string );
+
 		int node		= hash % mysize;
+		
 // 		fprintf( stderr, "--- hash = %llu (%d)\n", hash, node );
 
 // 		fprintf( stderr, "- sending variable bindings to node %d\n", node );
@@ -251,7 +280,131 @@ int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
 	hx_variablebindings_string( b, NULL, &string );
 // 	fprintf( stderr, "node %d got variable bindings %s from %d\n", myrank, string, ses->peer );
 	free(string);
-	hx_free_variablebindings( b, 1 );
+	
+	if (recv_args->used == recv_args->allocated) {
+		int newsize	= (recv_args->allocated == 0) ? 8 : (recv_args->allocated * 1.5);
+		hx_variablebindings** oldbuffer	= recv_args->buffer;
+		hx_variablebindings** newbuffer	= (hx_variablebindings**) calloc( newsize, sizeof( hx_variablebindings* ) );
+		for (int i = 0; i < recv_args->allocated; i++) {
+			newbuffer[i]	= oldbuffer[i];
+		}
+		
+		recv_args->buffer		= newbuffer;
+		recv_args->allocated	= newsize;
+		
+		if (oldbuffer != NULL) {
+			free(oldbuffer);
+		}
+	}
+	
+	recv_args->buffer[ recv_args->used++ ]	= b;
+	
+//	hx_free_variablebindings( b, 1 );
 // 	fprintf( stderr, "node %d recv handler sucessfully freed variablebindings\n", myrank );
 	return 1;
+}
+
+char** hx_parallel_broadcast_variables(hx_node **nodes, size_t len, int* maxiv) {
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	size_t size_of_size_t = sizeof(size_t);
+	size_t size_of_int = sizeof(int);
+	size_t bufsize;
+	size_t i;
+	unsigned char* buffer;
+
+	if(rank == 0) {
+		bufsize = (len+1)*(size_of_size_t + size_of_int);
+		for(i = 0; i < len; i++) {
+			char* name;
+			hx_node_variable_name(nodes[i], &name);
+			bufsize += strlen(name);
+			free(name);
+		}
+	}
+
+	MPI_Bcast(&bufsize, size_of_size_t, MPI_BYTE, 0, MPI_COMM_WORLD);
+
+	if(bufsize <= 0) {
+		return NULL;
+	}
+
+	buffer = malloc(bufsize);
+	if(buffer == NULL) {
+		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for buffer.\n", __FILE__, __LINE__, rank, bufsize);
+		bufsize = 0;
+	}
+
+	if(rank == 0) {
+		unsigned char* b = buffer;
+		memcpy(b, &len, size_of_size_t);
+		b = &b[size_of_size_t + size_of_int];
+		int min_iv = 0;
+		for(i = 0; i < len; i++) {
+			int iv = hx_node_iv(nodes[i]);
+			if(iv < min_iv) {
+				min_iv = iv;
+			}
+			memcpy(b, &iv, size_of_int);
+			b = &b[size_of_int];
+			char* name;
+			hx_node_variable_name(nodes[i], &name);
+			size_t namelen = strlen(name);
+			memcpy(b, &namelen, size_of_size_t);
+			b = &b[size_of_size_t];
+			memcpy(b, name, namelen);
+			if(i < len - 1) {
+				b = &b[namelen];
+			}
+			free(name);
+		}
+		min_iv *= -1;
+		memcpy(&buffer[size_of_size_t], &min_iv, size_of_int);
+	}
+
+	MPI_Bcast(buffer, bufsize, MPI_BYTE, 0, MPI_COMM_WORLD);
+	
+	unsigned char* b = buffer;
+	memcpy(&len, b, size_of_size_t);
+	b = &b[size_of_size_t];
+
+	int min_iv;
+	memcpy(&min_iv, b, size_of_int);
+	b = &b[size_of_int];
+
+	*maxiv = min_iv;
+	char** map = calloc(min_iv+1, sizeof(char*));
+	if(map == NULL) {
+		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for map.\n", __FILE__, __LINE__, rank, min_iv*sizeof(char*));
+		return NULL;
+	}
+
+	for(i = 0; i < len; i++) {
+		size_t namelen;
+		int iv;
+		memcpy(&iv, b, size_of_int);
+		b = &b[size_of_int];
+		iv *= -1;
+		memcpy(&namelen, b, size_of_size_t);
+		b = &b[size_of_size_t];
+		if(namelen > 0) {
+			map[iv] = malloc(namelen+1);
+			if(map[iv] == NULL) {
+				fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for node name.\n", __FILE__, __LINE__, rank, namelen + 1);
+				return NULL;
+			}
+			memcpy(map[iv], b, namelen);
+			map[iv][namelen] = '\0';
+			if(i < len - 1) {
+				b = &b[namelen];
+			}
+		}
+	}
+	free(buffer);
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	return map;
 }
