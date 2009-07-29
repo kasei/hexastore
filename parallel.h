@@ -24,12 +24,13 @@ extern "C" {
 typedef struct {
 	int root;
 	hx_storage_manager* storage;
+	int join_iteration;
 } hx_parallel_execution_context;
 
 int hx_parallel_distribute_triples_from_hexastore ( int rank, hx_hexastore* source, hx_storage_manager* st, hx_hexastore* destination );
 int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, hx_storage_manager* st, hx_hexastore* destination, hx_nodemap* map );
 
-hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter, int shared_columns, char** shared_names );
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names );
 
 int hx_parallel_collect_variablebindings ( int rank, hx_storage_manager* st, hx_variablebindings_iter* iter );
 hx_variablebindings_iter* hx_parallel_new_rendezvousjoin_bgp ( hx_hexastore* hx, hx_storage_manager* st, hx_bgp* b );
