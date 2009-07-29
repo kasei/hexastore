@@ -16,7 +16,8 @@ typedef struct {
 
 typedef struct {
 	int count;
-	hx_storage_manager* st;
+	hx_parallel_execution_context* ctx;
+//	hx_storage_manager* st;
 	hx_variablebindings_iter* iter;
 	int shared_columns;
 	char** shared_names;
@@ -152,13 +153,15 @@ int _hx_parallel_recv_triples_handler(async_mpi_session* ses, void* args) {
 	return 1;
 }
 
-hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_manager* st, hx_variablebindings_iter* iter, int shared_columns, char** shared_names ) {
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
+	hx_storage_manager* st		= ctx->storage;
 	hx_parallel_send_vb_args_t send_args;
-	send_args.st				= st;
+	send_args.ctx				= ctx;
+//	send_args.st				= st;
 	send_args.iter				= iter;
 	send_args.count				= 0;
 	send_args.shared_columns	= shared_columns;
@@ -200,6 +203,8 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_storage_m
 		strcpy( newname, name );
 		newnames[i]		= newname;
 	}
+	
+	// fprintf( stderr, "node %d creating materialized iterator with size %d, length %d\n", myrank, size, recv_args.used );
 	hx_variablebindings_iter* r	= hx_new_materialize_iter_with_data( size, newnames, recv_args.used, recv_args.buffer );	
 	
 	if (iter != NULL) {
@@ -218,12 +223,14 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 	
 // 	fprintf( stderr, "node %d entered send handler\n", myrank );
 	hx_parallel_send_vb_args_t* send_args	= (hx_parallel_send_vb_args_t*) args;
-	hx_storage_manager* st			= send_args->st;
-	hx_variablebindings_iter* iter	= send_args->iter;
+	hx_parallel_execution_context* ctx	= send_args->ctx;
+	hx_storage_manager* st				= ctx->storage;
+	hx_variablebindings_iter* iter		= send_args->iter;
 	
 	if (iter == NULL) {
 		return 0;
 	}
+	
 	
 	while (!hx_variablebindings_iter_finished(iter)) {
 // 		fprintf( stderr, "node %d iter loop\n", myrank );
@@ -238,7 +245,9 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		
 		uint64_t hash	= 0;
 		for (int i = 0; i < send_args->shared_columns; i++) {
-			fprintf( stderr, "hashing on shared name %s\n", send_args->shared_names[i] );
+// 			if (ctx->join_iteration > 1) {
+// 				fprintf( stderr, "\thashing on shared name %s\n", send_args->shared_names[i] );
+// 			}
 			hx_node_id id	= hx_variablebindings_node_id_for_binding_name( b, send_args->shared_names[i] );
 			hash			+= id;
 		}
@@ -254,7 +263,11 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 
 // 		fprintf( stderr, "- sending variable bindings to node %d\n", node );
 		send_args->count++;
-		fprintf( stderr, "node %d sending variable bindings %s with length %d to node %d\n", myrank, string, len, node );
+		
+// 		if (ctx->join_iteration > 1) {
+// 			fprintf( stderr, "\t{J%d} node %d sending variable bindings %s with length %d to node %d\n", ctx->join_iteration, myrank, string, len, node );
+// 		}
+		
 		async_mpi_session_reset3(ses, buffer, len, node, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
 		free(string);
 		hx_variablebindings_iter_next(iter);
