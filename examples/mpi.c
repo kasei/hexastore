@@ -7,7 +7,7 @@
 #include "materialize.h"
 #include "nestedloopjoin.h"
 
-static int DEBUG_NODE	= -1;
+int DEBUG_NODE	= -1;
 
 extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
@@ -37,51 +37,6 @@ hx_variablebindings_iter* _hx_parallel_variablebindings_iter_for_triple ( int tr
 	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, ctx->storage, names[0], names[1], names[2], 0 );
 	return iter;
 }
-
-// int _hx_parallel_variablebindings_iter_shared_columns( hx_node_id* triple_nodes, char** node_names, char** variable_names, int maxiv, int lhs_triple, int rhs_triple, char*** columns ) {
-// 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-// 	
-// 	int* shared	= (int*) calloc( maxiv, sizeof( int ) );
-// 	
-// // 	if (myrank == DEBUG_NODE) fprintf( stderr, "names for lhs:\n" );	// XXX
-// 	
-// 	int lhs_start	= 3 * lhs_triple;
-// 	for (int i = lhs_start; i < 3+lhs_start; i++) {
-// 		if (triple_nodes[i] < 0) {
-// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );	// XXX
-// 			shared[ -1 * triple_nodes[i] ]++;
-// 		}
-// 	}
-// 
-// // 	if (myrank == DEBUG_NODE) fprintf( stderr, "names for rhs:\n" );	// XXX
-// 	int rhs_start	= 3 * rhs_triple;
-// 	for (int i = rhs_start; i < 3+rhs_start; i++) {
-// 		if (triple_nodes[i] < 0) {
-// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );	// XXX
-// 			shared[ -1 * triple_nodes[i] ]++;
-// 		}
-// 	}
-// 	
-// 	int shared_count	= 0;
-// 	for (int i = 0; i <= maxiv; i++) {
-// 		if (shared[i] == 2) {
-// 			shared_count++;
-// // 			if (myrank == DEBUG_NODE) fprintf( stderr, "variable is shared: %s\n", variable_names[i] );	// XXX
-// 		}
-// 	}
-// 	
-// 	int j		= 0;
-// 	*columns	= (char**) calloc( shared_count, sizeof( char* ) );
-// //	fprintf( stderr, "node %d allocated column array %p\n", myrank, *columns );
-// 	
-// 	for (int i = 0; i <= maxiv; i++) {
-// 		if (shared[i] == 2) {
-// 			(*columns)[ j++ ]	= variable_names[i];
-// 		}
-// 	}
-// 	
-// 	return shared_count;
-// }
 
 int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes, char** node_names, char** variable_names, int maxiv, hx_variablebindings_iter* lhs, int rhs_triple, char*** columns ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -161,6 +116,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	hx_variablebindings_iter* lhs		= _hx_parallel_variablebindings_iter_for_triple( 0, ctx, hx, node_count, triple_nodes, node_names );
 	
 	for (int j = 1; j < triple_count; j++) {
+		ctx->join_iteration	= j;
 		/**********************************************************************/
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (myrank == 0) {
@@ -188,13 +144,11 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		MPI_Barrier(MPI_COMM_WORLD);
 		/**********************************************************************/
 		
-		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx->storage, lhs, shared_count, columns );
-		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx->storage, rhs, shared_count, columns );
+		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx, lhs, shared_count, columns );
+		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx, rhs, shared_count, columns );
 		lhs								= hx_new_nestedloopjoin_iter( lhsr, rhsr );
 		
-		fprintf( stderr, "************* triple count %d\n", triple_count );
-		
-		break;
+//		break;
 // 		fprintf( stderr, "node %d freeing column array %p\n", myrank, columns );
 // 		free(columns);
 	}
@@ -244,7 +198,7 @@ int main ( int argc, char** argv ) {
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
-			fprintf( stderr, ">>>>>>>>>>>>> node %d got result: ", myrank );
+			fprintf( stderr, "node %d: ", myrank );
 			hx_variablebindings_debug( b, NULL );
 			hx_free_variablebindings( b, 1 );
 			hx_variablebindings_iter_next( iter );
