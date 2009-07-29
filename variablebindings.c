@@ -5,9 +5,19 @@
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names ) {
 	hx_variablebindings* b	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	b->size			= size;
-	b->names		= names;
+	b->names		= (char**) calloc( size, sizeof( char* ) );
 	b->nodes		= nodes;
-	b->free_names	= free_names;
+	b->free_names	= 1;
+	
+	for (int i = 0; i < size; i++) {
+		b->names[i]	= (char*) malloc( strlen(names[i]) + 1 );
+		strcpy( b->names[i], names[i] );
+	}
+	
+	if (free_names) {
+		free(names);
+	}
+	
 	return b;
 }
 
@@ -29,14 +39,18 @@ hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 	if (free_names > 0) {
 		for (int i = 0; i < b->size; i++) {
-			free( b->names[ i ] );
+			free( b->names[i] );
+			b->names[i]	= NULL;
 		}
 	}
 	
 	if (b->free_names > 0) {
 		free( b->names );
+		b->names	= NULL;
 	}
 	free( b->nodes );
+	b->nodes	= NULL;
+	
 	free( b );
 	return 0;
 }
@@ -260,6 +274,7 @@ int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindi
 			}
 		}
 		if (!seen) {
+// 			fprintf( stderr, "lhs adding name '%s'\n", name );
 			names[ seen_names++ ]	= name;
 		}
 	}
@@ -272,6 +287,7 @@ int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindi
 			}
 		}
 		if (!seen) {
+// 			fprintf( stderr, "rhs adding name '%s'\n", name );
 			names[ seen_names++ ]	= name;
 		}
 	}
@@ -347,9 +363,11 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
 			}
 		}
-		for (int j = 0; j < rhs_size; j++) {
-			if (strcmp( name, rhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
+		if (!values[i]) {
+			for (int j = 0; j < rhs_size; j++) {
+				if (strcmp( name, rhs_names[j] ) == 0) {
+					values[i]	= hx_variablebindings_node_id_for_binding( right, j );
+				}
 			}
 		}
 	}
