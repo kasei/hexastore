@@ -71,6 +71,45 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 	}
 }
 
+hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n ) {
+	hx_node* node	= hx_node_copy( n );
+	hx_nodemap_item i;
+	i.node	= node;
+	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
+	if (item == NULL) {
+		if (0) {
+			char* nodestr;
+			hx_node_string( node, &nodestr );
+			fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
+			free(nodestr);
+		}
+		
+		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
+		item->node	= node;
+		
+		
+		int myrank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+		hx_node_id id	= m->next_id++ | (myrank << 48);
+		item->id		= id;
+		fprintf( stderr, "adding MPI node %llx\n", id );
+		
+		avl_insert( m->node2id, item );
+		avl_insert( m->id2node, item );
+// 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
+		
+		if (0) {
+			hx_node_id id	= hx_nodemap_get_node_id( m, node );
+			fprintf( stderr, "*** After adding: %d\n", (int) id );
+		}
+		
+		return item->id;
+	} else {
+		hx_free_node( node );
+		return item->id;
+	}
+}
+
 int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id ) {
 	hx_nodemap_item i;
 	i.id	= id;

@@ -29,6 +29,7 @@ hx_nodemap* hx_new_nodemap( void );
 int hx_free_nodemap ( hx_nodemap* m );
 
 hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n );
+hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n );
 int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id );
 int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n );
 hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* n );
