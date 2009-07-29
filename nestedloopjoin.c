@@ -370,7 +370,14 @@ int _hx_nestedloopjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_n
 	
 	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
 	for (int i = 0; i < seen_names; i++) {
-		(*merged_names)[ i ]	= names[ i ];
+		// (*merged_names)[ i ]    = names[ i ];
+		// XXXXXXXXXXXXX experimentally put in place while seeking a memory leak... maybe want to roll this back at some point in favor of the preceeding line
+		char* n		= names[i];
+		int len		= strlen(n);
+//		fprintf( stderr, "copying variable name string : '%s'\n", n );
+		char* nn	= (char*) calloc( len + 1, sizeof(char) );
+		strcpy( nn, n );
+		(*merged_names)[i]	= nn;
 	}
 	*size	= seen_names;
 	free( names );
