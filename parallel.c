@@ -196,7 +196,8 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 	int size		= hx_variablebindings_iter_size(iter);
 	char** names	= hx_variablebindings_iter_names(iter);
 	char** newnames	= (char**) calloc( size, sizeof( char* ) );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char* name		= names[i];
 		int len			= strlen(name);
 		char* newname	= (char*) calloc( len + 1, sizeof( char ) );
@@ -244,7 +245,8 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		
 		
 		uint64_t hash	= 0;
-		for (int i = 0; i < send_args->shared_columns; i++) {
+		int i;
+		for (i = 0; i < send_args->shared_columns; i++) {
 // 			if (ctx->join_iteration > 1) {
 // 				fprintf( stderr, "\thashing on shared name %s\n", send_args->shared_names[i] );
 // 			}
@@ -298,7 +300,8 @@ int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
 		int newsize	= (recv_args->allocated == 0) ? 8 : (recv_args->allocated * 1.5);
 		hx_variablebindings** oldbuffer	= recv_args->buffer;
 		hx_variablebindings** newbuffer	= (hx_variablebindings**) calloc( newsize, sizeof( hx_variablebindings* ) );
-		for (int i = 0; i < recv_args->allocated; i++) {
+		int i;
+		for (i = 0; i < recv_args->allocated; i++) {
 			newbuffer[i]	= oldbuffer[i];
 		}
 		

@@ -99,7 +99,8 @@ uint64_t hx_triple_hash ( hx_triple* t, hx_hash_function* func ) {
 uint64_t hx_triple_hash_string ( char* s ) {
 	uint64_t h	= 0;
 	int len	= strlen(s);
-	for (int i = 0; i < len; i++) {
+	int i;
+	for (i = 0; i < len; i++) {
 		unsigned char ki	= (unsigned char) s[i];
 		uint64_t highorder	= h & 0xfffffffff8000000;	// extract high-order 37 bits from h
 		h	= h << 37;									// shift h left by 37 bits

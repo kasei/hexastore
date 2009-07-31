@@ -39,7 +39,9 @@ int hx_nodemap_debug ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
 int hx_nodemap_write_mpi ( hx_nodemap* t, MPI_File f );
+
 hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
+hx_nodemap* hx_nodemap_read_mpi( hx_storage_manager* s, MPI_File f, int buffer );
 
 #ifdef __cplusplus
 }

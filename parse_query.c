@@ -102,7 +102,8 @@ int main( int argc, char** argv ) {
 				hx_variablebindings_iter_current( iter, &b );
 				
 				fprintf( stdout, "Row %d:\n", (int) count );
-				for (int i = 0; i < size; i++) {
+				int i;
+				for (i = 0; i < size; i++) {
 					char* string;
 					hx_node* node	= hx_variablebindings_node_for_binding( b, map, i );
 					hx_node_string( node, &string );

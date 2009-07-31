@@ -62,11 +62,12 @@ int _hx_materialize_iter_vb_free ( void* data ) {
 		_hx_materialize_prime_results( info );
 	}
 	
-	for (int i = 0; i < info->length; i++) {
+	int i;
+	for (i = 0; i < info->length; i++) {
 		hx_free_variablebindings( info->bindings[i], 0 );
 	}
 	free( info->bindings );
-	for (int i = 0; i < info->size; i++) {
+	for (i = 0; i < info->size; i++) {
 		free( info->names[i] );
 	}
 	free( info->names );
@@ -94,7 +95,8 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	char** _names	= hx_variablebindings_iter_names( iter );
 	char** names	= (char**) calloc( size, sizeof( char* ) );
 	int sorted_by	= -1;
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char* _new	= (char*) calloc( strlen( _names[i] ) + 1, sizeof( char ) );
 		strcpy( _new, _names[i] );
 		names[i]	= _new;
@@ -134,7 +136,8 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 hx_variablebindings_iter* hx_new_materialize_iter_with_data ( int size, char** _names, int length, hx_variablebindings** bindings ) {
 	char** names	= (char**) calloc( size, sizeof( char* ) );
 	int sorted_by	= -1;
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char* _new	= (char*) calloc( strlen( _names[i] ) + 1, sizeof( char ) );
 		strcpy( _new, _names[i] );
 		names[i]	= _new;
@@ -204,7 +207,8 @@ int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 					fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
 					return 1;
 				}
-				for (int i = 0; i < info->length; i++) {
+				int i;
+				for (i = 0; i < info->length; i++) {
 					newbindings[i]	= bindings[i];
 				}
 				free( bindings );
@@ -238,13 +242,14 @@ int hx_materialize_sort_iter_by_column ( hx_variablebindings_iter* iter, int ind
 		return 1;
 	}
 	
-	for (int i = 0; i < info->length; i++) {
+	int i;
+	for (i = 0; i < info->length; i++) {
 		sorted[i].index		= index;
 		sorted[i].binding	= info->bindings[i];
 	}
 	
 	qsort( sorted, info->length, sizeof( _hx_materialize_bindings_sort_info ), _hx_materialize_cmp_bindings_column );
-	for (int i = 0; i < info->length; i++) {
+	for (i = 0; i < info->length; i++) {
 		info->bindings[i]	= sorted[i].binding;
 	}
 	free( sorted );
@@ -284,7 +289,8 @@ void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
 	fprintf( stderr, "\tInfo: %p\n", (void*) info );
 	fprintf( stderr, "\tLength: %d\n", (int) info->length );
-	for (int i = 0; i < info->length; i++) {
+	int i;
+	for (i = 0; i < info->length; i++) {
 		char* string;
 		hx_variablebindings_string( info->bindings[i], NULL, &string );
 		fprintf( stderr, "\t[%d] %s\n", i, string );
@@ -298,14 +304,15 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 		fprintf( stderr, "*** malloc failed in _hx_materialize_debug\n" );
 	}
 	char* p			= indent;
-	for (int i = 0; i < _indent; i++) *(p++) = ' ';
+	int i;
+	for (i = 0; i < _indent; i++) *(p++) = ' ';
 	*p	= (char) 0;
 	
 	fprintf( stderr, "%s%s materialize iterator\n", indent, header );
 	
 	fprintf( stderr, "%s%s  Info: %p\n", indent, header, (void*) info );
 	fprintf( stderr, "%s%s  Length: %d\n", indent, header, (int) info->length );
-	for (int i = 0; i < info->length; i++) {
+	for (i = 0; i < info->length; i++) {
 		fprintf( stderr, "[%d]\n", i );
 		char* string;
 		hx_variablebindings_string( info->bindings[i], NULL, &string );

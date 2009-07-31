@@ -96,7 +96,8 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_n
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
@@ -134,7 +135,8 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st,
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
@@ -163,7 +165,8 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 	

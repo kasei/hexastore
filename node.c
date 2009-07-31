@@ -607,6 +607,65 @@ int hx_node_write_mpi ( hx_node* n, MPI_File f ) {
 	return 0;
 }
 
+hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
+	char c;
+	MPI_Status status;
+	size_t used, read;
+	
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	if (c != 'N') {
+		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from file.\n", c );
+		return NULL;
+	}
+	
+	char* value;
+	char* extra	= NULL;
+	hx_node* node;
+	c	= fgetc( f );
+	switch (c) {
+		case 'R':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			node	= hx_new_node_resource( value );
+			free( value );
+			return node;
+		case 'B':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			node	= hx_new_node_blank( value );
+			free( value );
+			return node;
+		case 'L':
+		case 'G':
+		case 'D':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			if (c == 'G' || c == 'D') {
+				MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+				extra	= (char*) calloc( 1, used + 1 );
+				MPI_File_read_shared(f, &extra, used, MPI_BYTE, &status);
+			}
+			if (c == 'G') {
+				node	= (hx_node*) hx_new_node_lang_literal( value, extra );
+			} else if (c == 'D') {
+				node	= (hx_node*) hx_new_node_dt_literal( value, extra );
+			} else {
+				node	= hx_new_node_literal( value );
+			}
+			free( value );
+			if (extra != NULL)
+				free( extra );
+			return node;
+		default:
+			fprintf( stderr, "*** Bad node type '%c' trying to read node from file.\n", (char) c );
+			return NULL;
+	};
+	
+}
+
 int _hx_node_parse_datatypes ( hx_node* n ) {
 	if (!hx_node_is_dt_literal(n)) {
 		return 1;

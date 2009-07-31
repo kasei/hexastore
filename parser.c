@@ -99,7 +99,8 @@ int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 		if (parser->logger != NULL) {
 			parser->logger( parser->total );
 		}
-		for (int i = 0; i < parser->count; i++) {
+		int i;
+		for (i = 0; i < parser->count; i++) {
 			hx_free_node( parser->triples[i].subject );
 			hx_free_node( parser->triples[i].predicate );
 			hx_free_node( parser->triples[i].object );

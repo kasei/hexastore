@@ -180,7 +180,8 @@ void pso_iter1_test1 ( void ) {
 	const int triples	= range * range * range;
 	
 	hx_node_id s, p, o;
-	for (int j = 0; j < 2; j++) {
+	int j;
+	for (j = 0; j < 2; j++) {
 		// duplicate adds should do nothing
 		for (s = 1; s <= range; s++) {
 			for (p = 1; p <= range; p++) {

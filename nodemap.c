@@ -214,7 +214,8 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	read	= fread( &used, sizeof( size_t ), 1, f );
 	read	= fread( &next_id, sizeof( hx_node_id ), 1, f );
 	m->next_id	= next_id;
-	for (int i = 0; i < used; i++) {
+	int i;
+	for (i = 0; i < used; i++) {
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
 		if (item == NULL) {
 			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
@@ -258,6 +259,41 @@ int hx_nodemap_write_mpi ( hx_nodemap* m, MPI_File f ) {
 	return 0;
 }
 
+hx_nodemap* hx_nodemap_read_mpi( hx_storage_manager* s, MPI_File f, int buffer ) {
+	size_t used, read;
+	hx_node_id next_id;
+	
+	char c;
+	MPI_Status status;
+	
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	
+	if (c != 'M') {
+		fprintf( stderr, "*** Bad header cookie trying to read nodemap from file.\n" );
+		return NULL;
+	}
+	
+	hx_nodemap* m	= hx_new_nodemap();
+
+	MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+	MPI_File_read_shared(f, &next_id, sizeof( hx_node_id ), MPI_BYTE, &status);
+
+	m->next_id	= next_id;
+	int i;
+	for (i = 0; i < used; i++) {
+		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
+		if (item == NULL) {
+			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
+		}
+		
+		MPI_File_read_shared(f, &( item->id ), sizeof( hx_node_id ), MPI_BYTE, &status);
+		item->node	= hx_node_read_mpi( f, 0 );
+		avl_insert( m->node2id, item );
+		avl_insert( m->id2node, item );
+	}
+	return m;
+}
+
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	size_t count	= avl_count( map->id2node );
 	hx_node** node_handles	= (hx_node**) calloc( count, sizeof( hx_node* ) );
@@ -271,7 +307,8 @@ hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	}
 	qsort( node_handles, i, sizeof( hx_node* ), _hx_nodemap_cmp_nodes );
 	hx_nodemap* sorted	= hx_new_nodemap();
-	for (int j = 0; j < i; j++) {
+	int j;
+	for (j = 0; j < i; j++) {
 		hx_nodemap_add_node( sorted, node_handles[ j ] );
 	}
 	free( node_handles );

@@ -125,7 +125,8 @@ int hx_btree_node_debug ( char* string, hx_storage_manager* w, hx_btree_node* no
 	if (node->flags & HX_BTREE_NODE_LEAF)
 		fprintf( stderr, "HX_BTREE_NODE_LEAF" );
 	fprintf( stderr, "\n" );
-	for (int i = 0; i < node->used; i++) {
+	int i;
+	for (i = 0; i < node->used; i++) {
 		fprintf( stderr, "%s\t- %d -> %d\n", string, (int) node->ptr[i].key, (int) node->ptr[i].child );
 	}
 	return 0;
@@ -167,7 +168,8 @@ int hx_btree_node_add_child ( hx_storage_manager* w, hx_btree_node* node, hx_nod
 			return 2;
 		}
 		
-		for (int k = node->used - 1; k >= i; k--) {
+		int k;
+		for (k = node->used - 1; k >= i; k--) {
 			node->ptr[ k+1 ]	= node->ptr[ k ];
 // 			node->keys[k + 1]	= node->keys[k];
 // 			node->children[k + 1]	= node->children[k];
@@ -200,7 +202,8 @@ int hx_btree_node_remove_child ( hx_storage_manager* w, hx_btree_node* node, hx_
 	int r	= _hx_btree_binary_search( node, n, &i );
 	if (r == 0) {
 		// found
-		for (int k = i; k < node->used; k++) {
+		int k;
+		for (k = i; k < node->used; k++) {
 			node->ptr[k]		= node->ptr[k+1];
 // 			node->keys[ k ]		= node->keys[ k + 1 ];
 // 			node->children[ k ]	= node->children[ k + 1 ];
@@ -233,7 +236,8 @@ hx_btree_node* _hx_btree_node_search_page ( hx_storage_manager* w, hx_btree_node
 	hx_btree_node* u	= root;
 	while (!hx_btree_node_has_flag(w, u, HX_BTREE_NODE_LEAF)) {
 //		fprintf( stderr, "node is not a leaf... (flags: %x)\n", u->flags );
-		for (int i = 0; i < u->used - 1; i++) {
+		int i;
+		for (i = 0; i < u->used - 1; i++) {
 			if (key <= u->ptr[i].key) {
 				hx_storage_id_t id	= u->ptr[i].child;
 //				fprintf( stderr, "descending to child %d\n", (int) id );
@@ -324,11 +328,12 @@ int hx_btree_node_remove ( hx_storage_manager* s, hx_btree_node** _root, hx_node
 	
 //	fprintf( stderr, "remove> REMOVED NODE FROM LEAF\n" );
 	
+	int k;
 REMOVE_NODE:
 	// [3] remove entry from node
 //	fprintf( stderr, "remove> [3] remove entry from node\n" );
 //	fprintf( stderr, "      > removing node from parent with (%d/%d) slots used\n", (int) node->used, branching_size );
-	for (int k = i; k < node->used; k++) {
+	for (k = i; k < node->used; k++) {
 		node->ptr[k]		= node->ptr[k+1];
 // 		node->keys[ k ]		= node->keys[ k + 1 ];
 // 		node->children[ k ]	= node->children[ k + 1 ];
@@ -453,7 +458,8 @@ REMOVE_NODE:
 	int found_parent_index	= 0;
 //	fprintf( stderr, "remove> re-wind to parent, continue at [3] (removing the just-removed node from the parent)\n" );
 	hx_btree_node* parent	= (hx_btree_node*) hx_storage_block_from_id( s, node->parent );
-	for (int j = 0; j < parent->used; j++) {
+	int j;
+	for (j = 0; j < parent->used; j++) {
 		if (parent->ptr[j].child == removed_nodeid) {
 			found_parent_index	= 1;
 			i	= j;
@@ -487,7 +493,8 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 	int extra	= from->used - min;
 	int take	= (extra+1)/2;
 	if (dir == 1) {
-		for (int i = from->used - take - 1; i < from->used; i++) {
+		int i;
+		for (i = from->used - take - 1; i < from->used; i++) {
 // 			fprintf( stderr, "rebalancing>\t%d\n", i );
 			hx_btree_node_add_child( s, node, from->ptr[i].key, from->ptr[i].child, branching_size );
 			if (!hx_btree_node_has_flag( s, from, HX_BTREE_NODE_LEAF )) {
@@ -497,7 +504,8 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 			}
 		}
 	} else {
-		for (int i = 0; i < take; i++) {
+		int i;
+		for (i = 0; i < take; i++) {
 // 			fprintf( stderr, "rebalancing>\t%d\n", i );
 			hx_btree_node_add_child( s, node, from->ptr[i].key, from->ptr[i].child, branching_size );
 			if (!hx_btree_node_has_flag( s, from, HX_BTREE_NODE_LEAF )) {
@@ -507,7 +515,7 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 			}
 		}
 		// now shift the remaining nodes in `from' over
-		for (int i = 0; i < from->used - take; i++) {
+		for (i = 0; i < from->used - take; i++) {
 // 			fprintf( stderr, "rebalancing>\t[%d] = [%d]\n", i, i+take );
 			from->ptr[i]		= from->ptr[i+take];
 // 			from->keys[i]		= from->keys[i+take];
@@ -529,7 +537,8 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 }
 
 void _hx_btree_node_reset_keys( hx_storage_manager* s, hx_btree_node* parent ) {
-	for (int i = 0; i < parent->used; i++) {
+	int i;
+	for (i = 0; i < parent->used; i++) {
 		hx_btree_node* child	= (hx_btree_node*) hx_storage_block_from_id( s, parent->ptr[i].child );
 		parent->ptr[i].key	= child->ptr[ child->used - 1 ].key;
 	}
@@ -547,7 +556,8 @@ int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_nod
 		return 1;
 	}
 	
-	for (int i = 0; i < b->used; i++) {
+	int i;
+	for (i = 0; i < b->used; i++) {
 		hx_btree_node_add_child( s, a, b->ptr[i].key, b->ptr[i].child, branching_size );
 		if (!hx_btree_node_has_flag( s, a, HX_BTREE_NODE_LEAF )) {
 			hx_btree_node* child	= (hx_btree_node*) hx_storage_block_from_id( s, b->ptr[i].child );
@@ -592,7 +602,8 @@ int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, ui
 	z->used	= 0;
 	int to_move		= child->used / 2;
 	int child_index	= child->used - to_move;
-	for (int j = 0; j < to_move; j++) {
+	int j;
+	for (j = 0; j < to_move; j++) {
 		z->ptr[j]		= child->ptr[ child_index ];
 // 		z->keys[j]		= child->keys[ child_index ];
 // 		z->children[j]	= child->children[ child_index ];
@@ -620,7 +631,8 @@ int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, ui
 void hx_btree_node_traverse ( hx_storage_manager* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, uint32_t branching_size, void* param ) {
 	if (before != NULL) before( w, node, level, branching_size, param );
 	if (!hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
-		for (int i = 0; i < node->used; i++) {
+		int i;
+		for (i = 0; i < node->used; i++) {
 			hx_btree_node* c	= (hx_btree_node*) hx_storage_block_from_id( w, node->ptr[i].child );
 			hx_btree_node_traverse( w, c, before, after, level + 1, branching_size, param );
 		}

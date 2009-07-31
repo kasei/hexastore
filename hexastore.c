@@ -99,13 +99,14 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 #ifdef HAVE_LIBPTHREAD
 	if (count < THREADED_BATCH_SIZE) {
 #endif
-		for (int i = 0; i < count; i++) {
+		int i;
+		for (i = 0; i < count; i++) {
 			hx_add_triple( hx, s, triples[i].subject, triples[i].predicate, triples[i].object );
 		}
 #ifdef HAVE_LIBPTHREAD
 	} else {
 		hx_triple_id* triple_ids	= (hx_triple_id*) calloc( count, sizeof( hx_triple_id ) );
-		for (int i = 0; i < count; i++) {
+		for (i = 0; i < count; i++) {
 			triple_ids[i].subject	= hx_nodemap_add_node( hx->map, triples[i].subject );
 			triple_ids[i].predicate	= hx_nodemap_add_node( hx->map, triples[i].predicate );
 			triple_ids[i].object	= hx_nodemap_add_node( hx->map, triples[i].object );
@@ -116,7 +117,7 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 		int thread_count;
 #ifdef HX_SHARE_TERMINALS
 		thread_count	= 3;
-		for (int i = 0; i < 3; i++) {
+		for (i = 0; i < 3; i++) {
 			tinfo[i].s			= s;
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
@@ -133,13 +134,15 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 			tinfo[2].index		= (hx_index*) hx_storage_block_from_id( s, hx->pos );
 			tinfo[2].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->ops );
 			
-			for (int i = 0; i < 3; i++) {
+			int i;
+			for (i = 0; i < 3; i++) {
 				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
 			}
 		}
 #else
 		thread_count	= 6;
-		for (int i = 0; i < 6; i++) {
+		int i;
+		for (i = 0; i < 6; i++) {
 			tinfo[i].s			= s;
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
@@ -165,12 +168,14 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 			tinfo[5].index		= (hx_index*) hx_storage_block_from_id( s, hx->ops );
 			tinfo[5].secondary	= NULL;
 			
-			for (int i = 0; i < 6; i++) {
+			int i;
+			for (i = 0; i < 6; i++) {
 				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
 			}
 		}
 #endif
-		for (int i = 0; i < thread_count; i++) {
+		int i;
+		for (i = 0; i < thread_count; i++) {
 			pthread_join(threads[i], NULL);
 		}
 		free( tinfo );
@@ -183,7 +188,8 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 
 void* _hx_add_triple_threaded (void* arg) {
 	hx_thread_info* tinfo	= (hx_thread_info*) arg;
-	for (int i = 0; i < tinfo->count; i++) {
+	int i;
+	for (i = 0; i < tinfo->count; i++) {
 		hx_node_id s	= tinfo->triples[i].subject;
 		hx_node_id p	= tinfo->triples[i].predicate;
 		hx_node_id o	= tinfo->triples[i].object;
@@ -301,11 +307,13 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
 #endif	
 	// check for any duplicated variables. if they haven't been added to the index order, add them now:
-	for (int j = 0; j < 3; j++) {
+	int j;
+	for (j = 0; j < 3; j++) {
 		if (!(used[j])) {
 			int current_chosen	= i;
 //			fprintf( stderr, "checking if %s (%d) matches already chosen nodes:\n", pnames[j], (int) triple_id[j] );
-			for (int k = 0; k < current_chosen; k++) {
+			int k;
+			for (k = 0; k < current_chosen; k++) {
 //				fprintf( stderr, "- %s (%d)?\n", pnames[k], triple_id[ index_order[k] ] );
 				if (triple_id[index_order[k]] == triple_id[j] && triple_id[j] != (hx_node_id) 0) {
 //					fprintf( stderr, "*** MATCHED\n" );
@@ -320,19 +328,22 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 	
 	// add any remaining triple positions to the index order:
 	if (i == 0) {
-		for (int j = 0; j < 3; j++) {
+		int j;
+		for (j = 0; j < 3; j++) {
 			if (j != order_position) {
 				index_order[ i++ ]	= j;
 			}
 		}
 	} else if (i == 1) {
-		for (int j = 0; j < 3; j++) {
+		int j;
+		for (j = 0; j < 3; j++) {
 			if (j != order_position && !(used[j])) {
 				index_order[ i++ ]	= j;
 			}
 		}
 	} else if (i == 2) {
-		for (int j = 0; j < 3; j++) {
+		int j;
+		for (j = 0; j < 3; j++) {
 			if (!(used[j])) {
 				index_order[ i++ ]	= j;
 			}
@@ -614,7 +625,8 @@ int _hx_iter_vb_current ( void* data, void* results ) {
 		hx_node_id triple[3];
 		hx_index_iter_current ( iter, &(triple[0]), &(triple[1]), &(triple[2]) );
 		hx_node_id* values	= (hx_node_id*) calloc( info->size, sizeof( hx_node_id ) );
-		for (int i = 0; i < info->size; i++) {
+		int i;
+		for (i = 0; i < info->size; i++) {
 			values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
 		}
 		info->current	= hx_new_variablebindings( info->size, info->names, values, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
@@ -665,7 +677,8 @@ int _hx_iter_vb_sorted_by (void* data, int index ) {
 
 int _hx_iter_debug ( void* data, char* header, int indent ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
-	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	int i;
+	for (i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
 	hx_index_iter* iter	= info->iter;
 	fprintf( stderr, "%s hexastore triples iterator (%p)\n", header, (void*) iter );
 	int counter	= 0;

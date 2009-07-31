@@ -254,7 +254,8 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 
 hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes ) {
 	hx_node_id* nodes	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		nodes[i]	= _nodes[i];
 	}
 	return hx_new_variablebindings ( size, names, nodes, 0 );

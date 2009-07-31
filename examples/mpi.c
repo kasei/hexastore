@@ -23,7 +23,8 @@ hx_variablebindings_iter* _hx_parallel_variablebindings_iter_for_triple ( int tr
 	hx_index_iter* titer	= hx_index_new_iter1( index, ctx->storage, triple_nodes[(3*triple)+0], triple_nodes[(3*triple)+1], triple_nodes[(3*triple)+2] );
 	
 	char* names[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		char* n	= node_names[ (3*triple) + i ];
 		if (n != NULL) {
 			int len	= strlen(n);
@@ -55,7 +56,8 @@ int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes
 
 // 	fprintf( stderr, "names for rhs:\n" );
 	int rhs_start	= 3 * rhs_triple;
-	for (int i = rhs_start; i < 3+rhs_start; i++) {
+	int i;
+	for (i = rhs_start; i < 3+rhs_start; i++) {
 		if (triple_nodes[i] < 0) {
 // 			fprintf( stderr, "- %s (%d)\n", node_names[i], (int) triple_nodes[i] );
 			shared[ -1 * triple_nodes[i] ]++;
@@ -65,10 +67,11 @@ int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes
 	int lhs_size		= hx_variablebindings_iter_size( lhs );
 // 	fprintf( stderr, "(%d total) names for lhs:\n", lhs_size );
 	char** lhs_names	= hx_variablebindings_iter_names( lhs );
-	for (int i = 0; i < lhs_size; i++) {
+	for (i = 0; i < lhs_size; i++) {
 		char* lhs_name	= lhs_names[i];
 // 		fprintf( stderr, "- %s\n", lhs_name );
-		for (int j = 0; j <= maxiv; j++) {
+		int j;
+		for (j = 0; j <= maxiv; j++) {
 			if (variable_names[j] != NULL) {
 // 				fprintf( stderr, "\tchecking with existing RHS variable %s\n", variable_names[j] );
 				if (strcmp(variable_names[j], lhs_name) == 0) {
@@ -79,7 +82,7 @@ int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes
 	}
 	
 	int shared_count	= 0;
-	for (int i = 0; i <= maxiv; i++) {
+	for (i = 0; i <= maxiv; i++) {
 		if (shared[i] == 2) {
 			shared_count++;
 // 			fprintf( stderr, "variable is shared: %s\n", variable_names[i] );
@@ -90,7 +93,7 @@ int _hx_parallel_variablebindings_iter_shared_columns2( hx_node_id* triple_nodes
 	*columns	= (char**) calloc( shared_count, sizeof( char* ) );
 //	fprintf( stderr, "node %d allocated column array %p\n", myrank, *columns );
 	
-	for (int i = 0; i <= maxiv; i++) {
+	for (i = 0; i <= maxiv; i++) {
 		if (shared[i] == 2) {
 			(*columns)[ j++ ]	= variable_names[i];
 		}
@@ -105,7 +108,8 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	int node_count	= triple_count * 3;
 	// create node_names[] that maps node positions in the BGP (blocks of 3 nodes per triple) to the name of the variable node in that position (NULL if not a variable)
 	char** node_names	= (char**) calloc( node_count, sizeof( char* ) );
-	for (int i = 0; i < node_count; i++) {
+	int i;
+	for (i = 0; i < node_count; i++) {
 		if (triple_nodes[i] < 0) {
 			node_names[i]	= variable_names[ -1 * triple_nodes[i] ];
 		} else {
@@ -115,7 +119,8 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	
 	hx_variablebindings_iter* lhs		= _hx_parallel_variablebindings_iter_for_triple( 0, ctx, hx, node_count, triple_nodes, node_names );
 	
-	for (int j = 1; j < triple_count; j++) {
+	int j;
+	for (j = 1; j < triple_count; j++) {
 		ctx->join_iteration	= j;
 		/**********************************************************************/
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -136,7 +141,8 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		/**********************************************************************/
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (myrank == 0) {
-			for (int i = 0; i < shared_count; i++) {
+			int i;
+			for (i = 0; i < shared_count; i++) {
 				fprintf( stderr, "- shared column: '%s'\n", columns[i] );
 			}
 			fprintf( stderr, "\n" );
@@ -187,7 +193,8 @@ int main ( int argc, char** argv ) {
 	distribute_bgp( 0, &b, map, &triple_nodes, &variable_names, &maxiv );
 
 	if (myrank == DEBUG_NODE) {
-		for (int i = 0; i <= maxiv; i++) {
+		int i;
+		for (i = 0; i <= maxiv; i++) {
 			fprintf( stderr, "variable map slot %d: '%s'\n", i, variable_names[i] );
 		}
 	}
@@ -255,24 +262,25 @@ int distribute_bgp ( int root, hx_bgp** b, hx_nodemap* map, hx_node_id** triple_
 		hx_node_id* _ptr	= (hx_node_id*) bfreeze;
 		hx_node_id* ptr		= &( _ptr[1] );
 		
-		for (int i = 0; i < node_count; i++) {
+		int i;
+		for (i = 0; i < node_count; i++) {
 			_triple_nodes[i]	= ptr[i];
 		}
 		
 		int* is_variable	= (int*) calloc( node_count, sizeof( int ) );
-		for (int i = 0; i < node_count; i++) {
+		for (i = 0; i < node_count; i++) {
 			if (_triple_nodes[i] < 0) {
 				is_variable[i]	= 1;
 			}
 		}
-		for (int i = 0; i < node_count; i++) {
+		for (i = 0; i < node_count; i++) {
 			if (is_variable[i]) {
 				variable_count++;
 			}
 		}
 		variables	= (hx_node**) calloc( variable_count, sizeof( hx_node* ) );
 		int j	= 0;
-		for (int i = 0; i < node_count; i++) {
+		for (i = 0; i < node_count; i++) {
 			hx_triple* t	= hx_bgp_triple( *b, (i/3) );
 			char* string;
 			hx_triple_string ( t, &string );

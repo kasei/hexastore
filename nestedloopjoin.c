@@ -18,14 +18,16 @@ int _hx_nestedloopjoin_prime_results ( _hx_nestedloopjoin_iter_vb_info* info ) {
 		// one side has no results, so we can't possibly produce any results from
 		// the join free the remaining sub-results, and set the iterator as finished
 		if (info->lhs_size > 0) {
-			for (int i = 0; i < info->lhs_size; i++) {
+			int i;
+			for (i = 0; i < info->lhs_size; i++) {
 				hx_free_variablebindings( info->lhs_batch[i], 0 );
 				info->lhs_batch[i]	= NULL;
 			}
 			info->lhs_size	= 0;
 		}
 		if (info->rhs_size > 0) {
-			for (int i = 0; i < info->rhs_size; i++) {
+			int i;
+			for (i = 0; i < info->rhs_size; i++) {
 				hx_free_variablebindings( info->rhs_batch[i], 0 );
 				info->rhs_batch[i]	= NULL;
 			}
@@ -38,9 +40,11 @@ int _hx_nestedloopjoin_prime_results ( _hx_nestedloopjoin_iter_vb_info* info ) {
 	// we've got results from both sides of the join. now let's find the first
 	// set of variablebindings that are compatible, and set them as the current
 	// result
-	for (int i = 0; i < info->lhs_size; i++) {
+	int i;
+	for (i = 0; i < info->lhs_size; i++) {
 		hx_variablebindings* lhs	= info->lhs_batch[i];
-		for (int j = 0; j < info->rhs_size; j++) {
+		int j;
+		for (j = 0; j < info->rhs_size; j++) {
 			hx_variablebindings* rhs	= info->rhs_batch[j];
 			hx_variablebindings* joined	= hx_variablebindings_natural_join( lhs, rhs );
 			if (joined != NULL) {
@@ -172,11 +176,12 @@ int _hx_nestedloopjoin_iter_vb_free ( void* data ) {
 		info->current	= NULL;
 	}
 
-	for (int i = 0; i < info->lhs_size; i++) {
+	int i;
+	for (i = 0; i < info->lhs_size; i++) {
 		hx_free_variablebindings( info->lhs_batch[i], 0 );
 		info->lhs_batch[i]	= NULL;
 	}
-	for (int i = 0; i < info->rhs_size; i++) {
+	for (i = 0; i < info->rhs_size; i++) {
 		hx_free_variablebindings( info->rhs_batch[i], 0 );
 		info->rhs_batch[i]	= NULL;
 	}
@@ -213,7 +218,8 @@ int _hx_nestedloopjoin_iter_sorted_by ( void* data, int index ) {
 
 int _hx_nestedloopjoin_debug ( void* data, char* header, int indent ) {
 	_hx_nestedloopjoin_iter_vb_info* info	= (_hx_nestedloopjoin_iter_vb_info*) data;
-	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	int i;
+	for (i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
 	fprintf( stderr, "%s nestedloopjoin iterator\n", header );
 	hx_variablebindings_iter_debug( info->lhs, header, indent + 4 );
 	hx_variablebindings_iter_debug( info->rhs, header, indent + 4 );
@@ -273,7 +279,8 @@ int _hx_nestedloopjoin_get_batch ( _hx_nestedloopjoin_iter_vb_info* info, hx_var
 	
 	if (*batch_size > 0) {
 //		fprintf( stderr, "getting new batch (batch currently has %d items)\n", *batch_size );
-		for (int i = 0; i < *batch_size; i++) {
+		int i;
+		for (i = 0; i < *batch_size; i++) {
 			hx_free_variablebindings( (*batch)[i], 0 );
 			(*batch)[i]	= NULL;
 		}
@@ -298,7 +305,8 @@ int _hx_nestedloopjoin_get_batch ( _hx_nestedloopjoin_iter_vb_info* info, hx_var
 			if (_new == NULL) {
 				return -1;
 			}
-			for (int i = 0; i < *batch_size; i++) {
+			int i;
+			for (i = 0; i < *batch_size; i++) {
 				_new[i]	= (*batch)[i];
 			}
 			free( *batch );
@@ -343,10 +351,12 @@ int _hx_nestedloopjoin_join_iter_names ( hx_variablebindings_iter* lhs, hx_varia
 int _hx_nestedloopjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size ) {
 	int seen_names	= 0;
 	char** names	= (char**) calloc( lhs_size + rhs_size, sizeof( char* ) );
-	for (int i = 0; i < lhs_size; i++) {
+	int i;
+	for (i = 0; i < lhs_size; i++) {
 		char* name	= lhs_names[ i ];
 		int seen	= 0;
-		for (int j = 0; j < seen_names; j++) {
+		int j;
+		for (j = 0; j < seen_names; j++) {
 			if (strcmp( name, names[ j ] ) == 0) {
 				seen	= 1;
 			}
@@ -355,10 +365,11 @@ int _hx_nestedloopjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_n
 			names[ seen_names++ ]	= name;
 		}
 	}
-	for (int i = 0; i < rhs_size; i++) {
+	for (i = 0; i < rhs_size; i++) {
 		char* name	= rhs_names[ i ];
 		int seen	= 0;
-		for (int j = 0; j < seen_names; j++) {
+		int j;
+		for (j = 0; j < seen_names; j++) {
 			if (strcmp( name, names[ j ] ) == 0) {
 				seen	= 1;
 			}
@@ -369,7 +380,7 @@ int _hx_nestedloopjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_n
 	}
 	
 	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
-	for (int i = 0; i < seen_names; i++) {
+	for (i = 0; i < seen_names; i++) {
 		// (*merged_names)[ i ]    = names[ i ];
 		// XXXXXXXXXXXXX experimentally put in place while seeking a memory leak... maybe want to roll this back at some point in favor of the preceeding line
 		char* n		= names[i];
@@ -397,15 +408,17 @@ hx_variablebindings* hx_nestedloopjoin_join_variablebindings( hx_variablebinding
 	char** lhs_names	= hx_variablebindings_names( left );
 	int rhs_size	= hx_variablebindings_size( right );
 	char** rhs_names	= hx_variablebindings_names( right );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char* name	= names[ i ];
 // 		fprintf( stderr, "filling node value for column %s (%d)\n", name, i );
-		for (int j = 0; j < lhs_size; j++) {
+		int j;
+		for (j = 0; j < lhs_size; j++) {
 			if (strcmp( name, lhs_names[j] ) == 0) {
 				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
 			}
 		}
-		for (int j = 0; j < rhs_size; j++) {
+		for (j = 0; j < rhs_size; j++) {
 			if (strcmp( name, rhs_names[j] ) == 0) {
 				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
 			}
