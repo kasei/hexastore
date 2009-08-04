@@ -67,7 +67,6 @@ typedef struct {
 	hx_storage_manager* s;
 	hx_index_iter* iter;
 	int size;
-	int free_names;
 	char** names;
 	int* triple_pos_to_index;
 	int* index_to_triple_pos;
@@ -98,7 +97,7 @@ hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names );
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name );
 
 int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f );
 hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );

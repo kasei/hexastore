@@ -111,7 +111,7 @@ int main( int argc, char** argv ) {
 					free( string );
 				}
 				
-				hx_free_variablebindings( b, 0 );
+				hx_free_variablebindings(b);
 				hx_variablebindings_iter_next( iter );
 			}
 		}

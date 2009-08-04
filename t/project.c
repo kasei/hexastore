@@ -133,7 +133,7 @@ void project_test1 ( void ) {
 // 		fprintf( stdout, "%s\n", string );
 // 		free( string );
 // 		
-// 		hx_free_variablebindings( b, 0 );
+// 		hx_free_variablebindings( b );
 // 		hx_variablebindings_iter_next( iter );
 // 	}
 	
@@ -150,7 +150,7 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
 	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj", 0 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
 	return iter;
 }
 

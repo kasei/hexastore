@@ -282,4 +282,5 @@ void _avl_tree_map_entry_destroy(void* e, void* p) {
 	map_entry_t entry = (map_entry_t)e;
 	_avl_tree_map_state_params_t params = (_avl_tree_map_state_params_t)p;
 	(*(params->entry_destroy))(entry->key, entry->value, params->user_params);
+	free(entry);
 }

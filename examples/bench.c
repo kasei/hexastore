@@ -84,7 +84,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 			free( zs );
 		}
 		
-		hx_free_variablebindings( b, 0 );
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
 	printf( "%llu results\n", (unsigned long long) count );

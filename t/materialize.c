@@ -69,9 +69,9 @@ void materialize_iter_test ( void ) {
 // 		fprintf( stdout, "**************** %s\n", string );
 // 		free( string );
 // 		
-// //		hx_free_variablebindings( b, 0 );
+// //		hx_free_variablebindings( b );
 // 		hx_variablebindings_iter_next( iter );
-// 		hx_free_variablebindings( b, 0 );
+// 		hx_free_variablebindings( b );
 // 	}
 // 	return;
 	
@@ -139,7 +139,6 @@ void materialize_data_test ( void ) {
 	
 	_test_iter_expected_values( iter, map );
 	
-	
 	hx_free_variablebindings_iter( iter, 0 );
 	hx_free_nodemap( map );
 }
@@ -158,7 +157,6 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 	// expect 3 variable bindings for the three triple nodes
 	size	= hx_variablebindings_size( b );
 	ok1( size == 3 );
-	
 
 	{
 		// expect the first variable binding to be "subj"
@@ -183,8 +181,10 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		ok1( hx_node_cmp( node, r1 ) == 0 );
 	}
 	
-//	hx_free_variablebindings( b, 0 );
+	hx_free_variablebindings( b );
+	b	= NULL;
 	hx_variablebindings_iter_next( iter );
+	
 	{
 		// expect that the iterator isn't finished
 		ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -199,10 +199,13 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		
 		// expect the SECOND result has "obj" of r2
 		ok1( hx_node_cmp( node, r2 ) == 0 );
-//		hx_free_variablebindings( b, 0 );
+//		hx_free_variablebindings( b );
 	}
 	
+	hx_free_variablebindings( b );
+	b	= NULL;
 	hx_variablebindings_iter_next( iter );
+	
 	{
 		// expect that the iterator isn't finished
 		ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -217,10 +220,13 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		
 		// expect the THIRD result has "obj" of l2
 		ok1( hx_node_cmp( node, l2 ) == 0 );
-//		hx_free_variablebindings( b, 0 );
+//		hx_free_variablebindings( b );
 	}
 	
+	hx_free_variablebindings( b );
+	b	= NULL;
 	hx_variablebindings_iter_next( iter );
+	
 	{
 		// expect that the iterator isn't finished
 		ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -235,8 +241,11 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		
 		// expect the FOURTH result has "obj" of l1
 		ok1( hx_node_cmp( node, l1 ) == 0 );
-//		hx_free_variablebindings( b, 0 );
+//		hx_free_variablebindings( b );
 	}
+	
+	hx_free_variablebindings( b );
+	b	= NULL;
 	
 	hx_variablebindings_iter_next( iter );
 	ok1( hx_variablebindings_iter_finished( iter ) );
@@ -248,7 +257,7 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
 	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj", 0 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
 	return iter;
 }
 
@@ -258,7 +267,7 @@ hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes ) {
 	for (i = 0; i < size; i++) {
 		nodes[i]	= _nodes[i];
 	}
-	return hx_new_variablebindings ( size, names, nodes, 0 );
+	return hx_new_variablebindings ( size, names, nodes );
 }
 
 void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {

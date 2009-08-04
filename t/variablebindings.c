@@ -48,7 +48,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, nodes, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, nodes );
 		
 		ok1( hx_variablebindings_size(b) == 2 );
 		ok1( hx_variablebindings_node_id_for_binding(b,0) == 1 );
@@ -56,7 +56,7 @@ void vb_test1 ( void ) {
 		ok1( hx_variablebindings_node_id_for_binding_name(b,"pred") == 7 );
 		ok1( hx_variablebindings_node_id_for_binding_name(b,"subj") == 1 );
 		
-		hx_free_variablebindings(b,0);
+		hx_free_variablebindings(b);
 	}
 	
 	{
@@ -66,7 +66,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
 
 		ok1( hx_variablebindings_size(b) == 2 );
 		hx_variablebindings* p	= hx_variablebindings_project( b, 1, pcols );
@@ -76,8 +76,8 @@ void vb_test1 ( void ) {
 		ok1( hx_variablebindings_node_id_for_binding_name(p,"pred") == 7 );
 		ok1( hx_variablebindings_node_id_for_binding_name(p,"subj") == 0 );
 		
-		hx_free_variablebindings(b,0);
-		hx_free_variablebindings(p,0);
+		hx_free_variablebindings(b);
+		hx_free_variablebindings(p);
 	}
 	
 	{
@@ -87,7 +87,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
 
 		ok1( hx_variablebindings_size(b) == 2 );
 		hx_variablebindings* p	= hx_variablebindings_project_names( b, 2, pnames );
@@ -99,10 +99,10 @@ void vb_test1 ( void ) {
 		
 		char** getnames	= hx_variablebindings_names( p );
 		ok1( strcmp( getnames[0], "pred" ) == 0 );
-		ok1( strcmp( getnames[1], "badName" ) == 0 );	// bad project name (node values will always be 0), but we want to keep it around
+		ok1( getnames[1] == NULL );	// bad project name (node values will always be 0), but we want to keep it around
 		
-		hx_free_variablebindings(b,0);
-		hx_free_variablebindings(p,0);
+		hx_free_variablebindings(b);
+		hx_free_variablebindings(p);
 	}
 }
 
@@ -112,10 +112,11 @@ void vb_freezethaw_test ( void ) {
 	hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 	nodes[0]				= 1;
 	nodes[1]				= 7;
-	hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes, 0 );
+	hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
 	
 	int len;
 	char* frozen			= hx_variablebindings_freeze( b, &len );
+	hx_free_variablebindings(b);
 	
 	hx_variablebindings* thawed	= hx_variablebindings_thaw( frozen, len );
 	
@@ -125,6 +126,5 @@ void vb_freezethaw_test ( void ) {
 	ok1( hx_variablebindings_node_id_for_binding_name(thawed,"pred") == 7 );
 	ok1( hx_variablebindings_node_id_for_binding_name(thawed,"subj") == 1 );
 	
-	hx_free_variablebindings(b,0);
-	hx_free_variablebindings(thawed,1);
+	hx_free_variablebindings(thawed);
 }

@@ -321,7 +321,7 @@ static void server_run(hx_server *server)
 		}
       
 		row_cb( server, size, fields, columns );
-		hx_free_variablebindings( b, 0 );
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
     }
     hx_free_index_iter( iter );

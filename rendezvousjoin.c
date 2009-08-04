@@ -20,7 +20,7 @@ int _hx_rendezvousjoin_prime_results ( _hx_rendezvousjoin_iter_vb_info* info ) {
 		if (info->lhs_size > 0) {
 			int i;
 			for (i = 0; i < info->lhs_size; i++) {
-				hx_free_variablebindings( info->lhs_batch[i], 0 );
+				hx_free_variablebindings(info->lhs_batch[i]);
 				info->lhs_batch[i]	= NULL;
 			}
 			info->lhs_size	= 0;
@@ -28,7 +28,7 @@ int _hx_rendezvousjoin_prime_results ( _hx_rendezvousjoin_iter_vb_info* info ) {
 		if (info->rhs_size > 0) {
 			int i;
 			for (i = 0; i < info->rhs_size; i++) {
-				hx_free_variablebindings( info->rhs_batch[i], 0 );
+				hx_free_variablebindings(info->rhs_batch[i]);
 				info->rhs_batch[i]	= NULL;
 			}
 			info->rhs_size	= 0;
@@ -90,7 +90,7 @@ int _hx_rendezvousjoin_iter_vb_next ( void* data ) {
 	}
 	
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	
@@ -132,14 +132,14 @@ int _hx_rendezvousjoin_iter_vb_next ( void* data ) {
 // // 					fprintf( stderr, "- no more matching batches. iterator is finished\n" );
 // 					if (info->lhs_size > 0) {
 // 						for (int i = 0; i < info->lhs_size; i++) {
-// 							hx_free_variablebindings( info->lhs_batch[i], 0 );
+// 							hx_free_variablebindings(info->lhs_batch[i]);
 // 							info->lhs_batch[i]	= NULL;
 // 						}
 // 						info->lhs_size	= 0;
 // 					}
 // 					if (info->rhs_size > 0) {
 // 						for (int i = 0; i < info->rhs_size; i++) {
-// 							hx_free_variablebindings( info->rhs_batch[i], 0 );
+// 							hx_free_variablebindings(info->rhs_batch[i]);
 // 							info->rhs_batch[i]	= NULL;
 // 						}
 // 						info->rhs_size	= 0;
@@ -172,17 +172,17 @@ int _hx_rendezvousjoin_iter_vb_free ( void* data ) {
 	_hx_rendezvousjoin_iter_vb_info* info	= (_hx_rendezvousjoin_iter_vb_info*) data;
 	
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 
 	int i;
 	for (i = 0; i < info->lhs_size; i++) {
-		hx_free_variablebindings( info->lhs_batch[i], 0 );
+		hx_free_variablebindings(info->lhs_batch[i]);
 		info->lhs_batch[i]	= NULL;
 	}
 	for (i = 0; i < info->rhs_size; i++) {
-		hx_free_variablebindings( info->rhs_batch[i], 0 );
+		hx_free_variablebindings(info->rhs_batch[i]);
 		info->rhs_batch[i]	= NULL;
 	}
 	info->lhs_size	= 0;
@@ -278,7 +278,7 @@ int _hx_rendezvousjoin_get_batch ( _hx_rendezvousjoin_iter_vb_info* info, hx_var
 //		fprintf( stderr, "getting new batch (batch currently has %d items)\n", *batch_size );
 		int i;
 		for (i = 0; i < *batch_size; i++) {
-			hx_free_variablebindings( (*batch)[i], 0 );
+			hx_free_variablebindings((*batch)[i]);
 			(*batch)[i]	= NULL;
 		}
 	}
@@ -415,6 +415,7 @@ hx_variablebindings* hx_rendezvousjoin_join_variablebindings( hx_variablebinding
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values, HX_VARIABLEBINDINGS_FREE_NAMES );
+	b	= hx_new_variablebindings( size, names, values );
+	free(names);
 	return b;
 }

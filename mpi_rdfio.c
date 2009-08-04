@@ -35,7 +35,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	MPI_RDFIO_DEBUG("%i: Creating list of triple ids.\n", rank);
 
 	size_t listsize = 0;
-	size_t listmaxsize = 3*1024;
+	size_t listmaxsize = 3*256;
 	hx_node_id* list = malloc(listmaxsize*sizeof(hx_node_id));
 	if(list == NULL) {
 		fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for triples.\n", __FILE__, __LINE__, listmaxsize);
@@ -132,7 +132,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	MPI_RDFIO_DEBUG("%i: Creating lookups table (_mpi_rdfio_lookup_record*).\n", rank);
 
 	size_t lookupsize = 0;
-	size_t lookupmaxsize = 1024;
+	size_t lookupmaxsize = 256;
 	/*
 	_mpi_rdfio_lookup_record** lookups = malloc(sizeof(_mpi_rdfio_lookup_record*));
 	if(lookups != NULL) {
@@ -273,7 +273,8 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	}
 
 	async_des_session_destroy(des);
-
+	free(lookups);
+	
 	MPI_RDFIO_DEBUG("%i: Translating lids to gids.\n", rank);
 	
 	size_t i;
@@ -317,7 +318,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 
 	int j = 2;
 	size_t r = 0;
-	size_t realloc_at = 1024;
+	size_t realloc_at = 256;
 	hx_node_id trip[3];
 	int done = 0;
 	for(i = listsize - 1; !done; i--) {

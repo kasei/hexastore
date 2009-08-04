@@ -85,7 +85,7 @@ void eval_test1 ( void ) {
 		ok1( hx_node_is_resource(subj) == 1 );
 		ok1( hx_node_cmp(subj, r1) == 0 );
 		
-		hx_free_variablebindings( vb, 1 );
+		hx_free_variablebindings(vb);
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 2 );
@@ -124,7 +124,7 @@ void eval_test2 ( void ) {
 		ok1( hx_node_is_resource(subj) == 1 );
 		ok1( hx_node_cmp(subj, r1) == 0 );
 		
-		hx_free_variablebindings( vb, 1 );
+		hx_free_variablebindings(vb);
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 1 );
@@ -283,7 +283,7 @@ void gp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= l4_id;
-			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes, 0 );
+			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
 			
 			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, map );
 			char* string;
@@ -291,7 +291,7 @@ void gp_varsub_test1 ( void ) {
 			ok( strcmp( string, "(filter\n  (sparql:str \"l4\")\n  (bgp\n    (triple ?y <p1> \"l1\")\n    (triple ?y <p2> \"l4\")\n  )\n)\n" ) == 0, "expected graphpattern after varsub" );
 			free( string );
 			hx_free_graphpattern( q );
-			hx_free_variablebindings(b,0);
+			hx_free_variablebindings(b);
 		}
 		
 		hx_free_graphpattern( p );

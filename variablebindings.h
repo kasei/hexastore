@@ -29,7 +29,6 @@ typedef struct {
 	int size;
 	char** names;
 	hx_node_id* nodes;
-	int free_names;
 } hx_variablebindings;
 
 typedef struct {
@@ -58,10 +57,10 @@ typedef struct {
 
 #include "materialize.h"
 
-hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names );
+hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
 hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes );
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b );
-int hx_free_variablebindings ( hx_variablebindings* b, int free_names );
+int hx_free_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings_nodes ( hx_variablebindings_nodes* b );
 
 hx_variablebindings* hx_variablebindings_project ( hx_variablebindings* b, int newsize, int* columns );
@@ -70,7 +69,7 @@ hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b,
 int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* m, char** string );
 void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m );
 
-int hx_variablebindings_set_names ( hx_variablebindings* b, char** names, int free_names );
+int hx_variablebindings_set_names ( hx_variablebindings* b, char** names );
 int hx_variablebindings_size ( hx_variablebindings* b );
 char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column );
 hx_node_id hx_variablebindings_node_id_for_binding ( hx_variablebindings* b, int column );
@@ -98,9 +97,6 @@ int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter
 int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent );
 
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
-
-
-
 
 
 int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** string );

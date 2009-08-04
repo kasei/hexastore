@@ -388,7 +388,10 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 	hx_node_variable_name( t0->subject, &sname );
 	hx_node_variable_name( t0->predicate, &pname );
 	hx_node_variable_name( t0->object, &oname );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, s, sname, pname, oname, 1 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, s, sname, pname, oname );
+	free(sname);
+	free(pname);
+	free(oname);
 	
 	if (size > 1) {
 		int i;
@@ -403,7 +406,10 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 			hx_node_variable_name( t->subject, &sname );
 			hx_node_variable_name( t->predicate, &pname );
 			hx_node_variable_name( t->object, &oname );
-			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, s, sname, pname, oname, 1 );
+			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, s, sname, pname, oname );
+			free(sname);
+			free(pname);
+			free(oname);
 			iter					= hx_new_mergejoin_iter( interm, iter );
 		}
 	}

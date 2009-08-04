@@ -60,7 +60,7 @@ int _hx_filter_iter_vb_next ( void* data ) {
 		return 0;
 	}
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	info->finished	= 1;
@@ -75,7 +75,7 @@ int _hx_filter_iter_vb_free ( void* data ) {
 	}
 
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	hx_free_variablebindings_iter( info->iter, 1 );
@@ -175,7 +175,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		}
 		
 		if (info->current != NULL) {
-			hx_free_variablebindings( info->current, 0 );
+			hx_free_variablebindings(info->current);
 			info->current	= NULL;
 		}
 		
@@ -185,7 +185,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 	}
 	info->finished	= 1;
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	return 1;

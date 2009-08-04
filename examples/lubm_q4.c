@@ -95,7 +95,7 @@ int main ( int argc, char** argv ) {
 		free( y2s );
 		free( y3s );
 		
-		hx_free_variablebindings( b, 0 );
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
 	hx_free_variablebindings_iter( iter, 1 );

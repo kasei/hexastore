@@ -40,7 +40,11 @@ hx_variablebindings_iter* _hx_parallel_variablebindings_iter_for_triple ( int tr
 		}
 	}
 	
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, ctx->storage, names[0], names[1], names[2], 0 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, ctx->storage, names[0], names[1], names[2] );
+	free( names[0] );
+	free( names[1] );
+	free( names[2] );
+	
 	return iter;
 }
 
@@ -87,15 +91,6 @@ int _hx_parallel_variablebindings_iter_shared_columns( hx_node_id* triple_nodes,
 	
 // 	fprintf( stderr, "%d: shared_count = %d\n", myrank, shared_count );
 	
-if (0) { // XXX
-    int i = 0;
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname));
-    printf("\n\n*** PID %d on %s ready for attach\n\n", getpid(), hostname);
-    fflush(stdout);
-    sleep(10);
-}
-
 	int j		= 0;
 	char** c	= (char**) calloc( shared_count, sizeof( char* ) );
 // 	fprintf( stderr, "%d: allocated column array %p\n", myrank, (void*) c );
@@ -168,7 +163,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		
 //		break;
 // 		fprintf( stderr, "node %d freeing column array %p\n", myrank, columns );
-// 		free(columns);
+		free(columns);
 	}
 	
 // 	fprintf( stderr, "node %d returning results iterator %p\n", myrank, (void*) lhsr );
@@ -192,6 +187,18 @@ int main ( int argc, char** argv ) {
 	TIME_T(load_start, load_end);
 	TIME_T(exec_start, exec_end);
 	
+	
+if (0) { // XXX
+    int i = 0;
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+    printf("\n\n*** PID %d on %s ready for attach\n\n", getpid(), hostname);
+    fflush(stdout);
+    sleep(10);
+}
+
+	
+	
 	load_start	= TIME();
 	hx_parallel_distribute_triples_from_file( ctx, argv[1], hx );
 	load_end	= TIME();
@@ -202,9 +209,9 @@ int main ( int argc, char** argv ) {
 	int triple_count			= hx_bgp_size(b);
 	int node_count				= triple_count * 3;
 	
-	hx_node_id* triple_nodes;
-	char** variable_names;
 	int maxiv;
+	char** variable_names;
+	hx_node_id* triple_nodes;
 	distribute_bgp( ctx, &b, &triple_nodes, &variable_names, &maxiv );
 
 	if (myrank == DEBUG_NODE) {
@@ -237,19 +244,12 @@ int main ( int argc, char** argv ) {
 		fprintf( stdout, "execution took %" PRINTTIME " seconds\n", DIFFTIME(exec_end, exec_start) );
 	}
 	
-// 	if (iter) {
-// 		while (!hx_variablebindings_iter_finished( iter )) {
-// 			hx_variablebindings* b;
-// 			hx_variablebindings_iter_current( iter, &b );
-// 			fprintf( stderr, "process %d: ", myrank );
-// 			hx_variablebindings_debug( b, NULL );
-// 			hx_free_variablebindings( b, 1 );
-// 			hx_variablebindings_iter_next( iter );
-// 		}
-// 		hx_free_variablebindings_iter( iter, 1 );
-// 	}
-	
-	
+	for (i = 0; i <= maxiv; i++) {
+		if (variable_names[i] != NULL) {
+			free(variable_names[i]);
+		}
+	}
+	free(variable_names);
 	hx_free_hexastore( hx, st );
 	hx_free_storage_manager( st );
 	MPI_Finalize(); 
@@ -261,8 +261,6 @@ int distribute_bgp ( hx_parallel_execution_context* ctx, hx_bgp** b, hx_node_id*
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-// 	fprintf( stderr, "entering distribute_bgp\n" );
 	
 	int triple_count			= hx_bgp_size(*b);
 	int node_count				= triple_count * 3;
@@ -336,6 +334,5 @@ int distribute_bgp ( hx_parallel_execution_context* ctx, hx_bgp** b, hx_node_id*
 	MPI_Bcast(_triple_nodes,sizeof(hx_node_id)*node_count,MPI_BYTE,0,MPI_COMM_WORLD);
 	*triple_nodes	= _triple_nodes;
 	
-// 	fprintf( stderr, "leaving distribute_bgp\n" );
 	return 0;
 }

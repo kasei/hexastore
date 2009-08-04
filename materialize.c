@@ -64,7 +64,7 @@ int _hx_materialize_iter_vb_free ( void* data ) {
 	
 	int i;
 	for (i = 0; i < info->length; i++) {
-		hx_free_variablebindings( info->bindings[i], 0 );
+		hx_free_variablebindings(info->bindings[i]);
 	}
 	free( info->bindings );
 	for (i = 0; i < info->size; i++) {
@@ -196,7 +196,7 @@ int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 			// replace the names array for this variable binding with our new copy,
 			// because the one it's got is stored in the iterator we're materializing
 			// and will be deallocated at the end of this function
-			hx_variablebindings_set_names( b, names, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
+			hx_variablebindings_set_names( b, names );
 			
 			bindings[ info->length++ ]	= b;
 			if (info->length >= alloc) {

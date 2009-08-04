@@ -294,6 +294,11 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 	// fprintf( stderr, "node %d creating materialized iterator with size %d, length %d\n", myrank, size, recv_args.used );
 	hx_variablebindings_iter* r	= hx_new_materialize_iter_with_data( size, newnames, recv_args.used, recv_args.buffer );	
 	
+	for (i = 0; i < size; i++) {
+		free( newnames[i] );
+	}
+	free(newnames);
+	
 	if (iter != NULL) {
 		hx_free_variablebindings_iter( iter, 0 );
 	}
@@ -353,7 +358,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		
 		async_mpi_session_reset3(ses, buffer, len, node, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
 		hx_variablebindings_iter_next(iter);
-		hx_free_variablebindings( b, 1 );
+		hx_free_variablebindings(b);
 // 		fprintf( stderr, "node %d send handler sucessfully freed variablebindings\n", myrank );
 		return 1;
 	}
@@ -397,7 +402,7 @@ int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
 	
 	recv_args->buffer[ recv_args->used++ ]	= b;
 	
-//	hx_free_variablebindings( b, 1 );
+//	hx_free_variablebindings(b);
 // 	fprintf( stderr, "node %d recv handler sucessfully freed variablebindings\n", myrank );
 	return 1;
 }
@@ -434,7 +439,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 
 	buffer = malloc(bufsize);
 	if(buffer == NULL) {
-// 		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for buffer.\n", __FILE__, __LINE__, rank, bufsize);
+		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for buffer.\n", __FILE__, __LINE__, rank, bufsize);
 		bufsize = 0;
 	}
 
@@ -478,7 +483,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 	*maxiv = min_iv;
 	char** map = calloc(min_iv+1, sizeof(char*));
 	if(map == NULL) {
-// 		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for map.\n", __FILE__, __LINE__, rank, min_iv*sizeof(char*));
+		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for map.\n", __FILE__, __LINE__, rank, min_iv*sizeof(char*));
 		return NULL;
 	}
 
@@ -493,7 +498,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 		if(namelen > 0) {
 			map[iv] = malloc(namelen+1);
 			if(map[iv] == NULL) {
-// 				fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for node name.\n", __FILE__, __LINE__, rank, namelen + 1);
+				fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for node name.\n", __FILE__, __LINE__, rank, namelen + 1);
 				return NULL;
 			}
 			memcpy(map[iv], b, namelen);
@@ -642,8 +647,6 @@ int hx_parallel_nodemap_get_process_id ( hx_node_id id ) {
 }
 
 int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, hx_variablebindings_nodes*** varbinds) {
-
-
 	int rank;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
