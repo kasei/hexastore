@@ -1,12 +1,12 @@
 # CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
-# CFLAGS		= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CFLAGS	= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
+# CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
+CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o safealloc.o async_mpi.o async_des.o parallel.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
-default: parse print optimize tests examples parse_query
+default: parse print optimize tests examples parse_query dumpmap
 
 all: sparql parse print optimize tests examples parse_query mpi
 
@@ -21,6 +21,9 @@ optimize: optimize.c $(OBJECTS)
 
 print: print.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o print print.c $(OBJECTS)
+
+dumpmap: dumpmap.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o dumpmap dumpmap.c $(OBJECTS)
 
 hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastore_types.h variablebindings.h nodemap.h
 	$(CC) $(INC) -c hexastore.c
@@ -117,6 +120,30 @@ SPARQLScanner.o: SPARQLScanner.c SPARQLParser.h SPARQLScanner.h
 
 parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 	$(CC) $(INC) $(LIBS) -o parse_query parse_query.c $(OBJECTS)
+
+########
+# jesse's mpi file io stuff:
+
+mpi_file_iterator.o: mpi_file_iterator.c mpi_file_iterator.h genmap/iterator.h genmap/buffer.h
+	$(CC) $(INC) $(LIBS) -c mpi_file_iterator.c
+
+mpi_file_ntriples_iterator.o: mpi_file_ntriples_iterator.c mpi_file_ntriples_iterator.h mpi_file_iterator.h
+	$(CC) $(INC) $(LIBS) -c mpi_file_ntriples_iterator.c
+
+mpi_file_ntriples_node_iterator.o: mpi_file_ntriples_node_iterator.c mpi_file_ntriples_node_iterator.h mpi_file_ntriples_iterator.h
+	$(CC) $(INC) $(LIBS) -c mpi_file_ntriples_node_iterator.c
+	
+mpi_rdfio.o: mpi_rdfio.c mpi_rdfio.h hexastore.h mpi_file_ntriples_node_iterator.h async_des.h genmap/avl_tree_map.h
+	$(CC) $(INC) $(LIBS) -c mpi_rdfio.c
+
+genmap/avl_tree_map.o: genmap/avl_tree_map.c genmap/avl_tree_map.h genmap/map.h genmap/iterator.h avl.h
+	$(CC) $(INC) $(LIBS) -c genmap/avl_tree_map.c -o genmap/avl_tree_map.o
+
+genmap/iterator.o: genmap/iterator.c genmap/iterator.h
+	$(CC) $(INC) $(LIBS) -c genmap/iterator.c -o genmap/iterator.o
+
+genmap/map.o: genmap/map.c genmap/map.h genmap/iterator.h
+	$(CC) $(INC) $(LIBS) -c genmap/map.c -o genmap/map.o
 
 ########
 
@@ -235,7 +262,7 @@ clean:
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f test parse print optimize a.out server parse_query
-	rm -f *.o
+	rm -f *.o genmap/*.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.c SPARQLScanner.c SPARQLParser.h
