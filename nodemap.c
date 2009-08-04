@@ -71,45 +71,6 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 	}
 }
 
-hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n ) {
-	hx_node* node	= hx_node_copy( n );
-	hx_nodemap_item i;
-	i.node	= node;
-	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
-	if (item == NULL) {
-		if (0) {
-			char* nodestr;
-			hx_node_string( node, &nodestr );
-			fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
-			free(nodestr);
-		}
-		
-		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
-		item->node	= node;
-		
-		
-		int myrank;
-		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-		hx_node_id id	= m->next_id++ | (myrank << 48);
-		item->id		= id;
-		fprintf( stderr, "adding MPI node %llx\n", id );
-		
-		avl_insert( m->node2id, item );
-		avl_insert( m->id2node, item );
-// 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
-		
-		if (0) {
-			hx_node_id id	= hx_nodemap_get_node_id( m, node );
-			fprintf( stderr, "*** After adding: %d\n", (int) id );
-		}
-		
-		return item->id;
-	} else {
-		hx_free_node( node );
-		return item->id;
-	}
-}
-
 int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id ) {
 	hx_nodemap_item i;
 	i.id	= id;
@@ -177,7 +138,7 @@ int hx_nodemap_debug ( hx_nodemap* map ) {
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		char* string;
 		hx_node_string( item->node, &string );
-		fprintf( stderr, "\t%d -> %s\n", (int) item->id, string );
+		fprintf( stderr, "\t%"PRIhxid" -> %s\n", item->id, string );
 		free( string );
 	}
 	return 0;
@@ -224,70 +185,6 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
 		}
 		item->node	= hx_node_read( f, 0 );
-		avl_insert( m->node2id, item );
-		avl_insert( m->id2node, item );
-	}
-	return m;
-}
-
-int hx_nodemap_write_mpi ( hx_nodemap* m, MPI_File f ) {
-	int flag = 0;
-	MPI_Status status;
-	MPIO_Request request;
-	
-	size_t used	= avl_count( m->id2node );
-	int len			= 1 + sizeof( size_t ) + sizeof( hx_node_id );
-	char* header	= calloc( len, 1 );
-	header[0]	= 'M';
-	memcpy( &(header[1]), &used, sizeof( size_t ) );
-	memcpy( &(header[1 + sizeof(size_t)]), &( m->next_id ), sizeof( hx_node_id ) );
-	MPI_File_iwrite_shared(f, header, len, MPI_BYTE, &request);
-	do {
-		MPIO_Test(&request, &flag, &status);
-	} while(!flag);
-	free(header);
-	
-	struct avl_traverser iter;
-	avl_t_init( &iter, m->id2node );
-	hx_nodemap_item* item;
-	
-	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
-		MPI_File_write_shared(f, &( item->id ), sizeof( hx_node_id ), MPI_BYTE, &status);
-		hx_node_write_mpi( item->node, f );
-	}
-	
-	return 0;
-}
-
-hx_nodemap* hx_nodemap_read_mpi( hx_storage_manager* s, MPI_File f, int buffer ) {
-	size_t used, read;
-	hx_node_id next_id;
-	
-	char c;
-	MPI_Status status;
-	
-	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
-	
-	if (c != 'M') {
-		fprintf( stderr, "*** Bad header cookie trying to read nodemap from file.\n" );
-		return NULL;
-	}
-	
-	hx_nodemap* m	= hx_new_nodemap();
-
-	MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
-	MPI_File_read_shared(f, &next_id, sizeof( hx_node_id ), MPI_BYTE, &status);
-
-	m->next_id	= next_id;
-	int i;
-	for (i = 0; i < used; i++) {
-		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
-		if (item == NULL) {
-			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
-		}
-		
-		MPI_File_read_shared(f, &( item->id ), sizeof( hx_node_id ), MPI_BYTE, &status);
-		item->node	= hx_node_read_mpi( f, 0 );
 		avl_insert( m->node2id, item );
 		avl_insert( m->id2node, item );
 	}
