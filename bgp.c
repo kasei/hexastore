@@ -528,4 +528,3 @@ char* hx_bgp_freeze( hx_bgp* b, int* len, hx_nodemap* map ) {
 	return (char*) buf;
 }
 
-// 		nameid	= 

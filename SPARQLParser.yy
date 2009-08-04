@@ -1731,6 +1731,7 @@ hx_bgp* parse_bgp_query ( void ) {
 		
 		b	= generate_bgp( q->bgp, prologue, vmap );
 		free_prologue( prologue );
+		free( vmap );
 		return b;
 	}
 	return NULL;
