@@ -614,26 +614,27 @@ hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
 	
 	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
 	if (c != 'N') {
-		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from file.\n", c );
+		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from MPI file.\n", c );
 		return NULL;
 	}
 	
 	char* value;
 	char* extra	= NULL;
 	hx_node* node;
-	c	= fgetc( f );
+
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
 	switch (c) {
 		case 'R':
 			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
 			value	= (char*) calloc( 1, used + 1 );
-			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
 			node	= hx_new_node_resource( value );
 			free( value );
 			return node;
 		case 'B':
 			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
 			value	= (char*) calloc( 1, used + 1 );
-			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
 			node	= hx_new_node_blank( value );
 			free( value );
 			return node;
@@ -642,11 +643,11 @@ hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
 		case 'D':
 			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
 			value	= (char*) calloc( 1, used + 1 );
-			MPI_File_read_shared(f, &value, used, MPI_BYTE, &status);
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
 			if (c == 'G' || c == 'D') {
 				MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
 				extra	= (char*) calloc( 1, used + 1 );
-				MPI_File_read_shared(f, &extra, used, MPI_BYTE, &status);
+				MPI_File_read_shared(f, extra, used, MPI_BYTE, &status);
 			}
 			if (c == 'G') {
 				node	= (hx_node*) hx_new_node_lang_literal( value, extra );
@@ -660,7 +661,7 @@ hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
 				free( extra );
 			return node;
 		default:
-			fprintf( stderr, "*** Bad node type '%c' trying to read node from file.\n", (char) c );
+			fprintf( stderr, "*** Bad node type '%c' trying to read node from MPI file.\n", (char) c );
 			return NULL;
 	};
 	

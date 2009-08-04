@@ -323,7 +323,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	for(i = listsize - 1; !done; i--) {
 		trip[j--] = list[i];
 		if(j < 0) {
-			MPI_RDFIO_DEBUG("%i:\tadd triple %"PRIhxid" %"PRIhxid" %"PRIhxid"\n", rank, trip[0], trip[1], trip[2]);
+			MPI_RDFIO_DEBUG("%i:\tadd triple %"PRIuHXID" %"PRIuHXID" %"PRIuHXID"\n", rank, trip[0], trip[1], trip[2]);
 			hx_add_triple_id(*store, *manager, trip[0], trip[1], trip[2]);
 			j = 2;
 		}
@@ -468,8 +468,8 @@ int _mpi_rdfio_recv_lookup(async_mpi_session* ses, void* p) {
 	
 	hx_free_node( node );
 	
-	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIhxid"].\n", lookup->pid, lookup->lid, lookup->gid);
-	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIhxid"].\n", (*records)[(*lookupsize)-1].pid, (*records)[(*lookupsize)-1].lid, (*records)[(*lookupsize)-1].gid);
+	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIuHXID"].\n", lookup->pid, lookup->lid, lookup->gid);
+	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIuHXID"].\n", (*records)[(*lookupsize)-1].pid, (*records)[(*lookupsize)-1].lid, (*records)[(*lookupsize)-1].gid);
 	
 	return 1;
 }

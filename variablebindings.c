@@ -38,6 +38,21 @@ hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 	return c;
 }
 
+hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes ) {
+	hx_variablebindings_nodes* b	= (hx_variablebindings_nodes*) calloc( 1, sizeof( hx_variablebindings_nodes ) );
+	b->size			= size;
+	b->names		= (char**) calloc( size, sizeof( char* ) );
+	b->nodes		= nodes;
+	
+	int i;
+	for (i = 0; i < size; i++) {
+		b->names[i]	= (char*) malloc( strlen(names[i]) + 1 );
+		strcpy( b->names[i], names[i] );
+	}
+	
+	return b;
+}
+
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 	if (free_names > 0) {
 		int i;
@@ -51,6 +66,23 @@ int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 		free( b->names );
 		b->names	= NULL;
 	}
+	free( b->nodes );
+	b->nodes	= NULL;
+	
+	free( b );
+	return 0;
+}
+
+int hx_free_variablebindings_nodes ( hx_variablebindings_nodes* b ) {
+	int i;
+	for (i = 0; i < b->size; i++) {
+		free( b->names[i] );
+		b->names[i]	= NULL;
+		hx_free_node( b->nodes[i] );
+	}
+	
+	free( b->names );
+	b->names	= NULL;
 	free( b->nodes );
 	b->nodes	= NULL;
 	
@@ -154,6 +186,7 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		p	+= 1;
 		
 		strcpy( p, nodestrs[i] );
+		free( nodestrs[i] );
 		p	+= strlen( nodestrs[i] );
 		if (i == size-1) {
 			strcpy( p, " }" );
@@ -176,6 +209,49 @@ void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m ) {
 	fprintf( stderr, "%s\n", string );
 	
 	free( string );
+}
+
+int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** string ) {
+	int size		= b->size;
+	char** nodestrs	= (char**) calloc( size, sizeof( char* ) );
+	size_t len	= 5;
+	int i;
+	for (i = 0; i < size; i++) {
+		hx_node* node	= b->nodes[i];
+		hx_node_string( node, &( nodestrs[i] ) );
+		len	+= strlen( nodestrs[i] ) + 2 + strlen(b->names[i]) + 1;
+	}
+	*string	= (char*) malloc( len );
+	if (*string == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_string\n" );
+	}
+	char* p			= *string;
+	if (*string == NULL) {
+		free( nodestrs );
+		fprintf( stderr, "*** Failed to allocated memory in hx_variablebindings_string\n" );
+		return 1;
+	}
+	
+	strcpy( p, "{ " );
+	p	+= 2;
+	for (i = 0; i < size; i++) {
+		strcpy( p, b->names[i] );
+		p	+= strlen( b->names[i] );
+		
+		strcpy( p, "=" );
+		p	+= 1;
+		
+		strcpy( p, nodestrs[i] );
+		p	+= strlen( nodestrs[i] );
+		if (i == size-1) {
+			strcpy( p, " }" );
+		} else {
+			strcpy( p, ", " );
+		}
+		p	+= 2;
+	}
+	free( nodestrs );
+	return 0;
 }
 
 char** hx_variablebindings_names ( hx_variablebindings* b ) {
@@ -438,6 +514,7 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, int* len ) {
 		memcpy( p, &( b->nodes[i] ), sizeof( hx_node_id ) );
 		p		+= sizeof( hx_node_id );
 	}
+	free( name_lengths );
 	return ptr;
 }
 

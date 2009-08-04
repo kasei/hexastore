@@ -138,7 +138,7 @@ int hx_nodemap_debug ( hx_nodemap* map ) {
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		char* string;
 		hx_node_string( item->node, &string );
-		fprintf( stderr, "\t%"PRIhxid" -> %s\n", item->id, string );
+		fprintf( stderr, "\t%"PRIuHXID" -> %s\n", item->id, string );
 		free( string );
 	}
 	return 0;

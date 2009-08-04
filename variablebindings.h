@@ -27,10 +27,16 @@ enum {
 
 typedef struct {
 	int size;
-	int free_names;
 	char** names;
 	hx_node_id* nodes;
+	int free_names;
 } hx_variablebindings;
+
+typedef struct {
+	int size;
+	char** names;
+	hx_node** nodes;
+} hx_variablebindings_nodes;
 
 typedef struct {
 	int (*finished) ( void* iter );
@@ -53,8 +59,10 @@ typedef struct {
 #include "materialize.h"
 
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names );
+hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes );
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names );
+int hx_free_variablebindings_nodes ( hx_variablebindings_nodes* b );
 
 hx_variablebindings* hx_variablebindings_project ( hx_variablebindings* b, int newsize, int* columns );
 hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b, int newsize, char** names );
@@ -90,6 +98,13 @@ int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter
 int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent );
 
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
+
+
+
+
+
+int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** string );
+
 
 #ifdef __cplusplus
 }
