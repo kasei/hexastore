@@ -17,7 +17,7 @@ extern "C" {
 #define TERMINAL_TREE_BRANCHING_SIZE			4
 
 #define PRIuHXID	PRIu64
-#define PRIuHXID	PRIx64
+#define PRIxHXID	PRIx64
 
 typedef int64_t hx_node_id;
 typedef hx_node_id list_size_t;
