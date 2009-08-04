@@ -707,10 +707,12 @@ RDFLiteral:
 		node_t* node	= (node_t*) calloc( 1, sizeof( node_t ) );
 		if (attrs == NULL) {
 			hx_node* l	= hx_new_node_literal( (char*) $1 );
+			free( $1 );
 			node->type		= TYPE_FULL_NODE;
 			node->ptr		= (void*) l;
 		} else if (attrs->language != NULL) {
 			hx_node* l	= (hx_node*) hx_new_node_lang_literal( (char*) $1, attrs->language );
+			free( $1 );
 			node->type		= TYPE_FULL_NODE;
 			node->ptr		= (void*) l;
 		} else {
@@ -721,6 +723,7 @@ RDFLiteral:
 				node->datatype	= (char*) dt->ptr;
 			} else {
 				hx_node* l	= (hx_node*) hx_new_node_dt_literal( (char*) $1, (char*) dt->ptr );
+				free( $1 );
 				node->type		= TYPE_FULL_NODE;
 				node->ptr		= (void*) l;
 			}
@@ -1851,11 +1854,9 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 		return hx_node_copy( node );
 	} else if (n->type == TYPE_VARIABLE) {
 		char* name	= (char*) n->ptr;
-		char* copy	= (char*) malloc( strlen( name ) + 1 );
 		hx_node* v;
-		strcpy( copy, name );
-		int id	= variable_id_with_name( vmap, copy );
-		v	= hx_new_node_named_variable( id, copy );
+		int id	= variable_id_with_name( vmap, name );
+		v	= hx_new_node_named_variable( id, name );
 		return v;
 	} else if (n->type == TYPE_QNAME) {
 		hx_node* u;
@@ -1872,6 +1873,7 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 			return NULL;
 		value	= (char*) n->ptr;
 		l	= (hx_node*) hx_new_node_dt_literal( value, dt );
+		free( value );
 		return l;
 	} else {
 		fprintf( stderr, "*** UNRECOGNIZED node type '%c' in generate_node()\n", n->type );
