@@ -647,20 +647,25 @@ int hx_parallel_nodemap_get_process_id ( hx_node_id id ) {
 }
 
 int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, hx_variablebindings_nodes*** varbinds) {
-	int rank;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	int rank, commsize;
+	
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
+	MPI_Comm_size(MPI_COMM_WORLD, &commsize);
 	HPGN_DEBUG("%i: Starting hx_parallel_get_nodes\n", rank);
-
+	
 	hx_variablebindings *bindings;
-
+	
 	hx_variablebindings_iter* miter = hx_new_materialize_iter(iter);
-
+	
+	int rankandsize[2];
+	rankandsize[0] = rank; 
+	rankandsize[1] = commsize;
+	
 	map_t gid2node;
-	gid2node = avl_tree_map_create(&_hx_parallel_compare_hx_node_id, NULL, &_hx_parallel_destroy_gid2node_entry, NULL, NULL);
-
+	gid2node = avl_tree_map_create(&_hx_parallel_compare_hx_node_id, NULL, &_hx_parallel_destroy_gid2node_entry, NULL, rankandsize);
+	
 	HPGN_DEBUG("%i: Reading nodemap from file %s.\n", rank, (char*)ctx->local_nodemap_file);
-
+	
 	MPI_File file;
 	MPI_Info info;
 	MPI_Info_create(&info);
@@ -872,11 +877,19 @@ hx_node* _hx_parallel_to_hx_node_p(char* ntnode) {
         }
 }
 
+
 int _hx_parallel_compare_hx_node_id(const void *id1, const void *id2, void *p) {
+	int *ras = (int*)p;
+	int rank = ras[0];
+	int size = ras[1];
 	hx_node_id *hid1 = (hx_node_id*)id1;
 	hx_node_id *hid2 = (hx_node_id*)id2;
-
-	return *hid1 < *hid2 ? -1 : (*hid1 > *hid2 ? 1 : 0);
+	hx_node_id pid1 = (hx_parallel_nodemap_get_process_id(*hid1) + rank) % size;
+	hx_node_id pid2 = (hx_parallel_nodemap_get_process_id(*hid2) + rank) % size;
+	hx_node_id nid1 = (0x0000ffffffffffffLL & *hid1) | (pid1 << 48);
+	hx_node_id nid2 = (0x0000ffffffffffffLL & *hid2) | (pid2 << 48);
+	
+	return nid1 < nid2 ? -1 : (nid1 > nid2 ? 1 : 0);
 }
 
 void _hx_parallel_destroy_gid2node_entry(void *k, void *v, void *p) {
