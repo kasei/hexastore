@@ -44,7 +44,7 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 int hx_parallel_collect_variablebindings ( int rank, hx_storage_manager* st, hx_variablebindings_iter* iter );
 hx_variablebindings_iter* hx_parallel_new_rendezvousjoin_bgp ( hx_hexastore* hx, hx_storage_manager* st, hx_bgp* b );
 char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_node **nodes, size_t len, int* maxiv);
-
+hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_hexastore* hx, int triple_count, hx_node_id* triple_nodes, char** variable_names, int maxiv );
 
 hx_nodemap* hx_nodemap_read_mpi( hx_storage_manager* s, MPI_File f, int buffer );
 int hx_nodemap_write_mpi ( hx_nodemap* t, MPI_File f );
