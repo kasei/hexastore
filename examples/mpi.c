@@ -202,6 +202,10 @@ if (0) { // XXX
 	load_start	= TIME();
 	hx_parallel_distribute_triples_from_file( ctx, argv[1], hx );
 	load_end	= TIME();
+
+	if (myrank == 0) {
+		fprintf( stdout, "loading took %" PRINTTIME " seconds\n", DIFFTIME(load_end, load_start) );
+	}
 	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://simile.mit.edu/2006/01/ontologies/mods3#point> \"end\" . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#encoding> ?bo . ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?co . }" );
@@ -225,22 +229,32 @@ if (0) { // XXX
 	hx_variablebindings_nodes** nodes;
 	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, hx, triple_count, triple_nodes, variable_names, maxiv );
 	int results	= hx_parallel_get_nodes( ctx, iter, &nodes );
-	FILE* f	= fopen( ctx->local_output_file, "w" );
+	MPI_File file;
+	MPI_Info info;
+	MPI_Status status;
+	MPI_Info_create(&info);
+	MPI_File_open(MPI_COMM_SELF, ctx->local_output_file, MPI_MODE_WRONLY | MPI_MODE_CREATE, info, &file);
+	//FILE* f	= fopen( ctx->local_output_file, "w" );
 	int i;
 	for (i = 0; i < results; i++) {
 		hx_variablebindings_nodes* b	= nodes[i];
 		char* string;
 		hx_variablebindings_nodes_string( b, &string );
-		fprintf(f, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		char chars[1024];
+		//fprintf(f, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		sprintf(chars, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		MPI_File_write_shared(file, chars, strlen(chars), MPI_BYTE, &status);
 		free(string);
 		hx_free_variablebindings_nodes(b);
 	}
-	fclose( f );
+	//fclose( f );
+	MPI_File_close(&file);
+	MPI_Info_free(&info);
+	
 	exec_end	= TIME();
 	
+	fprintf( stderr, "process %d: %d results\n", myrank, results );
 	if (myrank == 0) {
-		fprintf( stderr, "process %d: %d results\n", myrank, results );
-		fprintf( stdout, "loading took %" PRINTTIME " seconds\n", DIFFTIME(load_end, load_start) );
 		fprintf( stdout, "execution took %" PRINTTIME " seconds\n", DIFFTIME(exec_end, exec_start) );
 	}
 	
