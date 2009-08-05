@@ -1,6 +1,6 @@
 # CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
+CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
@@ -125,25 +125,25 @@ parse_query: parse_query.c SPARQLParser.o SPARQLScanner.o
 # jesse's mpi file io stuff:
 
 mpi_file_iterator.o: mpi_file_iterator.c mpi_file_iterator.h genmap/iterator.h genmap/buffer.h
-	$(CC) $(INC) $(LIBS) -c mpi_file_iterator.c
+	$(CC) $(INC) -c mpi_file_iterator.c
 
 mpi_file_ntriples_iterator.o: mpi_file_ntriples_iterator.c mpi_file_ntriples_iterator.h mpi_file_iterator.h
-	$(CC) $(INC) $(LIBS) -c mpi_file_ntriples_iterator.c
+	$(CC) $(INC) -c mpi_file_ntriples_iterator.c
 
 mpi_file_ntriples_node_iterator.o: mpi_file_ntriples_node_iterator.c mpi_file_ntriples_node_iterator.h mpi_file_ntriples_iterator.h
-	$(CC) $(INC) $(LIBS) -c mpi_file_ntriples_node_iterator.c
+	$(CC) $(INC) -c mpi_file_ntriples_node_iterator.c
 	
 mpi_rdfio.o: mpi_rdfio.c mpi_rdfio.h hexastore.h mpi_file_ntriples_node_iterator.h async_des.h genmap/avl_tree_map.h
-	$(CC) $(INC) $(LIBS) -c mpi_rdfio.c
+	$(CC) $(INC) -c mpi_rdfio.c
 
 genmap/avl_tree_map.o: genmap/avl_tree_map.c genmap/avl_tree_map.h genmap/map.h genmap/iterator.h avl.h
-	$(CC) $(INC) $(LIBS) -c genmap/avl_tree_map.c -o genmap/avl_tree_map.o
+	$(CC) $(INC) -c genmap/avl_tree_map.c -o genmap/avl_tree_map.o
 
 genmap/iterator.o: genmap/iterator.c genmap/iterator.h
-	$(CC) $(INC) $(LIBS) -c genmap/iterator.c -o genmap/iterator.o
+	$(CC) $(INC) -c genmap/iterator.c -o genmap/iterator.o
 
 genmap/map.o: genmap/map.c genmap/map.h genmap/iterator.h
-	$(CC) $(INC) $(LIBS) -c genmap/map.c -o genmap/map.o
+	$(CC) $(INC) -c genmap/map.c -o genmap/map.o
 
 ########
 
