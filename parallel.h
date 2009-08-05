@@ -31,10 +31,11 @@ typedef struct {
 	int root;
 	const char* local_nodemap_file;
 	const char* local_output_file;
+	const char* job_id;
 	int join_iteration;
 } hx_parallel_execution_context;
 
-hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_manager* st, const char* path );
+hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_manager* st, const char* path, char* job_id );
 int hx_parallel_free_execution_context ( hx_parallel_execution_context* ctx );
 int hx_parallel_distribute_triples_from_hexastore ( int rank, hx_hexastore* source, hx_storage_manager* st, hx_hexastore* destination );
 int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, hx_storage_manager* st, hx_hexastore* destination, hx_nodemap* map );

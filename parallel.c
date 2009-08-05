@@ -1,5 +1,7 @@
 #include "parallel.h"
 #include "nodemap.h"
+#include "mergejoin.h"
+#include "nestedloopjoin.h"
 
 // #define HPGN_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define HPGN_DEBUG(s, ...)
@@ -51,7 +53,7 @@ int _hx_parallel_recv_vb_handler (async_mpi_session* ses, void* args);
 
 
 
-hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_manager* st, const char* path ) {
+hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_manager* st, const char* path, char* job_id ) {
 	int myrank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
@@ -59,14 +61,17 @@ hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_ma
 	ctx->storage				= st;
 	ctx->root					= 0;
 	
-	static const char* map_template	= "%s/mapfile.%d";
-	char *mapfile		= malloc(strlen(path) + strlen(map_template) + 6 + 1);
-	sprintf(mapfile, map_template, path, myrank);
+	ctx->job_id					= malloc( strlen(job_id) + 1 );
+	sprintf( (char*) ctx->job_id, job_id );
+	
+	static const char* map_template	= "%s/rendezvous-map.%s.%d";
+	char *mapfile		= malloc(strlen(path) + strlen(map_template) + strlen(job_id) + 6 + 1);
+	sprintf(mapfile, map_template, path, job_id, myrank);
 	ctx->local_nodemap_file	= mapfile;
 	
-	static const char* out_template	= "%s/rendezvous-out.%d";
-	char *outfile		= malloc(strlen(path) + strlen(out_template) + 6 + 1);
-	sprintf(outfile, out_template, path, myrank);
+	static const char* out_template	= "%s/rendezvous-out.%s.%d";
+	char *outfile		= malloc(strlen(path) + strlen(out_template) + strlen(job_id) + 6 + 1);
+	sprintf(outfile, out_template, path, job_id, myrank);
 	ctx->local_output_file	= outfile;
 	
 	return ctx;
@@ -75,6 +80,7 @@ hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_ma
 int hx_parallel_free_execution_context ( hx_parallel_execution_context* ctx ) {
 	free( (char*) ctx->local_nodemap_file );
 	free( (char*) ctx->local_output_file );
+	free( (char*) ctx->job_id );
 	free( ctx );
 	return 0;
 }
@@ -1135,14 +1141,26 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx, lhs, shared_count, columns );
 // 		fprintf(stderr, "%i: _hx_parallelhx_parallel_distribute_variablebindings(2)\n", myrank);
 		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx, rhs, shared_count, columns );
-		lhs								= hx_new_nestedloopjoin_iter( lhsr, rhsr );
 		
-//		break;
-// 		fprintf( stderr, "node %d freeing column array %p\n", myrank, columns );
+		if (shared_count > 0) {
+			lhs		= hx_new_mergejoin_iter( lhsr, rhsr );
+		} else {
+			lhs		= hx_new_nestedloopjoin_iter( lhsr, rhsr );
+		}
+		
 		free(columns);
 	}
 	
+	char** all_names	= (char**) calloc( node_count, sizeof( char* ) );
+	int all_count	= 0;
+	for (i = 0; i <= maxiv; i++) {
+		if (variable_names[i] != NULL) {
+			all_names[ all_count++ ]	= variable_names[i];
+		}
+	}
+	hx_variablebindings_iter* results	= hx_parallel_distribute_variablebindings( ctx, lhs, all_count, all_names );
+	
 // 	fprintf( stderr, "node %d returning results iterator %p\n", myrank, (void*) lhsr );
-	return lhs;
+	return results;
 }
 

@@ -5,7 +5,6 @@
 #include "bgp.h"
 #include "parallel.h"
 #include "materialize.h"
-#include "nestedloopjoin.h"
 
 #include "timing_choices.h"
 #define TIMING_CPU_FREQUENCY 2600000000
@@ -28,8 +27,8 @@ int main ( int argc, char** argv ) {
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_hexastore* hx		= hx_new_hexastore( st );
 	
-	
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp" );
+	char* job				= (argc > 2) ? argv[2] : "";
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
 //	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/scratch" );
 	
 	TIME_T(load_start, load_end);
