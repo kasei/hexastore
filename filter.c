@@ -5,6 +5,9 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info );
 
 hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_nodemap* map ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	if (vtable == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_filter_iter\n" );
+	}
 	vtable->finished	= _hx_filter_iter_vb_finished;
 	vtable->current		= _hx_filter_iter_vb_current;
 	vtable->next		= _hx_filter_iter_vb_next;
@@ -57,7 +60,7 @@ int _hx_filter_iter_vb_next ( void* data ) {
 		return 0;
 	}
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	info->finished	= 1;
@@ -72,7 +75,7 @@ int _hx_filter_iter_vb_free ( void* data ) {
 	}
 
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	hx_free_variablebindings_iter( info->iter, 1 );
@@ -172,7 +175,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		}
 		
 		if (info->current != NULL) {
-			hx_free_variablebindings( info->current, 0 );
+			hx_free_variablebindings(info->current);
 			info->current	= NULL;
 		}
 		
@@ -182,7 +185,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 	}
 	info->finished	= 1;
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	return 1;

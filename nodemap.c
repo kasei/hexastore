@@ -138,7 +138,7 @@ int hx_nodemap_debug ( hx_nodemap* map ) {
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		char* string;
 		hx_node_string( item->node, &string );
-		fprintf( stderr, "\t%d -> %s\n", (int) item->id, string );
+		fprintf( stderr, "\t%"PRIuHXID" -> %s\n", item->id, string );
 		free( string );
 	}
 	return 0;
@@ -175,8 +175,12 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	read	= fread( &used, sizeof( size_t ), 1, f );
 	read	= fread( &next_id, sizeof( hx_node_id ), 1, f );
 	m->next_id	= next_id;
-	for (int i = 0; i < used; i++) {
+	int i;
+	for (i = 0; i < used; i++) {
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
+		if (item == NULL) {
+			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
+		}
 		if ((read = fread( &( item->id ), sizeof( hx_node_id ), 1, f )) == 0) {
 			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
 		}
@@ -200,7 +204,8 @@ hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	}
 	qsort( node_handles, i, sizeof( hx_node* ), _hx_nodemap_cmp_nodes );
 	hx_nodemap* sorted	= hx_new_nodemap();
-	for (int j = 0; j < i; j++) {
+	int j;
+	for (j = 0; j < i; j++) {
 		hx_nodemap_add_node( sorted, node_handles[ j ] );
 	}
 	free( node_handles );

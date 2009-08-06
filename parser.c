@@ -99,7 +99,8 @@ int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 		if (parser->logger != NULL) {
 			parser->logger( parser->total );
 		}
-		for (int i = 0; i < parser->count; i++) {
+		int i;
+		for (i = 0; i < parser->count; i++) {
 			hx_free_node( parser->triples[i].subject );
 			hx_free_node( parser->triples[i].predicate );
 			hx_free_node( parser->triples[i].object );
@@ -159,6 +160,9 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 		case RAPTOR_IDENTIFIER_TYPE_ORDINAL:
 			needs_free	= 1;
 			value		= (char*) malloc( 64 );
+			if (value == NULL) {
+				fprintf( stderr, "*** malloc failed in _hx_parser_node\n" );
+			}
 			sprintf( value, "http://www.w3.org/1999/02/22-rdf-syntax-ns#_%d", *((int*) node) );
 			newnode		= hx_new_node_resource( value );
 			node_type	= 'R';

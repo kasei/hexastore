@@ -34,7 +34,8 @@ void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 
 double average ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s, int count ) {
 	double total	= 0.0;
-	for (int i = 0; i < count; i++) {
+	int i;
+	for (i = 0; i < count; i++) {
 		total	+= bench( hx, b, s );
 	}
 	return (total / (double) count);
@@ -51,7 +52,8 @@ double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 	char** names	= hx_variablebindings_iter_names( iter );
 	
 	int xi, yi, zi;
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		if (strcmp(names[i], "x") == 0) {
 			xi	= i;
 		} else if (strcmp(names[i], "y") == 0) {
@@ -82,7 +84,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 			free( zs );
 		}
 		
-		hx_free_variablebindings( b, 0 );
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
 	printf( "%llu results\n", (unsigned long long) count );

@@ -65,8 +65,6 @@ int hx_btree_iter_current ( hx_btree_iter* iter, hx_node_id* n, hx_storage_id_t*
 int hx_btree_iter_next ( hx_btree_iter* iter );
 int hx_btree_iter_seek( hx_btree_iter* iter, hx_node_id n );
 
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-/* XXX remove this as soon as branching_size is a param of the tree... */
 #include "btree_internal.h"
 
 #ifdef __cplusplus

@@ -155,7 +155,8 @@ hx_vector* hx_vector_read( hx_storage_manager* s, FILE* f, int buffer ) {
 		if (read == 0) {
 			return NULL;
 		}
-		for (int i = 0; i < used; i++) {
+		int i;
+		for (i = 0; i < used; i++) {
 			hx_node_id n;
 			hx_terminal* t;
 			read	= fread( &n, sizeof( hx_node_id ), 1, f );

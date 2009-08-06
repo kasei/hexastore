@@ -87,7 +87,8 @@ int main ( int argc, char** argv ) {
 		char** names	= hx_variablebindings_iter_names( iter );
 		
 		int xi, yi, zi;
-		for (int i = 0; i < size; i++) {
+		int i;
+		for (i = 0; i < size; i++) {
 			if (strcmp(names[i], "x") == 0) {
 				xi	= i;
 			} else if (strcmp(names[i], "y") == 0) {
@@ -117,7 +118,7 @@ int main ( int argc, char** argv ) {
 			free( ys );
 			free( zs );
 			
-			hx_free_variablebindings( b, 0 );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 		}
 		

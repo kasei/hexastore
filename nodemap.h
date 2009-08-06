@@ -11,6 +11,7 @@ extern "C" {
 #include "avl.h"
 #include "node.h"
 #include "storage.h"
+#include "mpi.h"
 
 typedef struct avl_table avl;
 typedef struct {
@@ -36,6 +37,7 @@ hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map );
 int hx_nodemap_debug ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
+
 hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
 
 #ifdef __cplusplus

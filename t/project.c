@@ -63,12 +63,6 @@ void project_test1 ( void ) {
 		ok1( !hx_variablebindings_iter_finished( iter ) );
 		
 		hx_variablebindings_iter_current( iter, &b );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[1] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect 1 variable binding for the projected result
 			int size	= hx_variablebindings_size( b );
@@ -93,12 +87,6 @@ void project_test1 ( void ) {
 		}
 	
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[2] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -110,12 +98,6 @@ void project_test1 ( void ) {
 		}
 		
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[3] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -129,12 +111,6 @@ void project_test1 ( void ) {
 		}
 		
 		hx_variablebindings_iter_next( iter );
-		if (0) {
-			// XXX
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "[4] bindings: %s\n", string );
-			free( string );
-		}
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -157,7 +133,7 @@ void project_test1 ( void ) {
 // 		fprintf( stdout, "%s\n", string );
 // 		free( string );
 // 		
-// 		hx_free_variablebindings( b, 0 );
+// 		hx_free_variablebindings( b );
 // 		hx_variablebindings_iter_next( iter );
 // 	}
 	
@@ -174,7 +150,7 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
 	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj", 0 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
 	return iter;
 }
 

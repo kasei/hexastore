@@ -62,10 +62,10 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	
 	{
 		hx_index_iter* titer_a	= hx_get_statements( hx, s, r1, p1, v1, HX_OBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, NULL, NULL, "x", 0 );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, NULL, NULL, "x" );
 		
 		hx_index_iter* titer_b	= hx_get_statements( hx, s, r2, p1, v2, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, NULL, NULL, "y", 0 );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, NULL, NULL, "y" );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -113,10 +113,10 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	
 	{
 		hx_index_iter* titer_a	= hx_get_statements( hx, s, v1, p1, v2, HX_OBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, "a", NULL, "b", 0 );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, "a", NULL, "b" );
 		
 		hx_index_iter* titer_b	= hx_get_statements( hx, s, v3, p2, v4, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, "c", NULL, "d", 0 );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, "c", NULL, "d" );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -196,10 +196,10 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	hx_node* v3		= hx_new_variable( hx );
 	
 	hx_index_iter* titer_a	= hx_get_statements( hx, s, v1, p1, v2, HX_OBJECT );
-	hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, "from", NULL, "neighbor", 0 );
+	hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, s, "from", NULL, "neighbor" );
 	
 	hx_index_iter* titer_b	= hx_get_statements( hx, s, v2, p1, v3, HX_SUBJECT );
-	hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, "neighbor", NULL, "to", 0 );
+	hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, s, "neighbor", NULL, "to" );
 	
 	hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -264,7 +264,7 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
 	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj", 0 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
 	return iter;
 }
 

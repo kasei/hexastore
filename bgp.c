@@ -1,7 +1,6 @@
 #include "bgp.h"
 #include "mergejoin.h"
 
-void _XXX_print_triple ( hx_triple* t, uint64_t size );
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
@@ -19,7 +18,8 @@ hx_bgp* hx_new_bgp ( int size, hx_triple** triples ) {
 	b->size		= size;
 	b->triples	= (hx_triple**) calloc( size, sizeof( hx_triple* ) );
 	int vars	= 0;
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		b->triples[i]	= triples[i];
 		if (hx_node_is_variable( triples[i]->subject )) {
 			int vid	= abs(hx_node_iv( triples[i]->subject ));
@@ -42,7 +42,7 @@ hx_bgp* hx_new_bgp ( int size, hx_triple** triples ) {
 	}
 	b->variables		= vars;
 	b->variable_names	= (vars == 0) ? NULL : (char**) calloc( vars + 1, sizeof( char* ) );
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		if (hx_node_is_variable( triples[i]->subject )) {
 			int vid	= abs(hx_node_iv( triples[i]->subject ));
 			if (b->variable_names[ vid ] == NULL) {
@@ -80,7 +80,8 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 
 int hx_free_bgp ( hx_bgp* b ) {
 	if (b->variable_names != NULL) {
-		for (int i = 1; i <= b->variables; i++) {
+		int i;
+		for (i = 1; i <= b->variables; i++) {
 			if (b->variable_names[i] != NULL) {
 				free( b->variable_names[i] );
 			}
@@ -96,14 +97,16 @@ int hx_free_bgp ( hx_bgp* b ) {
 hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_nodemap* map ) {
 	int size	= hx_bgp_size ( orig );
 	hx_triple** triples	= (hx_triple**) calloc( size, sizeof( hx_triple* ) );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		hx_node* nodes[3];
 		hx_triple* t	= hx_bgp_triple( orig, i );
 		nodes[0]	= t->subject;
 		nodes[1]	= t->predicate;
 		nodes[2]	= t->object;
 		
-		for (int j = 0; j < 3; j++) {
+		int j;
+		for (j = 0; j < 3; j++) {
 			if (hx_node_is_variable(nodes[j])) {
 				char* name;
 				hx_node_variable_name( nodes[j], &name );
@@ -169,7 +172,7 @@ int _hx_bgp_string_concat ( char** string, char* _new, int* alloc ) {
 		*alloc	*= 2;
 		char* newstring	= (char*) malloc( *alloc );
 		if (newstring == NULL) {
-			fprintf( stderr, "*** could not allocate memory for bgp string\n" );
+			fprintf( stderr, "*** malloc failed in _hx_bgp_string_concat\n" );
 			return 1;
 		}
 		strcpy( newstring, *string );
@@ -192,7 +195,8 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 	
 	hx_node *last_s	= NULL;
 	hx_node *last_p	= NULL;
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char *s, *p, *o;
 		hx_triple* t	= hx_bgp_triple( b, i );
 		hx_node_string( t->subject, &s );
@@ -245,8 +249,10 @@ int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level ) {
 	int size	= hx_bgp_size( b );
 	if (_hx_bgp_string_concat( &str, "(bgp\n", &alloc )) return 1;
 	
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < level+1; j++) {
+	int i;
+	for (i = 0; i < size; i++) {
+		int j;
+		for (j = 0; j < level+1; j++) {
 			if (_hx_bgp_string_concat( &str, indent, &alloc )) return 1;
 		}
 		char *tstring;
@@ -261,7 +267,8 @@ int hx_bgp_sse ( hx_bgp* b, char** string, char* indent, int level ) {
 		if (_hx_bgp_string_concat( &str, "\n", &alloc )) return 1;
 		free( tstring );
 	}
-	for (int j = 0; j < level; j++) {
+	int j;
+	for (j = 0; j < level; j++) {
 		if (_hx_bgp_string_concat( &str, indent, &alloc )) return 1;
 	}
 	if (_hx_bgp_string_concat( &str, ")\n", &alloc )) return 1;
@@ -285,11 +292,11 @@ int hx_bgp_debug ( hx_bgp* b ) {
 int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* st ) {
 	int size	= hx_bgp_size( b );
 	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
 		s[i].cost		= hx_count_statements( hx, st, t->subject, t->predicate, t->object );
-//		_XXX_print_triple( t, s[i].cost );
 		if (s[i].cost == 0) {
 			fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
 			// there are no triples for this pattern, so no sense in continuing
@@ -301,7 +308,7 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* st ) {
 	
 	
 	int* seen	= (int*) calloc( b->variables + 1, sizeof( int ) );
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		hx_triple* t	= s[i].triple;
 		if (i > 0) {
 			int joins	= _hx_bgp_triple_joins_with_seen( b, t, seen, size );
@@ -328,7 +335,7 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* st ) {
 		_hx_bgp_triple_add_seen_variables( b, t, seen, size );
 	}
 	
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		b->triples[i]	= s[i].triple;
 	}
 	
@@ -381,10 +388,14 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 	hx_node_variable_name( t0->subject, &sname );
 	hx_node_variable_name( t0->predicate, &pname );
 	hx_node_variable_name( t0->object, &oname );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, s, sname, pname, oname, 1 );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, s, sname, pname, oname );
+	free(sname);
+	free(pname);
+	free(oname);
 	
 	if (size > 1) {
-		for (int i = 1; i < size; i++) {
+		int i;
+		for (i = 1; i < size; i++) {
 			char *sname, *pname, *oname;
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
@@ -395,7 +406,10 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 			hx_node_variable_name( t->subject, &sname );
 			hx_node_variable_name( t->predicate, &pname );
 			hx_node_variable_name( t->object, &oname );
-			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, s, sname, pname, oname, 1 );
+			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, s, sname, pname, oname );
+			free(sname);
+			free(pname);
+			free(oname);
 			iter					= hx_new_mergejoin_iter( interm, iter );
 		}
 	}
@@ -419,9 +433,11 @@ int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r ) {
 	int pos[3]			= { HX_SUBJECT, HX_PREDICATE, HX_OBJECT };
 	hx_node* lnodes[3]	= { l->subject, l->predicate, l->object };
 	hx_node* rnodes[3]	= { r->subject, r->predicate, r->object };
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		if (hx_node_is_variable( lnodes[i] )) {
-			for (int j = 0; j < 3; j++) {
+			int j;
+			for (j = 0; j < 3; j++) {
 				if (hx_node_is_variable( rnodes[j] )) {
 					if (hx_node_cmp(lnodes[i], rnodes[j]) == 0) {
 // 						fprintf( stderr, "should sort on %d\n", pos[i] );
@@ -439,9 +455,11 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 	hx_node* lnodes[3]	= { l->subject, l->predicate, l->object };
 	int rsize			= hx_variablebindings_iter_size( iter );
 	char** rnames		= hx_variablebindings_iter_names( iter );
-	for (int j = 0; j < rsize; j++) {
+	int j;
+	for (j = 0; j < rsize; j++) {
 		if (hx_variablebindings_iter_is_sorted_by_index(iter, j)) {
-			for (int i = 0; i < 3; i++) {
+			int i;
+			for (i = 0; i < 3; i++) {
 				if (hx_node_is_variable( lnodes[i] )) {
 					char* lname;
 					hx_node_variable_name( lnodes[i], &lname );
@@ -456,11 +474,13 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 	}
 	
 	
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		if (hx_node_is_variable( lnodes[i] )) {
 			char* lname;
 			hx_node_variable_name( lnodes[i], &lname );
-			for (int j = 0; j < rsize; j++) {
+			int j;
+			for (j = 0; j < rsize; j++) {
 				if (strcmp(lname, rnames[j]) == 0) {
 					free( lname );
 //					fprintf( stderr, "should sort on %d (%s)\n", pos[i], lname );
@@ -473,16 +493,44 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 	return HX_SUBJECT;
 }
 
-void _XXX_print_triple ( hx_triple* t, uint64_t size ) {
-	hx_node* s	= t->subject;
-	hx_node* p	= t->predicate;
-	hx_node* o	= t->object;
-	char *ss, *sp, *so;
-	hx_node_string( s, &ss );
-	hx_node_string( p, &sp );
-	hx_node_string( o, &so );
-	fprintf( stderr, "%10lu\t{ %s %s %s }\n", (unsigned long) size, ss, sp, so );
-	free( ss );
-	free( sp );
-	free( so );
+hx_node_id* hx_bgp_thaw_ids ( char* ptr, int* len ) {
+	hx_node_id* buf	= (hx_node_id*) ptr;
+	int size		= (int) buf[0];
+	*len			= size * 3;		// size is the number of triples, not nodes
+	hx_node_id* ids	= (hx_node_id*) calloc( 3*size, sizeof( hx_node_id ) );
+	int i;
+	for (i = 0; i < size*3; i++) {
+		ids[i]	= buf[i+1];
+	}
+	return ids;
 }
+
+hx_node_id _hx_bgp_get_node_id ( hx_nodemap* map, hx_node* node ) {
+	if (hx_node_is_variable(node)) {
+		return (hx_node_id) hx_node_iv(node);
+	} else {
+		return hx_nodemap_get_node_id( map, node );
+	}
+}
+
+char* hx_bgp_freeze( hx_bgp* b, int* len, hx_nodemap* map ) {
+	int size		= hx_bgp_size(b);
+	int _len		= (1 + (3 * size)) * sizeof( hx_node_id );
+	*len			= _len;
+	hx_node_id* buf	= (hx_node_id*) calloc( 1, _len );
+	buf[0]			= size;				// the first slot is the size of the bgp
+	hx_node_id* ptr	= &( buf[1] );	// the rest is a set of node IDs, in triple groups
+	int i;
+	for (i = 0; i < size; i++) {
+		hx_triple* t	= b->triples[i];
+		hx_node_id s	= _hx_bgp_get_node_id( map, t->subject );
+		hx_node_id p	= _hx_bgp_get_node_id( map, t->predicate );
+		hx_node_id o	= _hx_bgp_get_node_id( map, t->object );
+		ptr[ i*3 ]		= s;
+		ptr[ i*3 + 1 ]	= p;
+		ptr[ i*3 + 2 ]	= o;
+	}
+	
+	return (char*) buf;
+}
+

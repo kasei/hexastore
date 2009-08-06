@@ -22,7 +22,8 @@ void head_test ( void ) {
 	hx_head* h	= hx_new_head( st );
 	ok1( h != NULL );
 	
-	for (int i = 1; i <= 10; i++) {
+	int i;
+	for (i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
 		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
@@ -43,7 +44,8 @@ void head_test ( void ) {
 void head_iter_test1 ( void ) {
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_head* h	= hx_new_head( st );
-	for (int i = 1; i <= 10; i++) {
+	int i;
+	for (i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
 		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
@@ -72,7 +74,8 @@ void head_iter_test1 ( void ) {
 void head_iter_test2 ( void ) {
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_head* h	= hx_new_head( st );
-	for (int i = 1; i <= 10; i++) {
+	int i;
+	for (i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
 		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
@@ -92,7 +95,8 @@ void head_iter_test2 ( void ) {
 void head_iter_test3 ( void ) {
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_head* h	= hx_new_head( st );
-	for (int i = 2; i <= 10; i+=2) {
+	int i;
+	for (i = 2; i <= 10; i+=2) {
 		hx_vector* v	= _new_vector( st, i );
 		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
@@ -112,9 +116,11 @@ void head_iter_test3 ( void ) {
 
 hx_vector* _new_vector ( hx_storage_manager* st, int n ) {
 	hx_vector* v	= hx_new_vector( st );
-	for (int i = 1; i <= 10+n; i++) {
+	int i;
+	for (i = 1; i <= 10+n; i++) {
 		hx_terminal* t	= hx_new_terminal( st );
-		for (int j = 1; j <= i; j++) {
+		int j;
+		for (j = 1; j <= i; j++) {
 			hx_terminal_add_node( t, st, (hx_node_id) j );
 		}
 		hx_vector_add_terminal( v, st, (hx_node_id) i, t );

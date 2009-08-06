@@ -36,15 +36,17 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 	}
 	if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
 		if (info->lhs_batch_size > 0) {
-			for (int i = 0; i < info->lhs_batch_size; i++) {
-				hx_free_variablebindings( info->lhs_batch[i], 0 );
+			int i;
+			for (i = 0; i < info->lhs_batch_size; i++) {
+				hx_free_variablebindings(info->lhs_batch[i]);
 				info->lhs_batch[i]	= NULL;
 			}
 			info->lhs_batch_size	= 0;
 		}
 		if (info->rhs_batch_size > 0) {
-			for (int i = 0; i < info->rhs_batch_size; i++) {
-				hx_free_variablebindings( info->rhs_batch[i], 0 );
+			int i;
+			for (i = 0; i < info->rhs_batch_size; i++) {
+				hx_free_variablebindings(info->rhs_batch[i]);
 				info->rhs_batch[i]	= NULL;
 			}
 			info->rhs_batch_size	= 0;
@@ -88,7 +90,7 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 	}
 	
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	
@@ -115,15 +117,17 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 				if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
 // 					fprintf( stderr, "- no more matching batches. iterator is finished\n" );
 					if (info->lhs_batch_size > 0) {
-						for (int i = 0; i < info->lhs_batch_size; i++) {
-							hx_free_variablebindings( info->lhs_batch[i], 0 );
+						int i;
+						for (i = 0; i < info->lhs_batch_size; i++) {
+							hx_free_variablebindings(info->lhs_batch[i]);
 							info->lhs_batch[i]	= NULL;
 						}
 						info->lhs_batch_size	= 0;
 					}
 					if (info->rhs_batch_size > 0) {
-						for (int i = 0; i < info->rhs_batch_size; i++) {
-							hx_free_variablebindings( info->rhs_batch[i], 0 );
+						int i;
+						for (i = 0; i < info->rhs_batch_size; i++) {
+							hx_free_variablebindings(info->rhs_batch[i]);
 							info->rhs_batch[i]	= NULL;
 						}
 						info->rhs_batch_size	= 0;
@@ -156,16 +160,17 @@ int _hx_mergejoin_iter_vb_free ( void* data ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
 	
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 
-	for (int i = 0; i < info->lhs_batch_size; i++) {
-		hx_free_variablebindings( info->lhs_batch[i], 0 );
+	int i;
+	for (i = 0; i < info->lhs_batch_size; i++) {
+		hx_free_variablebindings(info->lhs_batch[i]);
 		info->lhs_batch[i]	= NULL;
 	}
-	for (int i = 0; i < info->rhs_batch_size; i++) {
-		hx_free_variablebindings( info->rhs_batch[i], 0 );
+	for (i = 0; i < info->rhs_batch_size; i++) {
+		hx_free_variablebindings(info->rhs_batch[i]);
 		info->rhs_batch[i]	= NULL;
 	}
 	info->lhs_batch_size	= 0;
@@ -200,7 +205,8 @@ int _hx_mergejoin_iter_sorted_by ( void* data, int index ) {
 
 int _hx_mergejoin_debug ( void* data, char* header, int indent ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
-	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	int i;
+	for (i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
 	fprintf( stderr, "%s mergejoin iterator\n", header );
 	hx_variablebindings_iter_debug( info->lhs, header, indent + 4 );
 	hx_variablebindings_iter_debug( info->rhs, header, indent + 4 );
@@ -215,8 +221,10 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	int lhs_index	= -1;
 	int rhs_index	= -1;
 	int set	= 0;
-	for (int i = 0; i < asize; i++) {
-		for (int j = 0; j < bsize; j++) {
+	int i;
+	for (i = 0; i < asize; i++) {
+		int j;
+		for (j = 0; j < bsize; j++) {
 			if (strcmp( anames[i], bnames[j] ) == 0) {
 				lhs_index	= i;
 				rhs_index	= j;
@@ -241,6 +249,9 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	
 	
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	if (vtable == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_mergejoin_iter\n" );
+	}
 	vtable->finished	= _hx_mergejoin_iter_vb_finished;
 	vtable->current		= _hx_mergejoin_iter_vb_current;
 	vtable->next		= _hx_mergejoin_iter_vb_next;
@@ -289,8 +300,9 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 	
 	if (*batch_size > 0) {
 //		fprintf( stderr, "getting new batch (batch currently has %d items)\n", *batch_size );
-		for (int i = 0; i < *batch_size; i++) {
-			hx_free_variablebindings( (*batch)[i], 0 );
+		int i;
+		for (i = 0; i < *batch_size; i++) {
+			hx_free_variablebindings((*batch)[i]);
 			(*batch)[i]	= NULL;
 		}
 	}
@@ -318,7 +330,8 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 				if (_new == NULL) {
 					return -1;
 				}
-				for (int i = 0; i < *batch_size; i++) {
+				int i;
+				for (i = 0; i < *batch_size; i++) {
 					_new[i]	= (*batch)[i];
 				}
 				free( *batch );
@@ -372,10 +385,12 @@ int _hx_mergejoin_join_iter_names ( hx_variablebindings_iter* lhs, hx_variablebi
 int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size ) {
 	int seen_names	= 0;
 	char** names	= (char**) calloc( lhs_size + rhs_size, sizeof( char* ) );
-	for (int i = 0; i < lhs_size; i++) {
+	int i;
+	for (i = 0; i < lhs_size; i++) {
 		char* name	= lhs_names[ i ];
 		int seen	= 0;
-		for (int j = 0; j < seen_names; j++) {
+		int j;
+		for (j = 0; j < seen_names; j++) {
 			if (strcmp( name, names[ j ] ) == 0) {
 				seen	= 1;
 			}
@@ -384,10 +399,11 @@ int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names,
 			names[ seen_names++ ]	= name;
 		}
 	}
-	for (int i = 0; i < rhs_size; i++) {
+	for (i = 0; i < rhs_size; i++) {
 		char* name	= rhs_names[ i ];
 		int seen	= 0;
-		for (int j = 0; j < seen_names; j++) {
+		int j;
+		for (j = 0; j < seen_names; j++) {
 			if (strcmp( name, names[ j ] ) == 0) {
 				seen	= 1;
 			}
@@ -398,7 +414,7 @@ int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names,
 	}
 	
 	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
-	for (int i = 0; i < seen_names; i++) {
+	for (i = 0; i < seen_names; i++) {
 		(*merged_names)[ i ]	= names[ i ];
 	}
 	*size	= seen_names;
@@ -419,21 +435,24 @@ hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* le
 	char** lhs_names	= hx_variablebindings_names( left );
 	int rhs_size	= hx_variablebindings_size( right );
 	char** rhs_names	= hx_variablebindings_names( right );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		char* name	= names[ i ];
 // 		fprintf( stderr, "filling node value for column %s (%d)\n", name, i );
-		for (int j = 0; j < lhs_size; j++) {
+		int j;
+		for (j = 0; j < lhs_size; j++) {
 			if (strcmp( name, lhs_names[j] ) == 0) {
 				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
 			}
 		}
-		for (int j = 0; j < rhs_size; j++) {
+		for (j = 0; j < rhs_size; j++) {
 			if (strcmp( name, rhs_names[j] ) == 0) {
 				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
 			}
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values, HX_VARIABLEBINDINGS_FREE_NAMES );
+	b	= hx_new_variablebindings( size, names, values );
+	free(names);
 	return b;
 }

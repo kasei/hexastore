@@ -39,7 +39,6 @@ int hx_free_index ( hx_index* i, hx_storage_manager* st ) {
 	return 0;
 }
 
-// XXX replace the use of ->used, etc. with iterators (preserves abstraction)
 int hx_index_debug ( hx_index* index, hx_storage_manager* st ) {
 	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	fprintf(
@@ -97,7 +96,8 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_n
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
@@ -135,7 +135,8 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st,
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
@@ -164,7 +165,8 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
 	hx_node_id index_ordered[3];
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 	
@@ -231,7 +233,7 @@ hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_storage_manager* st, hx_
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
 	
-//	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
+// 	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
 	
 	if (iter->node_mask_b == iter->node_mask_a && iter->node_mask_a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );

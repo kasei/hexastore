@@ -94,7 +94,7 @@ void test_eval ( void ) {
 		hx_node_id mid		= hx_nodemap_add_node( map, m );
 		char* names[2]		= { "x", "y" };
 		hx_node_id ids[2]	= { lid, mid };
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* e	= hx_new_node_expr( v );
 		int r		= hx_expr_eval( e, b, map, &value );
@@ -123,7 +123,7 @@ void test_eval ( void ) {
 		hx_node_id iid		= hx_nodemap_add_node( map, iri );
 		char* names[2]		= { "y", "x" };
 		hx_node_id ids[2]	= { iid, lid };
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* x_e	= hx_new_node_expr( x );
 		hx_expr* e		= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
@@ -151,7 +151,7 @@ void expr_varsub_test1 ( void ) {
 		char* names[1]			= { "v" };
 		hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 		nodes[0]				= p1_id;
-		hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes, 0 );
+		hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
 
 		hx_expr* f				= hx_expr_substitute_variables( e, b, map );
 		
@@ -162,7 +162,7 @@ void expr_varsub_test1 ( void ) {
 		hx_free_expr(e);
 		hx_free_expr(f);
 		
-		hx_free_variablebindings(b,0);
+		hx_free_variablebindings(b);
 		hx_free_nodemap( map );
 	}
 }

@@ -38,7 +38,8 @@ void new_root_test ( void ) {
 	hx_btree_node* orig	= hx_new_btree_root( w, branching_size );
 	hx_btree_node* root	= orig;
 	
-	for (int i = 0; i < branching_size; i++) {
+	int i;
+	for (i = 0; i < branching_size; i++) {
 		hx_node_id key	= (hx_node_id) i*2;
 		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_insert( w, &root, key, value, branching_size );
@@ -53,7 +54,7 @@ void new_root_test ( void ) {
 	
 	int total	= 0;
 //	hx_btree_node_debug( "root>\t", w, root );
-	for (int i = 0; i < root->used; i++) {
+	for (i = 0; i < root->used; i++) {
 		hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 		total	+= c->used;
 //		hx_btree_node_debug( "child>\t", w, c );
@@ -71,7 +72,8 @@ void small_split_test ( void ) {
 	hx_btree_node* child	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, child, HX_BTREE_NODE_LEAF );
 	
-	for (int i = 0; i < 10; i++) {
+	int i;
+	for (i = 0; i < 10; i++) {
 		hx_node_id key	= (hx_node_id) 7 + i;
 		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
@@ -83,7 +85,7 @@ void small_split_test ( void ) {
 	
 //	fprintf( stderr, "# *** BEFORE SPLIT:\n" );
 //	hx_btree_node_debug( "# root>\t", w, root );
-	for (int i = 0; i < root->used; i++) {
+	for (i = 0; i < root->used; i++) {
 		hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 		ok1( c->used == 10 );
 //		hx_btree_node_debug( "# child>\t", w, c );
@@ -98,7 +100,7 @@ void small_split_test ( void ) {
 	ok1( root->ptr[0].key == (hx_node_id) 11 );
 	ok1( root->ptr[1].key == (hx_node_id) 16 );
 	
-	for (int i = 0; i < root->used; i++) {
+	for (i = 0; i < root->used; i++) {
 		hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 		ok1( c->used == 5 );
 // 		hx_btree_node_debug( "# child>\t", w, c );
@@ -116,7 +118,8 @@ void medium_split_test ( void ) {
 	hx_btree_node* child	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, child, HX_BTREE_NODE_LEAF );
 	
-	for (int i = 0; i < branching_size-1; i++) {
+	int i;
+	for (i = 0; i < branching_size-1; i++) {
 		hx_node_id key	= (hx_node_id) i;
 		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
@@ -131,7 +134,8 @@ void medium_split_test ( void ) {
 	
 	{
 		int counter	= 0;
-		for (int i = 0; i < root->used; i++) {
+		int i;
+		for (i = 0; i < root->used; i++) {
 			hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 			ok1( c->used == branching_size-1 );
 //			hx_btree_node_debug( "# child>\t", w, c );
@@ -153,7 +157,8 @@ void medium_split_test ( void ) {
 	{
 		int total	= 0;
 		int counter	= 0;
-		for (int i = 0; i < root->used; i++) {
+		int i;
+		for (i = 0; i < root->used; i++) {
 			hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 			total	+= c->used;
 //			hx_btree_node_debug( "# child>\t", w, c );
@@ -175,7 +180,8 @@ void large_split_test ( void ) {
 	hx_btree_node* child	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, child, HX_BTREE_NODE_LEAF );
 	
-	for (int i = 0; i < branching_size; i++) {
+	int i;
+	for (i = 0; i < branching_size; i++) {
 		hx_node_id key	= (hx_node_id) i;
 		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
@@ -190,7 +196,8 @@ void large_split_test ( void ) {
 	
 	{
 		int counter	= 0;
-		for (int i = 0; i < root->used; i++) {
+		int i;
+		for (i = 0; i < root->used; i++) {
 			hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 			ok1( c->used == branching_size );
 // 			hx_btree_node_debug( "# child>\t", w, c );
@@ -211,7 +218,8 @@ void large_split_test ( void ) {
 	
 	{
 		int counter	= 0;
-		for (int i = 0; i < root->used; i++) {
+		int i;
+		for (i = 0; i < root->used; i++) {
 			hx_btree_node* c	= hx_storage_block_from_id( w, root->ptr[i].child );
 			ok1( c->used == (branching_size/2) );
 // 			hx_btree_node_debug( "# child>\t", w, c );
@@ -233,7 +241,8 @@ void large_test ( void ) {
 	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_LEAF );
 //	printf( "root: %d (%p)\n", (int) _hx_btree_node2int(w, root), (void*) root );
 	
-	for (int i = 1; i <= 4000000; i++) {
+	int i;
+	for (i = 1; i <= 4000000; i++) {
 		hx_btree_node* root	= hx_storage_block_from_id( w, tree->root );
 		hx_btree_node_insert( w, &(root), (hx_node_id) i, (hx_storage_id_t) 10*i, branching_size );
 		tree->root	= hx_storage_id_from_block( w, root );
@@ -279,7 +288,8 @@ void small_remove_test ( void ) {
 		_add_data( s, tree, 10, 7 );
 		ok1( hx_btree_size(s,tree) == 10 );
 		
-		for (int i = 0; i < 10; i++) {
+		int i;
+		for (i = 0; i < 10; i++) {
 			hx_node_id key	= (hx_node_id) 7 + i;
 			hx_btree_node* root	= hx_storage_block_from_id( s, tree->root );
 			hx_btree_node_remove( s, &(root), key, branching_size );
@@ -293,7 +303,8 @@ void small_remove_test ( void ) {
 		_add_data( s, tree, 10, 7 );
 		ok1( hx_btree_size(s,tree) == 10 );
 		
-		for (int i = 9; i >= 0; i--) {
+		int i;
+		for (i = 9; i >= 0; i--) {
 			hx_node_id key	= (hx_node_id) 7 + i;
 			hx_btree_node* root	= hx_storage_block_from_id( s, tree->root );
 			hx_btree_node_remove( s, &(root), key, branching_size );
@@ -348,7 +359,8 @@ void medium_remove_test ( void ) {
 		tree->root	= hx_storage_id_from_block( s, root );
 		ok1( hx_btree_size(s,tree) == 251 );
 		
-		for (int i = 1; i <= 253; i++) {
+		int i;
+		for (i = 1; i <= 253; i++) {
 			root	= hx_storage_block_from_id( s, tree->root );
 			hx_btree_node_remove( s, &(root), (hx_node_id) i, branching_size );
 			tree->root	= hx_storage_id_from_block( s, root );
@@ -370,7 +382,8 @@ void large_remove_test ( void ) {
 		_add_data( s, tree, 5000, 1 );
 // 		hx_btree_tree_debug( "", s, root );
 		ok1( hx_btree_size(s,tree) == 5000 );
-		for (int i = 1; i <= 126; i++) {
+		int i;
+		for (i = 1; i <= 126; i++) {
 			hx_btree_node* root	= hx_storage_block_from_id( s, tree->root );
 			hx_btree_node_remove( s, &(root), (hx_node_id) i, branching_size );
 			tree->root	= hx_storage_id_from_block( s, root );
@@ -384,7 +397,7 @@ void large_remove_test ( void ) {
 // 		fprintf( stderr, "%d\n", (int) hx_btree_size(s,root) );
 		ok1( hx_btree_size(s,tree) == 4873 );
 		
-		for (int i = 1; i <= 5000; i++) {
+		for (i = 1; i <= 5000; i++) {
 			hx_btree_node* root	= hx_storage_block_from_id( s, tree->root );
 			hx_btree_node_remove( s, &(root), (hx_node_id) i, branching_size );
 			tree->root	= hx_storage_id_from_block( s, root );
@@ -400,7 +413,8 @@ void large_remove_test ( void ) {
 
 
 void _add_data ( hx_storage_manager* s, hx_btree* tree, int count, int add ) {
-	for (int i = 0; i < count; i++) {
+	int i;
+	for (i = 0; i < count; i++) {
 		hx_node_id key	= (hx_node_id) add + i;
 		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_insert( s, tree, key, value );

@@ -2,6 +2,9 @@
 
 hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter, int size, char** names ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	if (vtable == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_project_iter\n" );
+	}
 	vtable->finished	= _hx_project_iter_vb_finished;
 	vtable->current		= _hx_project_iter_vb_current;
 	vtable->next		= _hx_project_iter_vb_next;
@@ -18,7 +21,8 @@ hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter,
 	info->current	= NULL;
 	info->names		= (char**) calloc( size, sizeof( char* ) );
 	info->columns	= (int*) calloc( size, sizeof( int ) );
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		int len	= strlen( names[i] );
 		info->names[i]	= (char*) calloc( len, sizeof( char ) );
 		strcpy( info->names[i], names[i] );
@@ -57,7 +61,7 @@ int _hx_project_iter_vb_next ( void* data ) {
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) data;
 	int r	= hx_variablebindings_iter_next( info->iter );
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
 	return r;
@@ -67,10 +71,11 @@ int _hx_project_iter_vb_free ( void* data ) {
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) data;
 	hx_free_variablebindings_iter( info->iter, 1 );
 	if (info->current != NULL) {
-		hx_free_variablebindings( info->current, 0 );
+		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
-	for (int i = 0; i < info->size; i++) {
+	int i;
+	for (i = 0; i < info->size; i++) {
 		free( info->names[i] );
 	}
 	free( info->columns );
@@ -99,15 +104,19 @@ int _hx_project_iter_sorted_by ( void* data, int index ) {
 int _hx_project_debug ( void* data, char* header, int _indent ) {
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) data;
 	char* indent	= (char*) malloc( _indent + 1 );
+	if (indent == NULL) {
+		fprintf( stderr, "*** malloc failed in _hx_project_debug\n" );
+	}
 	char* p			= indent;
-	for (int i = 0; i < _indent; i++) *(p++) = ' ';
+	int i;
+	for (i = 0; i < _indent; i++) *(p++) = ' ';
 	*p	= (char) 0;
 
 	fprintf( stderr, "%s%s Project iterator\n", indent, header );
 	fprintf( stderr, "%s%s Info: %p\n", indent, header, (void*) info );
 	fprintf( stderr, "%s%s Size: %d\n", indent, header, (int) info->size );
 	fprintf( stderr, "%s%s Project columns:\n", indent, header );
-	for (int i = 0; i < info->size; i++) {
+	for (i = 0; i < info->size; i++) {
 		fprintf( stderr, "%s%s   [%d] %s\n", indent, header, i, info->names[i] );
 	}
 	hx_variablebindings_iter_debug( info->iter, header, _indent+1 );

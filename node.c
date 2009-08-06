@@ -17,6 +17,9 @@ hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, 
 	
 	if (value != NULL) {
 		n->value	= (char*) malloc( strlen( value ) + 1 );
+		if (n->value == NULL) {
+			fprintf( stderr, "*** malloc failed in _hx_new_node\n" );
+		}
 		strcpy( n->value, value );
 	}
 	return n;
@@ -53,6 +56,9 @@ hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->lang		= (char*) malloc( strlen( lang ) + 1 );
 	if (n->lang == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_node_lang_literal\n" );
+	}
+	if (n->lang == NULL) {
 		free( n->value );
 		free( n );
 		return NULL;
@@ -66,6 +72,9 @@ hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 	int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->dt		= (char*) malloc( strlen( dt ) + 1 );
+	if (n->dt == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_new_node_dt_literal\n" );
+	}
 	if (n->dt == NULL) {
 		free( n->value );
 		free( n );
@@ -83,6 +92,9 @@ hx_node* hx_node_copy( hx_node* n ) {
 			int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
 			hx_node_lang_literal* copy	= (hx_node_lang_literal*) _hx_new_node( 'G', d->value, padding, HX_NODE_NONE, 0, 0.0 );
 			copy->lang		= (char*) malloc( strlen( d->lang ) + 1 );
+			if (copy->lang == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_copy\n" );
+			}
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -94,6 +106,9 @@ hx_node* hx_node_copy( hx_node* n ) {
 			int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 			hx_node_dt_literal* copy	= (hx_node_dt_literal*) _hx_new_node( 'D', d->value, padding, HX_NODE_NONE, 0, 0.0 );
 			copy->dt		= (char*) malloc( strlen( d->dt ) + 1 );
+			if (copy->dt == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_copy\n" );
+			}
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -195,6 +210,9 @@ int hx_node_variable_name ( hx_node* n, char** name ) {
 			sprintf( *name, "__var%d", n->iv );
 		} else {
 			*name	= (char*) malloc( strlen( n->value ) + 1 );
+			if (*name == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_variable_name\n" );
+			}
 			strcpy( *name, n->value );
 		}
 	} else {
@@ -550,6 +568,100 @@ hx_node* hx_node_read( FILE* f, int buffer ) {
 			return node;
 		default:
 			fprintf( stderr, "*** Bad node type '%c' trying to read node from file.\n", (char) c );
+			return NULL;
+	};
+	
+}
+
+int hx_node_write_mpi ( hx_node* n, MPI_File f ) {
+	int flag = 0;
+	MPI_Status status;
+	MPIO_Request request;
+	
+	if (n->type == '?') {
+//		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
+		return 1;
+	}
+	
+	MPI_File_write_shared(f, "N", 1, MPI_BYTE, &status);
+	MPI_File_write_shared(f, &(n->type), 1, MPI_BYTE, &status);
+	
+	size_t len	= (size_t) strlen( n->value );
+	MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+	MPI_File_write_shared(f, n->value, strlen(n->value), MPI_BYTE, &status);
+	
+	if (hx_node_is_literal( n )) {
+		if (hx_node_is_lang_literal( n )) {
+			hx_node_lang_literal* l	= (hx_node_lang_literal*) n;
+			size_t len	= strlen( l->lang );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, l->lang, strlen(l->lang), MPI_BYTE, &status);
+		}
+		if (hx_node_is_dt_literal( n )) {
+			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
+			size_t len	= strlen( d->dt );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, d->dt, strlen(d->dt), MPI_BYTE, &status);
+		}
+	}
+	return 0;
+}
+
+hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
+	char c;
+	MPI_Status status;
+	size_t used, read;
+	
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	if (c != 'N') {
+		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from MPI file.\n", c );
+		return NULL;
+	}
+	
+	char* value;
+	char* extra	= NULL;
+	hx_node* node;
+
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	switch (c) {
+		case 'R':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			node	= hx_new_node_resource( value );
+			free( value );
+			return node;
+		case 'B':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			node	= hx_new_node_blank( value );
+			free( value );
+			return node;
+		case 'L':
+		case 'G':
+		case 'D':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			if (c == 'G' || c == 'D') {
+				MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+				extra	= (char*) calloc( 1, used + 1 );
+				MPI_File_read_shared(f, extra, used, MPI_BYTE, &status);
+			}
+			if (c == 'G') {
+				node	= (hx_node*) hx_new_node_lang_literal( value, extra );
+			} else if (c == 'D') {
+				node	= (hx_node*) hx_new_node_dt_literal( value, extra );
+			} else {
+				node	= hx_new_node_literal( value );
+			}
+			free( value );
+			if (extra != NULL)
+				free( extra );
+			return node;
+		default:
+			fprintf( stderr, "*** Bad node type '%c' trying to read node from MPI file.\n", (char) c );
 			return NULL;
 	};
 	

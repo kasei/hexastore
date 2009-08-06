@@ -67,7 +67,6 @@ typedef struct {
 	hx_storage_manager* s;
 	hx_index_iter* iter;
 	int size;
-	int free_names;
 	char** names;
 	int* triple_pos_to_index;
 	int* index_to_triple_pos;
@@ -80,11 +79,13 @@ hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
 
+int hx_add_triple_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count );
 
 int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
 int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
+int hx_get_ordered_index_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count );
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position );
 int hx_debug ( hx_hexastore* hx, hx_storage_manager* st );
 
@@ -96,7 +97,7 @@ hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names );
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name );
 
 int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f );
 hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );

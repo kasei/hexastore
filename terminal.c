@@ -159,7 +159,8 @@ hx_terminal* hx_terminal_read( hx_storage_manager* s, FILE* f, int buffer ) {
 			hx_free_terminal( terminal, s );
 			return NULL;
 		} else {
-			for (int i = 0; i < used; i++) {
+			int i;
+			for (i = 0; i < used; i++) {
 				hx_terminal_add_node( terminal, s, p[i] );
 			}
 			free( p );

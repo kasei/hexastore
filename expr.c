@@ -77,7 +77,8 @@ int hx_free_expr ( hx_expr* e ) {
 		if (e->subtype == HX_EXPR_OP_NODE) {
 			hx_free_node( e->operands );
 		} else {
-			for (int i = 0; i < e->arity; i++) {
+			int i;
+			for (i = 0; i < e->arity; i++) {
 				hx_expr** args	= e->operands;
 				hx_free_expr( args[i] );
 			}
@@ -210,7 +211,8 @@ int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level ) {
 			snprintf( str, alloc, "(%s", name );
 			
 			hx_expr** args	= e->operands;
-			for (int i = 0; i < e->arity; i++) {
+			int i;
+			for (i = 0; i < e->arity; i++) {
 				hx_expr* n	= args[i];
 				char* nstring;
 				hx_expr_sse( n, &nstring, indent, level+1 );
@@ -244,7 +246,7 @@ int _hx_expr_string_concat ( char** string, char* _new, int* alloc ) {
 		*alloc	*= 2;
 		char* newstring	= (char*) malloc( *alloc );
 		if (newstring == NULL) {
-			fprintf( stderr, "*** could not allocate memory for expr string\n" );
+			fprintf( stderr, "*** malloc failed in _hx_expr_string_concat\n" );
 			return 1;
 		}
 		strcpy( newstring, *string );

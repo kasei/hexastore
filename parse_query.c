@@ -67,6 +67,9 @@ int main( int argc, char** argv ) {
 		}
 		
 		char* query	= malloc( st.st_size + 1 );
+		if (query == NULL) {
+			fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
+		}
 		fread(query, st.st_size, 1, f);
 		query[ st.st_size ]	= 0;
 		b	= parse_bgp_query_string( query );
@@ -99,7 +102,8 @@ int main( int argc, char** argv ) {
 				hx_variablebindings_iter_current( iter, &b );
 				
 				fprintf( stdout, "Row %d:\n", (int) count );
-				for (int i = 0; i < size; i++) {
+				int i;
+				for (i = 0; i < size; i++) {
 					char* string;
 					hx_node* node	= hx_variablebindings_node_for_binding( b, map, i );
 					hx_node_string( node, &string );
@@ -107,7 +111,7 @@ int main( int argc, char** argv ) {
 					free( string );
 				}
 				
-				hx_free_variablebindings( b, 0 );
+				hx_free_variablebindings(b);
 				hx_variablebindings_iter_next( iter );
 			}
 		}
