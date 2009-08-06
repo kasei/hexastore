@@ -106,48 +106,51 @@ enum async_status async_des(void* session) {
 	done = 0;
 	int r;
 	size_t max = ses->num_sends < ses->num_recvs ? ses->num_recvs : ses->num_sends;
-	for(i = 0; i < max; i++) {
-		if(!ses->no_sends && i < ses->num_sends) {
-			if(!ses->first) {
-				r = async_mpi(ses->sends[i]);
-				_CHECK_R(r);
-			}
-			if(ses->first || r != ASYNC_PENDING) {
-			// while(r != ASYNC_PENDING) {
-				// send_handler should reset only if there is something left
-				if((*(ses->send_handler))(ses->sends[i], ses->sendh_args)) {
-					ses->sends[i]->tag = ses->tags;
-					ses->tags++;
-					if(ses->tags < 1) {
-						ses->tags = 1;
-					}
+	size_t j;
+	for(j = 0; j < 1024; j++) {
+		for(i = 0; i < max; i++) {
+			if(!ses->no_sends && i < ses->num_sends) {
+				if(!ses->first) {
 					r = async_mpi(ses->sends[i]);
 					_CHECK_R(r);
-					ses->msg_count++;
-					DEBUG("msg_count = %i\n", ses->msg_count);
-				} else {
-					r = ASYNC_PENDING;
-					done++;
+				}
+				if(ses->first || r != ASYNC_PENDING) {
+				// while(r != ASYNC_PENDING) {
+					// send_handler should reset only if there is something left
+					if((*(ses->send_handler))(ses->sends[i], ses->sendh_args)) {
+						ses->sends[i]->tag = ses->tags;
+						ses->tags++;
+						if(ses->tags < 1) {
+							ses->tags = 1;
+						}
+						r = async_mpi(ses->sends[i]);
+						_CHECK_R(r);
+						ses->msg_count++;
+						DEBUG("msg_count = %i\n", ses->msg_count);
+					} else {
+						r = ASYNC_PENDING;
+						done++;
+					}
 				}
 			}
-		}
-		if(i < ses->num_recvs) {
-			r = async_mpi(ses->recvs[i]);
-			_CHECK_R(r);
-			// printf("ses->recvs[%i]->state = %i\n", i, ses->recvs[i]->state);
-			if(r != ASYNC_PENDING) {
-			// while(r != ASYNC_PENDING) {
-				ses->msg_count--;
-				DEBUG("msg_count = %i\n", ses->msg_count);
-				if(!(*(ses->recv_handler))(ses->recvs[i], ses->recvh_args)) {
-					return ASYNC_FAILURE;
-				}
-				async_mpi_session_reset3(ses->recvs[i], ses->recvs[i]->buf, ses->recvs[i]->count, MPI_ANY_SOURCE, ses->recvs[i]->flags);
-				if(ses->fixed_size > 0) {
-					ses->recvs[i]->tag = MPI_ANY_TAG;
-				}
+			if(i < ses->num_recvs) {
 				r = async_mpi(ses->recvs[i]);
 				_CHECK_R(r);
+				// printf("ses->recvs[%i]->state = %i\n", i, ses->recvs[i]->state);
+				if(r != ASYNC_PENDING) {
+				// while(r != ASYNC_PENDING) {
+					ses->msg_count--;
+					DEBUG("msg_count = %i\n", ses->msg_count);
+					if(!(*(ses->recv_handler))(ses->recvs[i], ses->recvh_args)) {
+						return ASYNC_FAILURE;
+					}
+					async_mpi_session_reset3(ses->recvs[i], ses->recvs[i]->buf, ses->recvs[i]->count, MPI_ANY_SOURCE, ses->recvs[i]->flags);
+					if(ses->fixed_size > 0) {
+						ses->recvs[i]->tag = MPI_ANY_TAG;
+					}
+					r = async_mpi(ses->recvs[i]);
+					_CHECK_R(r);
+				}
 			}
 		}
 	}
@@ -155,13 +158,15 @@ enum async_status async_des(void* session) {
 	if(done >= ses->num_sends) {
 		ses->no_sends = 1;
 	}
-	if(ses->no_sends) {
-		int total_msg_count;
-		MPI_Allreduce(&(ses->msg_count), &total_msg_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-		if(total_msg_count == 0) {
-			return ASYNC_SUCCESS;
-		}
+	//if(ses->no_sends) {
+	ses->msg_count = ses->no_sends ? ses->msg_count : ses->msg_count + 1;
+	int total_msg_count;
+	MPI_Allreduce(&(ses->msg_count), &total_msg_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	if(ses->no_sends && total_msg_count == 0) {
+		return ASYNC_SUCCESS;
 	}
+	ses->msg_count = ses->no_sends ? ses->msg_count : ses->msg_count - 1;
+	//}
 	return ASYNC_PENDING;
 }
 #undef _CHECK_R
