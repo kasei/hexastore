@@ -150,14 +150,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	}
 
 	MPI_RDFIO_DEBUG("%i: Getting iterator of node2lid.\n", rank);
-
-	iter = map_entry_iterator(node2lid);
-	while(iterator_has_next(iter)) {
-		map_entry_t entry = (map_entry_t)iterator_next(iter);
-		MPI_RDFIO_DEBUG("%i:\t%s => %i\n", rank, entry->key, *((int*)(entry->value)) );
-	}
-	iterator_destroy(iter);
-
+	
 	iter = map_entry_iterator(node2lid);
 	if(iter == NULL) {
 		fprintf(stderr, "%s:%u: Error; cannot allocate iterator on node2lid map.\n", __FILE__, __LINE__);
