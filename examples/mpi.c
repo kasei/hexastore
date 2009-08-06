@@ -28,8 +28,8 @@ int main ( int argc, char** argv ) {
 	hx_hexastore* hx		= hx_new_hexastore( st );
 	
 	char* job				= (argc > 2) ? argv[2] : "";
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
-//	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/scratch" );
+// 	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
 	
 	TIME_T(load_start, load_end);
 	TIME_T(exec_start, exec_end);
@@ -55,8 +55,10 @@ if (0) { // XXX
 	}
 	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
-	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://simile.mit.edu/2006/01/ontologies/mods3#point> \"end\" . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#encoding> ?bo . ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?co . }" );
-	
+//	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );
+	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
+//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x a :GraduateStudent . ?x :takesCourse <http://www.Department0.University0.edu/GraduateCourse0> . } " ); 
+//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> {?x a :Person .  ?x :memberOf <http://www.Department0.University0.edu> .} " ); 
 	int triple_count			= hx_bgp_size(b);
 	int node_count				= triple_count * 3;
 	
@@ -74,7 +76,21 @@ if (0) { // XXX
 
 	exec_start	= TIME();
 	hx_variablebindings_nodes** nodes;
-	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, hx, triple_count, triple_nodes, variable_names, maxiv );
+	
+	int missing_node	= 0;
+	for (i = 0; i < triple_count; i++) {
+		int j;
+		for (j = 0; j < 3; j++) {
+			hx_node_id id	= triple_nodes[(3*i)+j];
+			if (id == (hx_node_id) 0) {
+				missing_node	= 1;
+			}
+		}
+	}
+	
+	hx_variablebindings_iter* iter	= (missing_node)
+									? hx_variablebindings_new_empty_iter()
+									: hx_parallel_rendezvousjoin( ctx, hx, triple_count, triple_nodes, variable_names, maxiv );
 	int results	= hx_parallel_get_nodes( ctx, iter, &nodes );
 	MPI_File file;
 	MPI_Info info;
