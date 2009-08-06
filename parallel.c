@@ -144,7 +144,7 @@ int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ct
 
 	const char* mapfile		= ctx->local_nodemap_file;
 	hx_storage_manager *st	= ctx->storage;
-	if(!mpi_rdfio_readnt(file, mapfile, 4096, &destination, &st, MPI_COMM_WORLD)) {
+	if(!mpi_rdfio_readnt(file, mapfile, 1048576, &destination, &st, MPI_COMM_WORLD)) {
 		fprintf(stderr, "%s:%u:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
 		MPI_Abort(MPI_COMM_WORLD, 127);
 	}
@@ -1115,8 +1115,6 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 // 		MPI_Barrier(MPI_COMM_WORLD);
 		/**********************************************************************/
 		
-
-
 		char** columns						= NULL;
 // 		fprintf(stderr, "%i: _hx_parallel_variablebinding_iter_for_triple\n", myrank);
 		hx_variablebindings_iter* rhs		= _hx_parallel_variablebindings_iter_for_triple( j, ctx, hx, node_count, triple_nodes, node_names );
