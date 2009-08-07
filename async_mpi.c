@@ -14,7 +14,7 @@ int async_mpi_session_reset(async_mpi_session* ses, void* buf, int count, MPI_Da
 		ses->buf = NULL;
 	}
 	if(ses->request != NULL) {
-		if(ses->state > ASYNC_MPI_STATE_SEND_OR_RECV && ses->state < ASYNC_MPI_STATE_SUCCESS) {
+		if(ses->state > ASYNC_MPI_STATE_SEND_OR_RECV && ses->state < ASYNC_MPI_STATE_SUCCESS && (ses->flags & ASYNC_MPI_FLAG_IS_SENDING) == 0) {
 			MPI_Status status;
 			int flag = 0;
 			//printf("Canceling in reset.\n");
