@@ -79,8 +79,8 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 }
 
 int hx_free_bgp ( hx_bgp* b ) {
+	int i;
 	if (b->variable_names != NULL) {
-		int i;
 		for (i = 1; i <= b->variables; i++) {
 			if (b->variable_names[i] != NULL) {
 				free( b->variable_names[i] );
@@ -88,6 +88,12 @@ int hx_free_bgp ( hx_bgp* b ) {
 		}
 		free( b->variable_names );
 	}
+	
+	for (i = 0; i < b->size; i++) {
+		hx_free_triple( b->triples[i] );
+		b->triples[i]	= NULL;
+	}
+	
 	free( b->triples );
 	free( b );
 	return 0;
@@ -410,7 +416,11 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 			free(sname);
 			free(pname);
 			free(oname);
-			iter					= hx_new_mergejoin_iter( interm, iter );
+			
+			// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			// mergejoin has a memory leak, but we really should be using it here:
+// 			iter					= hx_new_mergejoin_iter( interm, iter );
+			iter					= hx_new_nestedloopjoin_iter( interm, iter );
 		}
 	}
 	return iter;
