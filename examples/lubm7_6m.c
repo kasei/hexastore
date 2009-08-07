@@ -92,7 +92,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 	printf( "%llu results\n", (unsigned long long) count );
 	clock_t end_time	= clock();
 	
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	return DIFFTIME(st_time, end_time);
 }
 

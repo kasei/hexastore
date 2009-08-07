@@ -215,39 +215,6 @@ int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_
 	return 0;
 }
 
-int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
-	hx_node_id s	= hx_get_node_id( hx, sn );
-	hx_node_id p	= hx_get_node_id( hx, pn );
-	hx_node_id o	= hx_get_node_id( hx, on );
-	if (!hx_node_is_variable( sn ) && s == 0) {
-		return 1;
-	}
-	if (!hx_node_is_variable( pn ) && p == 0) {
-		return 1;
-	}
-	if (!hx_node_is_variable( on ) && o == 0) {
-		return 1;
-	}
-	
-	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
-	
-	hx_node* triple_ordered[3]	= { sn, pn, on };
-	nodes[0]	= triple_ordered[ (*index)->order[0] ];
-	nodes[1]	= triple_ordered[ (*index)->order[1] ];
-	nodes[2]	= triple_ordered[ (*index)->order[2] ];
-	return 0;
-}
-
-int hx_get_ordered_index_id ( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count ) {
-	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
-	
-	hx_node_id triple_ordered[3]	= { s, p, o };
-	nodes[0]	= triple_ordered[ (*index)->order[0] ];
-	nodes[1]	= triple_ordered[ (*index)->order[1] ];
-	nodes[2]	= triple_ordered[ (*index)->order[2] ];
-	return 0;
-}
-
 int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
 	int i		= 0;
 	int vars	= 0;
@@ -400,6 +367,39 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 			}
 			break;
 	}
+	return 0;
+}
+
+int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
+	hx_node_id s	= hx_get_node_id( hx, sn );
+	hx_node_id p	= hx_get_node_id( hx, pn );
+	hx_node_id o	= hx_get_node_id( hx, on );
+	if (!hx_node_is_variable( sn ) && s == 0) {
+		return 1;
+	}
+	if (!hx_node_is_variable( pn ) && p == 0) {
+		return 1;
+	}
+	if (!hx_node_is_variable( on ) && o == 0) {
+		return 1;
+	}
+	
+	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
+	
+	hx_node* triple_ordered[3]	= { sn, pn, on };
+	nodes[0]	= triple_ordered[ (*index)->order[0] ];
+	nodes[1]	= triple_ordered[ (*index)->order[1] ];
+	nodes[2]	= triple_ordered[ (*index)->order[2] ];
+	return 0;
+}
+
+int hx_get_ordered_index_id ( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count ) {
+	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
+	
+	hx_node_id triple_ordered[3]	= { s, p, o };
+	nodes[0]	= triple_ordered[ (*index)->order[0] ];
+	nodes[1]	= triple_ordered[ (*index)->order[1] ];
+	nodes[2]	= triple_ordered[ (*index)->order[2] ];
 	return 0;
 }
 

@@ -3,7 +3,6 @@
 #include "tap.h"
 
 void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 hx_bgp* _test_bgp1 ( void );
 hx_bgp* _test_bgp2 ( void );
 hx_bgp* _test_bgp3 ( void );
@@ -89,7 +88,7 @@ void eval_test1 ( void ) {
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 2 );
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
@@ -128,7 +127,7 @@ void eval_test2 ( void ) {
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 1 );
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
@@ -297,12 +296,6 @@ void gp_varsub_test1 ( void ) {
 		hx_free_graphpattern( p );
 		hx_free_nodemap( map );
 	}
-}
-
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
 }
 
 hx_bgp* _test_bgp1 ( void ) {

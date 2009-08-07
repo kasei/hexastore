@@ -538,14 +538,12 @@ hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_ite
 	return iter;
 }
 
-int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable ) {
+int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter ) {
 	if (iter->vtable != NULL) {
 		iter->vtable->free( iter->ptr );
-		if (free_vtable) {
-			free( iter->vtable );
-			iter->vtable	= NULL;
-		}
-		iter->ptr	= NULL;
+		free( iter->vtable );
+		iter->vtable	= NULL;
+		iter->ptr		= NULL;
 	}
 	free( iter );
 	return 0;
@@ -650,7 +648,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		// so, materialize the iterator
 		hx_variablebindings_iter* sorted	= hx_new_materialize_iter( iter );
 		if (sorted == NULL) {
-			hx_free_variablebindings_iter( iter, 1 );
+			hx_free_variablebindings_iter( iter );
 			return NULL;
 		}
 		
@@ -661,7 +659,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		if (r == 0) {
 			return sorted;
 		} else {
-			hx_free_variablebindings_iter( sorted, 1 );
+			hx_free_variablebindings_iter( sorted );
 			return NULL;
 		}
 	}

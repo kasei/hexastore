@@ -72,7 +72,7 @@ void filter_test1 ( void ) {
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 6 );
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }
@@ -111,7 +111,7 @@ void filter_test2 ( void ) {
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 1 );
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }

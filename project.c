@@ -69,7 +69,7 @@ int _hx_project_iter_vb_next ( void* data ) {
 
 int _hx_project_iter_vb_free ( void* data ) {
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) data;
-	hx_free_variablebindings_iter( info->iter, 1 );
+	hx_free_variablebindings_iter( info->iter );
 	if (info->current != NULL) {
 		hx_free_variablebindings(info->current);
 		info->current	= NULL;

@@ -104,7 +104,7 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 			hx_variablebindings_iter_next( iter );
 			ok1( hx_variablebindings_iter_finished( iter ) );
 			
-			hx_free_variablebindings_iter( iter, 1 );
+			hx_free_variablebindings_iter( iter );
 		} else {
 			// expect the join constructor to fail and return NULL
 			ok1( iter == NULL );
@@ -164,7 +164,7 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 				hx_variablebindings_iter_next( iter );
 			}
 			ok1( counter == 4 );
-			hx_free_variablebindings_iter( iter, 1 );
+			hx_free_variablebindings_iter( iter );
 		} else {
 			// expect the join constructor to fail and return NULL
 			ok1( iter == NULL );
@@ -253,7 +253,7 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	hx_variablebindings_iter_next( iter );
 	ok1( hx_variablebindings_iter_finished( iter ) );
 	
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }

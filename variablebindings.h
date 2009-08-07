@@ -86,7 +86,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void );
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr );
-int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable );
+int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter );
 int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter );
 int hx_variablebindings_iter_current ( hx_variablebindings_iter* iter, hx_variablebindings** b );
 int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter );

@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "hexastore.h"
+#include "triple.h"
 #include "mergejoin.h"
 #include "node.h"
 #include "bgp.h"
 
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];
 	FILE* f	= fopen( filename, "r" );
@@ -28,13 +28,9 @@ int main ( int argc, char** argv ) {
 	
 	hx_triple* triples[3];
 	{
-		hx_triple t0, t1, t2;
-		_fill_triple( &t0, x, type, person );
-		_fill_triple( &t1, x, knows, y );
-		_fill_triple( &t2, y, name, z );
-		triples[0]	= &t0;
-		triples[1]	= &t1;
-		triples[2]	= &t2;
+		triples[0]	= hx_new_triple( x, type, person );
+		triples[1]	= hx_new_triple( x, knows, y );
+		triples[2]	= hx_new_triple( y, name, z );
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 3, triples );
@@ -76,7 +72,7 @@ int main ( int argc, char** argv ) {
 		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	
 	hx_free_bgp( b );
 	hx_free_node( x );
@@ -92,8 +88,3 @@ int main ( int argc, char** argv ) {
 	return 0;
 }
 
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
-}

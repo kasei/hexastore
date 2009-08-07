@@ -77,7 +77,7 @@ hx_parallel_execution_context* hx_parallel_new_execution_context ( hx_storage_ma
 	return ctx;
 }
 
-int hx_parallel_free_execution_context ( hx_parallel_execution_context* ctx ) {
+int hx_parallel_free_parallel_execution_context ( hx_parallel_execution_context* ctx ) {
 	free( (char*) ctx->local_nodemap_file );
 	free( (char*) ctx->local_output_file );
 	free( (char*) ctx->job_id );
@@ -144,7 +144,8 @@ int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ct
 
 	const char* mapfile		= ctx->local_nodemap_file;
 	hx_storage_manager *st	= ctx->storage;
-	if(!mpi_rdfio_readnt(file, mapfile, 1048576, &destination, &st, MPI_COMM_WORLD)) {
+	if (!mpi_rdfio_readids(file, 4800, &destination, &st, MPI_COMM_WORLD)) {
+//	if(!mpi_rdfio_readnt(file, mapfile, 1048576, &destination, &st, MPI_COMM_WORLD)) {
 		fprintf(stderr, "%s:%u:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
 		MPI_Abort(MPI_COMM_WORLD, 127);
 	}
@@ -306,7 +307,7 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 	free(newnames);
 	
 	if (iter != NULL) {
-		hx_free_variablebindings_iter( iter, 0 );
+		hx_free_variablebindings_iter( iter );
 	}
 	
 	async_des_session_destroy(ses);
@@ -545,6 +546,7 @@ char* hx_bgp_freeze_mpi( hx_parallel_execution_context* ctx, hx_bgp* b, int* len
 // 		fprintf( stderr, "- %d\n", (int) nodeids[i] );
 // 	}
 	memcpy( ptr, nodeids, (3*size*sizeof(hx_node_id)) );
+	free( nodes );
 	free( nodeids );
 	return (char*) buf;
 }
@@ -646,6 +648,100 @@ hx_nodemap* hx_nodemap_read_mpi( hx_storage_manager* s, MPI_File f, int buffer )
 		avl_insert( m->id2node, item );
 	}
 	return m;
+}
+
+int hx_node_write_mpi ( hx_node* n, MPI_File f ) {
+	int flag = 0;
+	MPI_Status status;
+	MPIO_Request request;
+	
+	if (n->type == '?') {
+//		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
+		return 1;
+	}
+	
+	MPI_File_write_shared(f, "N", 1, MPI_BYTE, &status);
+	MPI_File_write_shared(f, &(n->type), 1, MPI_BYTE, &status);
+	
+	size_t len	= (size_t) strlen( n->value );
+	MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+	MPI_File_write_shared(f, n->value, strlen(n->value), MPI_BYTE, &status);
+	
+	if (hx_node_is_literal( n )) {
+		if (hx_node_is_lang_literal( n )) {
+			hx_node_lang_literal* l	= (hx_node_lang_literal*) n;
+			size_t len	= strlen( l->lang );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, l->lang, strlen(l->lang), MPI_BYTE, &status);
+		}
+		if (hx_node_is_dt_literal( n )) {
+			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
+			size_t len	= strlen( d->dt );
+			MPI_File_write_shared(f, &len, sizeof(size_t), MPI_BYTE, &status);
+			MPI_File_write_shared(f, d->dt, strlen(d->dt), MPI_BYTE, &status);
+		}
+	}
+	return 0;
+}
+
+hx_node* hx_node_read_mpi( MPI_File f, int buffer ) {
+	char c;
+	MPI_Status status;
+	size_t used, read;
+	
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	if (c != 'N') {
+		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from MPI file.\n", c );
+		return NULL;
+	}
+	
+	char* value;
+	char* extra	= NULL;
+	hx_node* node;
+
+	MPI_File_read_shared(f, &c, 1, MPI_BYTE, &status);
+	switch (c) {
+		case 'R':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			node	= hx_new_node_resource( value );
+			free( value );
+			return node;
+		case 'B':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			node	= hx_new_node_blank( value );
+			free( value );
+			return node;
+		case 'L':
+		case 'G':
+		case 'D':
+			MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+			value	= (char*) calloc( 1, used + 1 );
+			MPI_File_read_shared(f, value, used, MPI_BYTE, &status);
+			if (c == 'G' || c == 'D') {
+				MPI_File_read_shared(f, &used, sizeof( size_t ), MPI_BYTE, &status);
+				extra	= (char*) calloc( 1, used + 1 );
+				MPI_File_read_shared(f, extra, used, MPI_BYTE, &status);
+			}
+			if (c == 'G') {
+				node	= (hx_node*) hx_new_node_lang_literal( value, extra );
+			} else if (c == 'D') {
+				node	= (hx_node*) hx_new_node_dt_literal( value, extra );
+			} else {
+				node	= hx_new_node_literal( value );
+			}
+			free( value );
+			if (extra != NULL)
+				free( extra );
+			return node;
+		default:
+			fprintf( stderr, "*** Bad node type '%c' trying to read node from MPI file.\n", (char) c );
+			return NULL;
+	};
+	
 }
 
 int hx_parallel_nodemap_get_process_id ( hx_node_id id ) {
@@ -827,7 +923,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
                 hx_variablebindings_iter_next(miter);
         }
 
-	hx_free_variablebindings_iter(miter, 1);
+	hx_free_variablebindings_iter(miter);
 	map_destroy(gid2node);
 
 	HPGN_DEBUG("Returning %i successfully.\n", numvbs);

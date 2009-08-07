@@ -175,8 +175,8 @@ int _hx_mergejoin_iter_vb_free ( void* data ) {
 	}
 	info->lhs_batch_size	= 0;
 	info->rhs_batch_size	= 0;
-	hx_free_variablebindings_iter( info->lhs, 1 );
-	hx_free_variablebindings_iter( info->rhs, 1 );
+	hx_free_variablebindings_iter( info->lhs );
+	hx_free_variablebindings_iter( info->rhs );
 	free( info->rhs_batch );
 	free( info->lhs_batch );
 	free( info->names );

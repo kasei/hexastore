@@ -137,7 +137,7 @@ void project_test1 ( void ) {
 // 		hx_variablebindings_iter_next( iter );
 // 	}
 	
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	}
 	
 	hx_free_hexastore( hx, s );
