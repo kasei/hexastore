@@ -1,20 +1,23 @@
-# CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
+CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CC			= mpicc $(CFLAGS)
+# CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
+CC			= gcc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
-default: parse print optimize tests examples parse_query dumpmap assign_ids
+default: parse print optimize tests examples parse_query dumpmap assign_ids triple_ids
 
 all: sparql parse print optimize tests examples parse_query mpi
 
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
 
-assign_ids: assign_ids.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c $(OBJECTS)
+assign_ids: assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+
+triple_ids: triple_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+	$(CC) $(INC) $(LIBS) -ltokyocabinet -o triple_ids triple_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)

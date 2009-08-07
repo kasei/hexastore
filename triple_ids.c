@@ -17,18 +17,34 @@ typedef struct {
 	uint64_t count;
 	uint64_t next_bnode;
 	uint64_t next_id;
-	struct timeval tv;
+	FILE* f;
 } parser_t;
 
 void help (int argc, char** argv);
 int main (int argc, char** argv);
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s nodemap.tcb data.rdf\n\n", argv[0] );
+	fprintf( stderr, "Usage: %s nodemap.tcb data.rdf triples.data\n\n", argv[0] );
 }
 
 void logger ( uint64_t _count ) {
 	fprintf( stderr, "\rParsed %lu triples...", (unsigned long) _count );
+}
+
+void print_node ( parser_t* parser, hx_node* n ) {
+	int len;
+	void* p;
+	char* string;
+	
+	hx_node_string( n, &string );
+	if ((p = tcbdbget(parser->cabinet, string, strlen(string), &len))) {
+		fwrite( p, sizeof( uint64_t ), 1, parser->f );
+	} else {
+		fprintf( stderr, "*** didn't find ID in nodemap for node %s\n", string );
+		free(string);
+		exit(1);
+	}
+	free( string );
 }
 
 unsigned char* generate_id_handler (void *user_data, raptor_genid_type type, unsigned char* user_bnodeid) {
@@ -129,17 +145,6 @@ hx_node* parser_node ( parser_t* parser, void* node, raptor_identifier_type type
 			return 0;
 	}
 	
-	char* string;
-	hx_node_string( newnode, &string );
-	
-	if (tcbdbputkeep(parser->cabinet, string, strlen(string), &(parser->next_id), sizeof(uint64_t))) {
-		parser->next_id++;
-//		fprintf(stderr, "adding: %s\n", string);
-	} else {
-//		fprintf(stderr, "skipping: %s\n", string);
-	}
-	free(string);
-	
 	if (needs_free) {
 		free( value );
 		needs_free	= 0;
@@ -159,8 +164,12 @@ void statement_handler (void* user_data, const raptor_statement* triple)	{
 	hx_node *s, *p, *o;
 	
 	get_triple_nodes( parser, triple, &s, &p, &o );
+	print_node( parser, s );
+	print_node( parser, p );
+	print_node( parser, o );
+	
 	int i	= parser->count++;
-	if (i % 25000 == 0) {
+	if (i % 5000 == 0) {
 		logger( i );
 	}
 }
@@ -169,73 +178,61 @@ int main (int argc, char** argv) {
 	int ecode;
 	const char* rdf_filename		= NULL;
 	const char* nodemap_filename	= NULL;
+	const char* triples_filename	= NULL;
 	
-	if (argc < 2) {
+	if (argc < 4) {
 		help(argc, argv);
 		exit(1);
 	}
 	
 	nodemap_filename	= argv[1];
+	rdf_filename		= argv[2];
+	triples_filename	= argv[3];
+	
+	raptor_init();
+	unsigned char* uri_string	= raptor_uri_filename_to_uri_string( rdf_filename );
+	raptor_uri* uri				= raptor_new_uri(uri_string);
+	const char* parser_name		= raptor_guess_parser_name(NULL, NULL, NULL, 0, uri_string);
+	raptor_parser* rdf_parser	= raptor_new_parser( parser_name );
+	raptor_uri *base_uri		= raptor_uri_copy(uri);
+	
 	parser_t* parser	= (parser_t*) calloc( 1, sizeof( parser_t ) );
 	parser->count		= 0;
 	parser->next_id		= 1;
 	parser->next_bnode	= 0;
-	gettimeofday( &( parser->tv ), NULL );
-	parser->cabinet	= tcbdbnew();
-	tcbdbsetcache(parser->cabinet, 1024*1024, 1024*1024);
-
-	if(!tcbdbopen(parser->cabinet, nodemap_filename, HDBOWRITER | HDBOCREAT)) {
+	parser->cabinet		= tcbdbnew();
+	tcbdbsetcache(parser->cabinet, 228*1024, 144*1024);
+	parser->f			= fopen( triples_filename, "w" );
+	
+	if (parser->f == NULL) {
+		perror("failed to open triples file: ");
+		exit(1);
+	}
+	
+	if(!tcbdbopen(parser->cabinet, nodemap_filename, HDBOREADER)) {
 		ecode = tcbdbecode(parser->cabinet);
 		fprintf(stderr, "open error: %s\n", tcbdberrmsg(ecode));
 		exit(1);
 	}
 	tcbdboptimize(parser->cabinet, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
 	
-	int len;
-	void* p;
-	if (argc >= 3) {
-		rdf_filename		= argv[2];
-		raptor_init();
-		unsigned char* uri_string	= raptor_uri_filename_to_uri_string( rdf_filename );
-		raptor_uri* uri				= raptor_new_uri(uri_string);
-		const char* parser_name		= raptor_guess_parser_name(NULL, NULL, NULL, 0, uri_string);
-		raptor_parser* rdf_parser	= raptor_new_parser( parser_name );
-		raptor_uri *base_uri		= raptor_uri_copy(uri);
-			
-		if ((p = tcbdbget(parser->cabinet, "   NEXTID", 9, &len))) {
-			uint64_t* ptr	= (uint64_t*) p;
-			parser->next_id	= *ptr;
-		}
-		
-		raptor_set_statement_handler(rdf_parser, parser, statement_handler);
-		raptor_set_generate_id_handler(rdf_parser, parser, generate_id_handler);
-		raptor_parse_file(rdf_parser, uri, base_uri);
-		logger( parser->count );
-		fprintf( stderr, "\n" );
-		tcbdbput(parser->cabinet, "   NEXTID", 9, &( parser->next_id ), sizeof( uint64_t ));
-		
-		raptor_free_parser(rdf_parser);
-		free( uri_string );
-		free( base_uri );
-		free( uri );
-	} else {
-		BDBCUR *cur	= tcbdbcurnew(parser->cabinet);
-		tcbdbcurfirst(cur);
-		while((p = tcbdbcurkey3(cur, &len)) != NULL) {
-			uint64_t* idp;
-			int idlen;
-			idp	= (uint64_t*) tcbdbcurval3(cur, &idlen);
-			printf("%10"PRIu64"\t%s\n", *idp, (char*) p);
-			tcbdbcurnext(cur);
-		}
-		tcbdbcurdel(cur);
-	}
+	raptor_set_statement_handler(rdf_parser, parser, statement_handler);
+	raptor_set_generate_id_handler(rdf_parser, parser, generate_id_handler);
+	raptor_parse_file(rdf_parser, uri, base_uri);
+	logger( parser->count );
+	fprintf( stderr, "\n" );
+	tcbdbput(parser->cabinet, "   NEXTID", 9, &( parser->next_id ), sizeof( uint64_t ));
 	
+	fclose( parser->f );
 	if(!tcbdbclose(parser->cabinet)) {
 		ecode = tcbdbecode(parser->cabinet);
 		fprintf(stderr, "close error: %s\n", tcbdberrmsg(ecode));
 		exit(1);
 	}
+	raptor_free_parser(rdf_parser);
+	free( uri_string );
+	free( base_uri );
+	free( uri );
 	
 	return 0;
 }
