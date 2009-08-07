@@ -128,6 +128,7 @@ typedef struct {
 extern void* parsedBGPPattern;
 extern void* parsedPrologue;
 extern void* parsedGP;
+extern node_t* copy_node( node_t* );
 extern node_t* new_dt_literal_node ( char*, char* );
 extern container_t* new_container ( char type, int size );
 extern int free_container ( container_t* c, int free_contained_objects );
@@ -390,6 +391,10 @@ TriplesSameSubject:
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->subject	= subject;
 		}
+		/*XXX
+		free_node( subject, 1 );
+		free_container( subj_triples, 0 );
+		*/
 		$$	= triples;
 	}
 
@@ -410,6 +415,8 @@ PropertyListNotEmpty:
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->predicate	= predicate;
 		}
+/*XXX		free_node( predicate, 1 );	*/
+		
 		if ($3 != NULL) {
 			int i;
 			container_t* triples2	= (container_t*) $3;
@@ -430,6 +437,7 @@ _O_QVerb_E_S_QObjectList_E_C:
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->predicate	= predicate;
 		}
+/*XXX		free_node( predicate, 1 );	*/
 		$$	= (void*) triples;
 	}
 ;
@@ -509,6 +517,7 @@ ObjectList:
 		t->type		= TYPE_TRIPLE;
 		t->object	= object;
 		container_push_item( set, t );
+/*XXX		free_container( obj_triples, 0 );	*/
 		$$	= (void*) set;
 	}
 ;
@@ -561,8 +570,8 @@ Verb:
 	}
 
 	| IT_a	{
-		node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
 		hx_node* iri	= hx_new_node_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
+		node_t* n		= (node_t*) calloc( 1, sizeof( node_t ) );
 		n->type			= TYPE_FULL_NODE;
 		n->ptr			= (void*) iri;
 		$$	= n;
@@ -864,8 +873,8 @@ IRIref:
 
 	| PrefixedName	{
 		node_t* r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= TYPE_QNAME;
-		r->ptr			= $1;
+		r->type		= TYPE_QNAME;
+		r->ptr		= $1;
 		$$	= (void*) r;
 	}
 ;
@@ -1670,7 +1679,7 @@ hx_graphpattern* parse_query ( void );
 hx_graphpattern* parse_query_string ( char* string );
 
 int free_container ( container_t* c, int free_contained_objects );
-int free_node ( node_t* n );
+int free_node ( node_t* n, int free_hx_nodes );
 
 void yyerror (char const *s) {
 	fprintf (stderr, "*** %s\n", s);
@@ -1685,7 +1694,7 @@ hx_graphpattern* parse_query ( void ) {
 		
 		hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
 		vmap->id	= 0;
-		vmap->name	= "";
+		vmap->name	= NULL;
 		vmap->next	= NULL;
 		
 		gp_query_t* q			= (gp_query_t*) parsedGP;
@@ -1709,6 +1718,13 @@ hx_bgp* parse_bgp_query_string ( char* string ) {
 	return parse_bgp_query();
 }
 
+void _free_vmap ( hx_sparqlparser_variable_map_list* vmap ) {
+	if (vmap->next) {
+		_free_vmap(vmap->next);
+	}
+	free(vmap);
+}
+
 hx_bgp* parse_bgp_query ( void ) {
 	if (yyparse() == 0) {
 		hx_bgp* b;
@@ -1716,7 +1732,7 @@ hx_bgp* parse_bgp_query ( void ) {
 
 		hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
 		vmap->id	= 0;
-		vmap->name	= "";
+		vmap->name	= NULL;
 		vmap->next	= NULL;
 		
 		bgp_query_t* q			= (bgp_query_t*) parsedBGPPattern;
@@ -1734,7 +1750,9 @@ hx_bgp* parse_bgp_query ( void ) {
 		
 		b	= generate_bgp( q->bgp, prologue, vmap );
 		free_prologue( prologue );
-		free( vmap );
+		_free_vmap( vmap );
+		free(q);
+		parsedBGPPattern	= NULL;
 		return b;
 	}
 	return NULL;
@@ -1778,6 +1796,7 @@ hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, hx_sparqlparser_v
 		hx_node* s	= generate_node( t->subject, prologue, vmap );
 		hx_node* p	= generate_node( t->predicate, prologue, vmap );
 		hx_node* o	= generate_node( t->object, prologue, vmap );
+		
 		hx_triple* triple;
 		if (s == NULL || p == NULL || o == NULL) {
 			fprintf( stderr, "Got NULL node in triple: (%p, %p, %p)\n", (void*) s, (void*) p, (void*) o );
@@ -1785,9 +1804,11 @@ hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, hx_sparqlparser_v
 		}
 		triple	= hx_new_triple( s, p, o );
 		triples[i]	= triple;
+		free(t);
 	}
-	
-	return hx_new_bgp( bgp->count, triples );
+	hx_bgp* b	= hx_new_bgp( bgp->count, triples );
+	free(triples);
+	return b;
 }
 
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
@@ -1831,7 +1852,7 @@ int variable_id_with_name ( hx_sparqlparser_variable_map_list* vmap, char* name 
 	while (p != NULL) {
 		current_id	= p->id;
 		char* n		= p->name;
-		if (strcmp(n,name) == 0) {
+		if (n && strcmp(n,name) == 0) {
 			return p->id;
 		}
 		last	= p;
@@ -1864,6 +1885,7 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 		if (uri == NULL)
 			return NULL;
 		u	= hx_new_node_resource( uri );
+		free(uri);
 		return u;
 	} else if (n->type == TYPE_DT_LITERAL) {
 		char* value;
@@ -1873,7 +1895,8 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 			return NULL;
 		value	= (char*) n->ptr;
 		l	= (hx_node*) hx_new_node_dt_literal( value, dt );
-		free( value );
+		free(dt);
+		free(value);
 		return l;
 	} else {
 		fprintf( stderr, "*** UNRECOGNIZED node type '%c' in generate_node()\n", n->type );
@@ -1932,6 +1955,9 @@ void free_prologue ( prologue_t* p ) {
 			free( n->uri );
 			free( n );
 		}
+		if (s->namespaces) {
+			free(s->namespaces);
+		}
 		free( s );
 	}
 	free( p );
@@ -1962,9 +1988,9 @@ int free_container ( container_t* c, int free_contained_objects ) {
 			if (free_contained_objects) {
 				for (i = 0; i < c->count; i++) {
 					triple_t* t	= (triple_t*) c->items[i];
-					free_node( t->subject );
-					free_node( t->predicate );
-					free_node( t->object );
+					free_node( t->subject, 1 );
+					free_node( t->predicate, 1 );
+					free_node( t->object, 1 );
 					free(t);
 				}
 			}
@@ -1978,10 +2004,12 @@ int free_container ( container_t* c, int free_contained_objects ) {
 	return 0;
 }
 
-int free_node ( node_t* n ) {
+int free_node ( node_t* n, int free_hx_nodes ) {
 	if (n->type == TYPE_FULL_NODE) {
-		hx_node* node	= (hx_node*) n->ptr;
-		hx_free_node( node );
+		if (free_hx_nodes) {
+			hx_node* node	= (hx_node*) n->ptr;
+			hx_free_node( node );
+		}
 		free(n);
 	} else if (n->type == TYPE_VARIABLE) {
 		char* name	= (char*) n->ptr;
@@ -2003,6 +2031,37 @@ int free_node ( node_t* n ) {
 		return 1;
 	}
 	return 0;
+}
+
+node_t* copy_node( node_t* node ) {
+	node_t* n	= (node_t*) calloc( 1, sizeof( node_t ) );
+	n->type		= node->type;
+	n->ptr		= NULL;
+	n->datatype	= NULL;
+	
+	switch (n->type) {
+		case TYPE_FULL_NODE:
+			n->ptr	= hx_node_copy( node->ptr );
+			break;
+		case TYPE_VARIABLE:
+		case TYPE_QNAME:
+		case TYPE_DT_LITERAL:
+			if (node->ptr) {
+				n->ptr	= (char*) calloc( 1, strlen(node->ptr) + 1 );
+				strcpy( n->ptr, node->ptr );
+			}
+		
+			if (node->datatype) {
+				n->datatype	= (char*) calloc( 1, strlen(node->datatype) + 1 );
+				strcpy( n->datatype, node->datatype );
+			}
+			break;
+		default:
+			fprintf( stderr, "*** '%c'\n", n->type );
+			n->ptr	= node->ptr;
+	};
+	
+	return n;
 }
 
 void container_push_item( container_t* set, void* t ) {
@@ -2064,7 +2123,7 @@ void XXXdebug_triple( triple_t* t, prologue_t* p ) {
 void XXXdebug_node( node_t* n, prologue_t* p ) {
 	hx_sparqlparser_variable_map_list* vmap	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof(hx_sparqlparser_variable_map_list) );
 	vmap->id	= 0;
-	vmap->name	= "";
+	vmap->name	= NULL;
 	vmap->next	= NULL;
 	
 	hx_node* node	= generate_node( n, p, vmap );
