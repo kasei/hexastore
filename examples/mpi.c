@@ -67,8 +67,10 @@ int main ( int argc, char** argv ) {
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
-	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x a :GraduateStudent . ?x :takesCourse <http://www.Department0.University0.edu/GraduateCourse0> . } " ); 
+//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x a :GraduateStudent . ?x :takesCourse <http://www.Department0.University0.edu/GraduateCourse0> . } " ); 
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> {?x a :Person .  ?x :memberOf <http://www.Department0.University0.edu> .} " ); 
+	hx_bgp* b					= parse_bgp_query_string( "{ ?as <http://simile.mit.edu/2006/01/ontologies/mods3#point> \"end\" ; <http://simile.mit.edu/2006/01/ontologies/mods3#encoding> ?bo ; a ?co }" ); 
+
 	int triple_count			= hx_bgp_size(b);
 	int node_count				= triple_count * 3;
 	
@@ -101,35 +103,35 @@ int main ( int argc, char** argv ) {
 									? hx_variablebindings_new_empty_iter()
 									: hx_parallel_rendezvousjoin( ctx, hx, triple_count, triple_nodes, variable_names, maxiv );
 	
+	
+//	int results	= hx_parallel_get_nodes( ctx, iter, &nodes );
+	int results	= 0;
+	MPI_File file;
+	MPI_Info info;
+	MPI_Status status;
+	MPI_Info_create(&info);
+	MPI_File_open(MPI_COMM_SELF, (char*) ctx->local_output_file, MPI_MODE_WRONLY | MPI_MODE_CREATE, info, &file);
+	//FILE* f	= fopen( ctx->local_output_file, "w" );
 	while (!hx_variablebindings_iter_finished(iter)) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_variablebindings_debug( b, NULL );
+		
+		char* string;
+		hx_variablebindings_string( b, NULL, &string );
+		char chars[1024];
+		//fprintf(f, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		sprintf(chars, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		MPI_File_write_shared(file, chars, strlen(chars), MPI_BYTE, &status);
+		free(string);
+		
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next(iter);
+		results++;
 	}
-	
-// 	int results	= hx_parallel_get_nodes( ctx, iter, &nodes );
-// 	MPI_File file;
-// 	MPI_Info info;
-// 	MPI_Status status;
-// 	MPI_Info_create(&info);
-// 	MPI_File_open(MPI_COMM_SELF, (char*) ctx->local_output_file, MPI_MODE_WRONLY | MPI_MODE_CREATE, info, &file);
-// 	//FILE* f	= fopen( ctx->local_output_file, "w" );
-// 	for (i = 0; i < results; i++) {
-// 		hx_variablebindings_nodes* b	= nodes[i];
-// 		char* string;
-// 		hx_variablebindings_nodes_string( b, &string );
-// 		char chars[1024];
-// 		//fprintf(f, "process %d: binding %p %s\n", myrank, (void*) b, string);
-// 		sprintf(chars, "process %d: binding %p %s\n", myrank, (void*) b, string);
-// 		MPI_File_write_shared(file, chars, strlen(chars), MPI_BYTE, &status);
-// 		free(string);
-// 		hx_free_variablebindings_nodes(b);
-// 	}
-// 	//fclose( f );
-// 	MPI_File_close(&file);
-// 	MPI_Info_free(&info);
-// 	fprintf( stderr, "process %d: %d results\n", myrank, results );
+	//fclose( f );
+	MPI_File_close(&file);
+	MPI_Info_free(&info);
+	fprintf( stderr, "process %d: %d results\n", myrank, results );
 	
 	exec_end	= TIME();
 	
@@ -142,12 +144,15 @@ int main ( int argc, char** argv ) {
 			free(variable_names[i]);
 		}
 	}
-	free(variable_names);
-	free(triple_nodes);
-	hx_free_bgp(b);
-	hx_free_hexastore( hx, st );
-	hx_free_storage_manager( st );
-	hx_parallel_free_parallel_execution_context( ctx );
+	
+	if (0) {
+		free(variable_names);
+		free(triple_nodes);
+		hx_free_bgp(b);
+		hx_free_hexastore( hx, st );
+		hx_free_storage_manager( st );
+		hx_parallel_free_parallel_execution_context( ctx );
+	}
 	
 	MPI_Finalize(); 
 	return 0;
