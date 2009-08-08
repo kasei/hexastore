@@ -93,6 +93,7 @@ double hx_node_nv ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );
 char* hx_node_dt ( hx_node_dt_literal* n );
 int hx_node_string ( hx_node* n, char** string );
+hx_node* hx_node_parse ( char* string );
 
 int hx_node_uniq_set ( int size, hx_node** set, hx_node*** new, int copy );
 int hx_node_uniq_set2 ( int size1, hx_node** set1, int size2, hx_node** set2, hx_node*** new, int copy );

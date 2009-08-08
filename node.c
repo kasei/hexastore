@@ -304,6 +304,50 @@ int hx_node_string ( hx_node* n, char** str ) {
 	return alloc;
 }
 
+hx_node* hx_node_parse ( char* ntnode ) {
+	switch(ntnode[0]) {
+		case '<': {
+			ntnode[strlen(ntnode)-1] = '\0';
+			return hx_new_node_resource(&ntnode[1]);
+		}
+		case '_': {
+			return hx_new_node_blank(&ntnode[2]);
+		}
+		case '"': {
+			int max_idx = strlen(ntnode) - 1;
+			switch(ntnode[max_idx]) {
+				case '"': {
+					ntnode[max_idx] = '\0';
+					return hx_new_node_literal(&ntnode[1]);
+				}
+				case '>': {
+					ntnode[max_idx] = '\0';
+					char* last_quote_p = strrchr(ntnode, '"');
+					if(last_quote_p == NULL) {
+						fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; expected typed literal, but found %s\n", __FILE__, __LINE__, ntnode);
+						return NULL;
+					}
+					last_quote_p[0] = '\0';
+					return (hx_node*)hx_new_node_dt_literal(&ntnode[1], &last_quote_p[4]);
+				}
+				default: {
+					char* last_quote_p = strrchr(ntnode, '"');
+					if(last_quote_p == NULL) {
+						fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; expected literal with language tag, but found %s\n", __FILE__, __LINE__, ntnode);
+						return NULL;
+					}
+					last_quote_p[0] = '\0';
+					return (hx_node*)hx_new_node_lang_literal(&ntnode[1], &last_quote_p[2]);
+				}
+			}
+		}
+		default: {
+			fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; invalid N-triples node %s\n", __FILE__, __LINE__, ntnode);
+			return NULL;
+		}
+	}
+}
+
 int hx_node_uniq_set ( int size, hx_node** set, hx_node*** v, int copy ) {
 	int i, j, uniq_count;
 	hx_node** vars	= (hx_node**) calloc( size, sizeof( hx_node* ) );
