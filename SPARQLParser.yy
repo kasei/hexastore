@@ -413,9 +413,9 @@ PropertyListNotEmpty:
 		/* XXX */
 		for (i = 0; i < triples->count; i++) {
 			triple_t* t	= (triple_t*) triples->items[i];
-			t->predicate	= predicate;
+			t->predicate	= copy_node( predicate );
 		}
-/*XXX		free_node( predicate, 1 );	*/
+		free_node( predicate, 1 );
 		
 		if ($3 != NULL) {
 			int i;
@@ -435,9 +435,9 @@ _O_QVerb_E_S_QObjectList_E_C:
 		node_t* predicate	= (node_t*) $1;
 		for (i = 0; i < triples->count; i++) {
 			triple_t* t	= (triple_t*) triples->items[i];
-			t->predicate	= predicate;
+			t->predicate	= copy_node( predicate );
 		}
-/*XXX		free_node( predicate, 1 );	*/
+		free_node( predicate, 1 );
 		$$	= (void*) triples;
 	}
 ;
@@ -1751,7 +1751,8 @@ hx_bgp* parse_bgp_query ( void ) {
 		b	= generate_bgp( q->bgp, prologue, vmap );
 		free_prologue( prologue );
 		_free_vmap( vmap );
-		free(q);
+		free(parsedBGPPattern);
+		free(parsedGP);
 		parsedBGPPattern	= NULL;
 		return b;
 	}
@@ -1872,7 +1873,9 @@ int variable_id_with_name ( hx_sparqlparser_variable_map_list* vmap, char* name 
 hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	if (n->type == TYPE_FULL_NODE) {
 		hx_node* node	= (hx_node*) n->ptr;
-		return hx_node_copy( node );
+		hx_node* copy	= hx_node_copy( node );
+		hx_free_node( node );
+		return copy;
 	} else if (n->type == TYPE_VARIABLE) {
 		char* name	= (char*) n->ptr;
 		hx_node* v;
