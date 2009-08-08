@@ -148,6 +148,9 @@ int hx_free_node( hx_node* n ) {
 	if (n->value != NULL) {
 		free( n->value );
 	}
+	
+	n->type		= (char) 0;
+	n->value	= NULL;
 	free( n );
 	return 0;
 }
