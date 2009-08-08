@@ -20,9 +20,88 @@ int _mpi_rdfio_recv_lookup(async_mpi_session*, void*);
 int _mpi_rdfio_send_answer(async_mpi_session*, void*);
 int _mpi_rdfio_recv_answer(async_mpi_session*, void*);
 
+hx_node* _mpi_rdfio_to_hx_node_p(char* ntnode);
+
 // #define MPI_RDFIO_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define MPI_RDFIO_DEBUG(s, ...)
 
+int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexastore **store, hx_storage_manager **manager, MPI_Comm comm) {
+	MPI_File file;
+	MPI_Offset filesize;
+	MPI_Info info;
+	int rank, commsize;
+
+	MPI_Comm_rank(comm, &rank);
+	MPI_Comm_size(comm, &commsize);
+	
+	int created_manager = 0;
+
+	MPI_RDFIO_DEBUG("%i: Creating manager if %p == %p.\n", rank, *manager, NULL);
+
+	if(*manager == NULL) {
+		*manager = hx_new_memory_storage_manager();
+		if(*manager == NULL) {
+			fprintf(stderr, "%s:%u: Error; cannot allocate storage manager.\n", __FILE__, __LINE__);
+			return -1;
+		}
+		created_manager = 1;
+	}
+
+	MPI_RDFIO_DEBUG("%i: Creating store if %p == %p.\n", rank, *store, NULL);
+
+	if(*store == NULL) {
+		*store = hx_new_hexastore(*manager);
+		if(*store == NULL) {
+			fprintf(stderr, "%s:%u: Error; cannot allocate hexastore.\n", __FILE__, __LINE__);
+			if(created_manager) {
+				hx_free_storage_manager(*manager);
+			}
+			return -1;
+		}
+	}
+
+	MPI_RDFIO_DEBUG("%i: Opening file %s.\n", rank, filename);
+
+	MPI_Info_create(&info);
+	
+	MPI_File_open(comm, filename, MPI_MODE_RDONLY, info, &file);
+
+	MPI_File_get_size(file, &filesize);
+	MPI_Offset chunk = filesize / commsize;
+	MPI_Offset my_chunk = chunk;
+	if(rank == commsize - 1) {
+		my_chunk += filesize % commsize;
+	}
+	
+	hx_node * nodes[3];
+	int nodecnt = 0;
+	
+	MPI_RDFIO_DEBUG("%i: Loading triples from %llu bytes located at offset %llu bytes in a file of total size %llu bytes.\n", rank, my_chunk, rank*chunk, filesize);
+	
+	iterator_t iter = mpi_file_ntriples_node_iterator_create(file, rank*chunk, my_chunk, bufsize, comm);
+	
+	while(iterator_has_next(iter)) {
+		char *nodestr = iterator_next(iter);
+		nodes[nodecnt++] = _mpi_rdfio_to_hx_node_p(nodestr);
+		if(nodecnt == 3) {
+			hx_add_triple(*store, *manager, nodes[0], nodes[1], nodes[2]);
+			nodecnt = 0;
+		}
+		free(nodestr);
+	}
+	
+	MPI_RDFIO_DEBUG("%i: Destroying iterator and closing file.\n", rank);
+	
+	iterator_destroy(iter);
+	
+	MPI_File_close(&file);
+
+	MPI_Info_free(&info);
+
+	return 1;
+}
+
+/*
 int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexastore **store, hx_storage_manager **manager, MPI_Comm comm) {
 	MPI_File file;
 	MPI_Offset filesize;
@@ -133,13 +212,6 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 
 	size_t lookupsize = 0;
 	size_t lookupmaxsize = 256;
-	/*
-	_mpi_rdfio_lookup_record** lookups = malloc(sizeof(_mpi_rdfio_lookup_record*));
-	if(lookups != NULL) {
-		*lookups = malloc(lookupmaxsize*sizeof(_mpi_rdfio_lookup_record));
-	}
-	*/
-	//if(lookups == NULL || *lookups == NULL) {
 	_mpi_rdfio_lookup_record *lookups = malloc(lookupmaxsize*sizeof(_mpi_rdfio_lookup_record));
 	if(lookups == NULL) {
 		fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for lookup records.\n", __FILE__, __LINE__, sizeof(_mpi_rdfio_lookup_record*) + lookupmaxsize*sizeof(_mpi_rdfio_lookup_record));
@@ -339,6 +411,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 
 	return 1;
 }
+*/
 
 hx_node* _mpi_rdfio_to_hx_node_p(char* ntnode) {
         switch(ntnode[0]) {
