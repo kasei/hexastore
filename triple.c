@@ -13,6 +13,20 @@ int hx_free_triple ( hx_triple* t ) {
 	return 0;
 }
 
+hx_node* hx_triple_node ( hx_triple* t, int i ) {
+	switch (i) {
+		case 0:
+			return t->subject;
+		case 1:
+			return t->predicate;
+		case 2:
+			return t->object;
+		default:
+			fprintf( stderr, "*** Bad triple index value (%d) passed to hx_triple_node\n", i );
+			return NULL;
+	};
+}
+
 int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string ) {
 	hx_node* subj	= hx_nodemap_get_node( map, t->subject );
 	hx_node* pred	= hx_nodemap_get_node( map, t->predicate );
