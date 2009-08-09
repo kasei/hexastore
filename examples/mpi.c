@@ -16,6 +16,31 @@ int DEBUG_NODE	= -1;
 extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
 
+char* read_file ( const char* qf ) {
+	struct stat st;
+	int fd	= open( qf, O_RDONLY );
+	if (fd < 0) {
+		perror( "Failed to open query file for reading: " );
+		return NULL;
+	}
+	
+	fstat( fd, &st );
+	
+	FILE* f	= fdopen( fd, "r" );
+	if (f == NULL) {
+		perror( "Failed to open query file for reading: " );
+		return NULL;
+	}
+	
+	char* query	= malloc( st.st_size + 1 );
+	if (query == NULL) {
+		fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
+	}
+	fread(query, st.st_size, 1, f);
+	query[ st.st_size ]	= 0;
+	return query;
+}
+
 int main ( int argc, char** argv ) {
 	int i;
 	MPI_Init(&argc, &argv);
@@ -30,9 +55,9 @@ int main ( int argc, char** argv ) {
 	int ecode;
 	const char* data_filename	= argv[1];
 	
-	char* job				= (argc > 2) ? argv[2] : "";
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
-//	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
+	char* job				= (argc > 3) ? argv[3] : "";
+//	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
 	
 	TIME_T(load_start, load_end);
 	TIME_T(exec_start, exec_end);
@@ -54,12 +79,15 @@ int main ( int argc, char** argv ) {
 		fprintf( stdout, "loading took %" PRINTTIME " seconds\n", DIFFTIME(load_end, load_start) );
 	}
 	
-//	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 
-	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
+	char* query	= read_file( argv[2] );
+	hx_bgp* b	= parse_bgp_query_string( query );
+	free(query);
+	
+//	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
+//	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?as <http://simile.mit.edu/2006/01/ontologies/mods3#point> \"end\" ; <http://simile.mit.edu/2006/01/ontologies/mods3#encoding> ?bo ; a ?co }" ); 
-
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x a :GraduateStudent . ?x :takesCourse <http://www.Department0.University0.edu/GraduateCourse0> . } " ); 
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> {?x a :Person .  ?x :memberOf <http://www.Department0.University0.edu> .} " ); 
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { <http://www.Department0.University0.edu/AssociateProfessor0> :teacherOf ?y . ?x :takesCourse ?y ; a :Student . ?y a :Course . } " ); 
@@ -109,8 +137,12 @@ int main ( int argc, char** argv ) {
 	
 	exec_end	= TIME();
 	
+	int total;
+	MPI_Allreduce(&results, &total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	
 	if (myrank == 0) {
-		fprintf( stdout, "execution took %" PRINTTIME " seconds\n", DIFFTIME(exec_end, exec_start) );
+		fprintf( stdout, "%d TOTAL RESULTS\n\n", total );
+		fprintf( stdout, "\nExecution took %" PRINTTIME " seconds.\n", DIFFTIME(exec_end, exec_start) );
 	}
 	
 	if (0) {
