@@ -43,10 +43,10 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap*
 	hx->map			= map;
 	hx->spo			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_SPO ) );
 	hx->sop			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_SOP ) );
-	hx->pso			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_PSO ) );
+// 	hx->pso			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_PSO ) );
 	hx->pos			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_POS ) );
-	hx->osp			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_OSP ) );
-	hx->ops			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_OPS ) );
+// 	hx->osp			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_OSP ) );
+// 	hx->ops			= hx_storage_id_from_block( s, hx_new_index( s, HX_INDEX_ORDER_OPS ) );
 	hx->next_var	= -1;
 	return hx;
 }
@@ -55,10 +55,10 @@ int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_free_nodemap( hx->map );
 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->spo ), s );
 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->sop ), s );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pso ), s );
+// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pso ), s );
 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pos ), s );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->osp ), s );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->ops ), s );
+// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->osp ), s );
+// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->ops ), s );
 	hx_storage_release_block( s, hx );
 	return 0;
 }
@@ -79,17 +79,23 @@ int hx_add_triple_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx
 	hx_terminal* t;
 	{
 		int added	= hx_index_add_triple_terminal( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st, s, p, o, &t );
-		hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->pso ), st, t, s, p, o, added );
+		if (hx->pso) {
+			hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->pso ), st, t, s, p, o, added );
+		}
 	}
 
 	{
 		int added	= hx_index_add_triple_terminal( (hx_index*) hx_storage_block_from_id( st, hx->sop ), st, s, p, o, &t );
-		hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->osp ), st, t, s, p, o, added );
+		if (hx->osp) {
+			hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->osp ), st, t, s, p, o, added );
+		}
 	}
 	
 	{
 		int added	= hx_index_add_triple_terminal( (hx_index*) hx_storage_block_from_id( st, hx->pos ), st, s, p, o, &t );
-		hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->ops ), st, t, s, p, o, added );
+		if (hx->ops) {
+			hx_index_add_triple_with_terminal( (hx_index*) hx_storage_block_from_id( st, hx->ops ), st, t, s, p, o, added );
+		}
 	}
 	
 	return 0;
@@ -126,13 +132,19 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 		
 		{
 			tinfo[0].index		= (hx_index*) hx_storage_block_from_id( s, hx->spo );
-			tinfo[0].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->pso );
+			if (hx->pso) {
+				tinfo[0].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->pso );
+			}
 			
 			tinfo[1].index		= (hx_index*) hx_storage_block_from_id( s, hx->sop );
-			tinfo[1].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->osp );
+			if (hx->osp) {
+				tinfo[1].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->osp );
+			}
 			
 			tinfo[2].index		= (hx_index*) hx_storage_block_from_id( s, hx->pos );
-			tinfo[2].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->ops );
+			if (hx->ops) {
+				tinfo[2].secondary	= (hx_index*) hx_storage_block_from_id( s, hx->ops );
+			}
 			
 			int i;
 			for (i = 0; i < 3; i++) {
@@ -159,14 +171,20 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 			tinfo[2].index		= (hx_index*) hx_storage_block_from_id( s, hx->pos );
 			tinfo[2].secondary	= NULL;
 			
-			tinfo[3].index		= (hx_index*) hx_storage_block_from_id( s, hx->pso );
-			tinfo[3].secondary	= NULL;
+			if (hx->pso) {
+				tinfo[3].index		= (hx_index*) hx_storage_block_from_id( s, hx->pso );
+				tinfo[3].secondary	= NULL;
+			}
 			
-			tinfo[4].index		= (hx_index*) hx_storage_block_from_id( s, hx->osp );
-			tinfo[4].secondary	= NULL;
+			if (hx->osp) {
+				tinfo[4].index		= (hx_index*) hx_storage_block_from_id( s, hx->osp );
+				tinfo[4].secondary	= NULL;
+			}
 			
-			tinfo[5].index		= (hx_index*) hx_storage_block_from_id( s, hx->ops );
-			tinfo[5].secondary	= NULL;
+			if (hx->ops) {
+				tinfo[5].index		= (hx_index*) hx_storage_block_from_id( s, hx->ops );
+				tinfo[5].secondary	= NULL;
+			}
 			
 			int i;
 			for (i = 0; i < 6; i++) {
@@ -208,10 +226,16 @@ int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_
 	hx_node_id o	= hx_get_node_id( hx, on );
 	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st, s, p, o );
 	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->sop ), st, s, p, o );
-	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->pso ), st, s, p, o );
+	if (hx->pso) {
+		hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->pso ), st, s, p, o );
+	}
 	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->pos ), st, s, p, o );
-	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->osp ), st, s, p, o );
-	hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->ops ), st, s, p, o );
+	if (hx->osp) {
+		hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->osp ), st, s, p, o );
+	}
+	if (hx->ops) {
+		hx_index_remove_triple( (hx_index*) hx_storage_block_from_id( st, hx->ops ), st, s, p, o );
+	}
 	return 0;
 }
 
@@ -337,10 +361,17 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 		case 1:
 			switch (index_order[1]) {
 				case 0:
+					if (hx->pso) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using pso index\n" );
+						fprintf( stderr, "using pso index\n" );
 #endif
-					*index	= (hx_index*) hx_storage_block_from_id( st, hx->pso );
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->pso );
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted pso index, but using spo...\n" );
+#endif
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->spo );
+					}
 					break;
 				case 2:
 #ifdef DEBUG_INDEX_SELECTION
@@ -353,16 +384,30 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 		case 2:
 			switch (index_order[1]) {
 				case 0:
+					if (hx->osp) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using osp index\n" );
+						fprintf( stderr, "using osp index\n" );
 #endif
-					*index	= (hx_index*) hx_storage_block_from_id( st, hx->osp );
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->osp );
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted osp index, but using sop...\n" );
+#endif
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->sop );
+					}
 					break;
 				case 1:
+					if (hx->ops) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using ops index\n" );
+						fprintf( stderr, "using ops index\n" );
 #endif
-					*index	= (hx_index*) hx_storage_block_from_id( st, hx->ops );
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->ops );
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted ops index, but using pos...\n" );
+#endif
+						*index	= (hx_index*) hx_storage_block_from_id( st, hx->pos );
+					}
 					break;
 			}
 			break;
@@ -387,16 +432,6 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn,
 	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
 	
 	hx_node* triple_ordered[3]	= { sn, pn, on };
-	nodes[0]	= triple_ordered[ (*index)->order[0] ];
-	nodes[1]	= triple_ordered[ (*index)->order[1] ];
-	nodes[2]	= triple_ordered[ (*index)->order[2] ];
-	return 0;
-}
-
-int hx_get_ordered_index_id ( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count ) {
-	_hx_get_ordered_index( hx, st, s, p, o, order_position, index, nodes, var_count );
-	
-	hx_node_id triple_ordered[3]	= { s, p, o };
 	nodes[0]	= triple_ordered[ (*index)->order[0] ];
 	nodes[1]	= triple_ordered[ (*index)->order[1] ];
 	nodes[2]	= triple_ordered[ (*index)->order[2] ];
@@ -507,14 +542,22 @@ int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f ) {
 		fprintf( stderr, "*** Error while writing hexastore nodemap to disk.\n" );
 		return 1;
 	}
-	if ((
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->spo ), s, f )) ||
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->sop ), s, f )) ||
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->pso ), s, f )) ||
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->pos ), s, f )) ||
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->osp ), s, f )) ||
-		(hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->ops ), s, f ))
-		) != 0) {
+	
+	int cond	= 0;
+	if (h->spo)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->spo ), s, f );
+	if (h->sop)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->sop ), s, f );
+	if (h->pso)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->pso ), s, f );
+	if (h->pos)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->pos ), s, f );
+	if (h->osp)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->osp ), s, f );
+	if (h->ops)
+		cond		|= hx_index_write( (hx_index*) hx_storage_block_from_id( s, h->ops ), s, f );
+	
+	if (cond != 0) {
 		fprintf( stderr, "*** Error while writing hexastore indices to disk.\n" );
 		return 1;
 	} else {
