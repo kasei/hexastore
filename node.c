@@ -386,7 +386,7 @@ int hx_node_uniq_set ( int size, hx_node** set, hx_node*** v, int copy ) {
 			}
 		}
 	}
-	
+	free( vars );
 	return uniq_count;
 }
 
