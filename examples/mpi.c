@@ -7,7 +7,7 @@
 #include "materialize.h"
 
 #include "timing_choices.h"
-#define TIMING_CPU_FREQUENCY 2600000000
+#define TIMING_CPU_FREQUENCY 2600000000.0
 #define TIMING_USE TIMING_RDTSC
 #include "timing.h"
 
@@ -17,52 +17,36 @@ extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
 
 char* read_file ( const char* qf ) {
-	struct stat st;
-	int fd	= open( qf, O_RDONLY );
-	if (fd < 0) {
-		perror( "Failed to open query file for reading: " );
-		return NULL;
-	}
-	
-	fstat( fd, &st );
-	
-	FILE* f	= fdopen( fd, "r" );
-	if (f == NULL) {
-		perror( "Failed to open query file for reading: " );
-		return NULL;
-	}
-	
-	char* query	= malloc( st.st_size + 1 );
+	MPI_File file;
+	MPI_Info info;
+	MPI_Status status;
+	MPI_Offset filesize;
+	MPI_Info_create(&info);
+	MPI_File_open(MPI_COMM_SELF, (char*) qf, MPI_MODE_RDONLY, info, &file);
+	MPI_File_get_size(file, &filesize);
+
+	char* query	= malloc( filesize + 1 );
 	if (query == NULL) {
 		fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
 	}
-	fread(query, st.st_size, 1, f);
-	query[ st.st_size ]	= 0;
+	MPI_File_read_shared(file, query, filesize, MPI_BYTE, &status);
+	query[ filesize ]	= 0;
+
+	MPI_File_close(&file);
+	MPI_Info_free(&info);
+	
 	return query;
 }
 
 int main ( int argc, char** argv ) {
 	int i;
 	MPI_Init(&argc, &argv);
-
+	
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
-	hx_storage_manager* st	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( st );
-	
-	int ecode;
-	const char* data_filename	= argv[1];
-	
-	char* job				= (argc > 3) ? argv[3] : "";
-//	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
-	
-	TIME_T(load_start, load_end);
-	TIME_T(exec_start, exec_end);
-	
-	
+
 	if (0) { // XXX
 		char hostname[256];
 		gethostname(hostname, sizeof(hostname));
@@ -71,18 +55,32 @@ int main ( int argc, char** argv ) {
 		sleep(5);
 	}
 
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_hexastore* hx		= hx_new_hexastore( st );
+	
+	int ecode;
+	const char* data_filename	= argv[1];
+	const char* query_filename	= argv[2];
+	
+	char* job				= (argc > 3) ? argv[3] : "";
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
+//  	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
+	
+	TIME_T(load_start, load_end);
+	TIME_T(exec_start, exec_end);
+	
+	
 	load_start	= TIME();
 	hx_parallel_distribute_triples_from_file( ctx, data_filename, hx );
 	load_end	= TIME();
 
 	if (myrank == 0) {
-		fprintf( stdout, "loading took %" PRINTTIME " seconds\n", DIFFTIME(load_end, load_start) );
+		fprintf( stdout, "Loading took %lf seconds\n", DIFFTIME(load_end, load_start) );
 	}
 	
 
-	char* query	= read_file( argv[2] );
+	char* query	= read_file( query_filename );
 	hx_bgp* b	= parse_bgp_query_string( query );
-	free(query);
 	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
@@ -120,11 +118,11 @@ int main ( int argc, char** argv ) {
 		
 		char* string;
 		hx_variablebindings_string( b, results_map, &string );
-		char chars[1024];
-		//fprintf(f, "process %d: binding %p %s\n", myrank, (void*) b, string);
-		sprintf(chars, "process %d: binding %p %s\n", myrank, (void*) b, string);
+		char* chars	= malloc( strlen( string ) + 2 );
+		sprintf(chars, "%s\n", string);
 		MPI_File_write_shared(file, chars, strlen(chars), MPI_BYTE, &status);
 		free(string);
+		free(chars);
 		
 		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next(iter);
@@ -133,7 +131,7 @@ int main ( int argc, char** argv ) {
 	//fclose( f );
 	MPI_File_close(&file);
 	MPI_Info_free(&info);
-	fprintf( stderr, "process %d: %d results\n", myrank, results );
+//	fprintf( stderr, "process %d: %d results\n", myrank, results );
 	
 	exec_end	= TIME();
 	
@@ -141,11 +139,15 @@ int main ( int argc, char** argv ) {
 	MPI_Allreduce(&results, &total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
 	if (myrank == 0) {
-		fprintf( stdout, "%d TOTAL RESULTS\n\n", total );
-		fprintf( stdout, "\nExecution took %" PRINTTIME " seconds.\n", DIFFTIME(exec_end, exec_start) );
+		fprintf( stdout, "%d Total results\n\n", total );
+		fprintf( stdout, "\nExecution took %lf seconds.\n", DIFFTIME(exec_end, exec_start) );
+		fprintf( stdout, "RESULTS: load=%lf exec=%lf total=%d np=%d data=%s query=%s\n", DIFFTIME(load_end, load_start), DIFFTIME(exec_end, exec_start), total, mysize, data_filename, query_filename);
 	}
 	
 	if (0) {
+		free(query);
+		hx_free_variablebindings_iter(iter);
+		hx_free_nodemap( results_map );
 		hx_free_bgp(b);
 		hx_free_hexastore( hx, st );
 		hx_free_storage_manager( st );
