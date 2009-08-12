@@ -53,12 +53,18 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap*
 
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_free_nodemap( hx->map );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->spo ), s );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->sop ), s );
-// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pso ), s );
-	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pos ), s );
-// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->osp ), s );
-// 	hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->ops ), s );
+	if (hx->spo)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->spo ), s );
+	if (hx->sop)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->sop ), s );
+	if (hx->pso)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pso ), s );
+	if (hx->pos)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->pos ), s );
+	if (hx->osp)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->osp ), s );
+	if (hx->ops)
+		hx_free_index( (hx_index*) hx_storage_block_from_id( s, hx->ops ), s );
 	hx_storage_release_block( s, hx );
 	return 0;
 }
