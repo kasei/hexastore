@@ -106,7 +106,7 @@ int main ( int argc, char** argv ) {
 			hx_variablebindings_iter_next( iter );
 		}
 		
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	}
 	
 	if (counter == 0) {

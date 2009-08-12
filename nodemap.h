@@ -11,7 +11,6 @@ extern "C" {
 #include "avl.h"
 #include "node.h"
 #include "storage.h"
-#include "mpi.h"
 
 typedef struct avl_table avl;
 typedef struct {

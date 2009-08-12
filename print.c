@@ -159,7 +159,7 @@ int main (int argc, char** argv) {
 			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 		}
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	} else if (strcmp( arg, "-path" ) == 0) {
 		char* from	= argv[3];
 		char* to	= argv[4];
@@ -192,7 +192,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings_iter_next( iter );
 		}
 		
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	} else if (strcmp( arg, "-star" ) == 0) {
 		char* uri	= argv[3];
 		hx_node* node	= node_for_string( uri, hx );
@@ -220,7 +220,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings_iter_next( iter );
 		}
 		
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	} else if (strcmp( arg, "-j" ) == 0) {
 		if ((argc % 3) != 0) {
 			help(argc, argv);
@@ -280,7 +280,7 @@ int main (int argc, char** argv) {
 			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 		}
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	} else {
 		if (argc != 5) {
 			help(argc, argv);

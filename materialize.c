@@ -203,7 +203,7 @@ int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 				alloc	= alloc * 2;
 				hx_variablebindings** newbindings	= (hx_variablebindings**) calloc( alloc, sizeof( hx_variablebindings* ) );
 				if (newbindings == NULL) {
-					hx_free_variablebindings_iter( iter, 1 );
+					hx_free_variablebindings_iter( iter );
 					fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
 					return 1;
 				}
@@ -222,7 +222,7 @@ int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 		}
 		
 		info->bindings	= bindings;
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 		return 0;
 	} else {
 		// iterator is already materialized and started

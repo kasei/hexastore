@@ -78,7 +78,7 @@ int _hx_filter_iter_vb_free ( void* data ) {
 		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
-	hx_free_variablebindings_iter( info->iter, 1 );
+	hx_free_variablebindings_iter( info->iter );
 	free( info );
 	return 0;
 }

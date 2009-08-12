@@ -77,7 +77,7 @@ void materialize_iter_test ( void ) {
 	
 	_test_iter_expected_values( iter, map );
 	
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }
@@ -105,7 +105,7 @@ void materialize_reset_test ( void ) {
  	}
 	ok1( counter == 8 );
 	
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }
@@ -139,7 +139,7 @@ void materialize_data_test ( void ) {
 	
 	_test_iter_expected_values( iter, map );
 	
-	hx_free_variablebindings_iter( iter, 0 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_nodemap( map );
 }
 

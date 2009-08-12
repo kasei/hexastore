@@ -466,13 +466,31 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	return b;
 }
 
-hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len ) {
-	char* p	= ptr;
+hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_nodemap* map ) {
+	char* ptr;
+	void* needs_free	= NULL;
+	if (*compressed == 1) { //compressed
+		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
+		char* compressed_data	= &( compressed[5] );
+		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
+		unsigned long destlen	= buffer_length;
+		uncompress(uncompressed, &destlen, compressed_data, len-5);
+		ptr	= uncompressed;
+		needs_free	= ptr;
+		len			= buffer_length;
+	} else {
+		ptr	= &( compressed[1] );
+		len--;
+	}
+	
+	int i;
 	int size;
+	char* p	= ptr;
 	memcpy( &size, p, sizeof( int ) );
 	p	+= sizeof( int );
-	char** names	= (char**) calloc( size, sizeof( char* ) );
-	int i;
+	char** names		= (char**) calloc( size, sizeof( char* ) );
+	hx_node_id* nodes	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
+	
 	for (i = 0; i < size; i++) {
 		int name_len	= strlen(p);
 		char* name		= (char*) calloc( name_len + 1, sizeof( char ) );
@@ -480,30 +498,128 @@ hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len ) {
 		names[i]		= name;
 		p				+= name_len + 1;
 	}
-	hx_node_id* nodes	= calloc( size, sizeof( hx_node_id ) );
+	
 	for (i = 0; i < size; i++) {
-		memcpy( &( nodes[i] ), p, sizeof( hx_node_id ) );
-		p				+= sizeof( hx_node_id );
+		int node_len	= strlen(p);
+		hx_node* n		= hx_node_parse( p );
+		nodes[i]		= hx_nodemap_add_node( map, n );
+		hx_free_node(n);
+		p				+= node_len + 1;
 	}
+	
 	hx_variablebindings* b	= hx_new_variablebindings( size, names, nodes );
 	for (i = 0; i < size; i++) {
 		free(names[i]);
 	}
 	free(names);
+	
+	if (needs_free) {
+		free(needs_free);
+	}
+	
 	return b;
 }
 
-char* hx_variablebindings_freeze( hx_variablebindings* b, int* len ) {
+hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len, hx_nodemap* map, int join_vars_count, char** join_vars ) {
+	char* ptr;
+	void* needs_free	= NULL;
+	if (*compressed == 1) { //compressed
+		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
+		char* compressed_data	= &( compressed[5] );
+		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
+		unsigned long destlen	= buffer_length;
+		uncompress(uncompressed, &destlen, compressed_data, len-5);
+		ptr	= uncompressed;
+		needs_free	= ptr;
+		len			= buffer_length;
+	} else {
+		ptr	= &( compressed[1] );
+		len--;
+	}
+	
+	int i, j;
+	int size;
+	char* p	= ptr;
+	memcpy( &size, p, sizeof( int ) );
+	p	+= sizeof( int );
+	char** names		= (char**) calloc( size, sizeof( char* ) );
+	hx_node_id* nodes	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
+	
+	int* noadd_columns	= (int*) calloc( size, sizeof(int) );
+	for (i = 0; i < size; i++) {
+		int name_len	= strlen(p);
+		char* name		= (char*) calloc( name_len + 1, sizeof( char ) );
+		strcpy( name, p );
+		for (j = 0; j < join_vars_count; j++) {
+			if (strcmp(name, join_vars[j]) == 0) {
+				noadd_columns[i]	= 1;
+			}
+		}
+		names[i]		= name;
+		p				+= name_len + 1;
+	}
+	
+	for (i = 0; i < size; i++) {
+		int node_len	= strlen(p);
+		hx_node* n		= hx_node_parse( p );
+		hx_node_id id	= hx_nodemap_get_node_id( map, n );
+		if (id == 0) {
+			if (noadd_columns[i] == 1) {
+				for (j = 0; j < size; j++) {
+					free(names[j]);
+				}
+				free( noadd_columns );
+				free(names);
+				if (needs_free) {
+					free(needs_free);
+				}
+				hx_free_node(n);
+				return NULL;
+			} else {
+				id			= hx_nodemap_add_node( map, n );
+				nodes[i]	= id;
+			}
+		} else {
+			nodes[i]		= id;
+		}
+		
+		hx_free_node(n);
+		p				+= node_len + 1;
+	}
+	free( noadd_columns );
+	
+	hx_variablebindings* b	= hx_new_variablebindings( size, names, nodes );
+	for (i = 0; i < size; i++) {
+		free(names[i]);
+	}
+	free(names);
+
+	if (needs_free) {
+		free(needs_free);
+	}
+	
+	return b;
+}
+
+char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* len ) {
+	int i;
 	int names_length	= 0;
 	int* name_lengths	= calloc( b->size, sizeof( int ) );
-	int i;
+	int node_length		= 0;
+	int* node_lengths	= calloc( b->size, sizeof( int ) );
+	char** node_strings	= (char**) calloc( b->size, sizeof( char* ) );
 	for (i = 0; i < b->size; i++) {
 		name_lengths[i]	= strlen( b->names[i] );
 		names_length	+= name_lengths[i] + 1;
+		hx_node* n		= hx_nodemap_get_node( map, b->nodes[i] );
+		hx_node_string( n, &( node_strings[i] ) );
+		node_lengths[i]	= strlen( node_strings[i] );
+		node_length		+= node_lengths[i] + 1;
 	}
-	*len		= sizeof(int) + (names_length * sizeof(char)) + (sizeof(hx_node_id) * b->size);
-	char* ptr	= (char*) calloc( 1, *len );
-	char* p		= ptr;
+	
+	int buffer_length	= sizeof(int) + (names_length * sizeof(char)) + (node_length * sizeof(char));
+	char* ptr	= (char*) calloc( 1, buffer_length + 1 );
+	char* p		= &( ptr[1] );
 	memcpy( p, &( b->size ), sizeof( int ) );
 	p			+= sizeof( int );
 	for (i = 0; i < b->size; i++) {
@@ -511,11 +627,31 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, int* len ) {
 		p		+= name_lengths[i] + 1;
 	}
 	for (i = 0; i < b->size; i++) {
-		memcpy( p, &( b->nodes[i] ), sizeof( hx_node_id ) );
-		p		+= sizeof( hx_node_id );
+		memcpy( p, node_strings[i], node_lengths[i] + 1 );
+		p		+= node_lengths[i] + 1;
+		free( node_strings[i] );
 	}
+	free( node_lengths );
+	free( node_strings );
 	free( name_lengths );
-	return ptr;
+	
+//	if (buffer_length < 60) {
+	if (1) {
+		*ptr		= 0;	// uncompressed
+		*len	= buffer_length + 1;
+		return ptr;
+	} else {
+		unsigned long compressed_length	= 13 + buffer_length;
+		char* compressed				= calloc( 5 + compressed_length, sizeof(char) );
+		*compressed	= 1;	// compressed
+		char* compressed_data			= &( compressed[5] );
+		compress( compressed_data, &compressed_length, &(ptr[1]), buffer_length );
+		*( (uint32_t*) &( compressed[1] ) )		= (uint32_t) buffer_length;
+		free( ptr );
+		
+		*len	= compressed_length;
+		return compressed;
+	}
 }
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
@@ -528,6 +664,10 @@ hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	return iter;
 }
 
+hx_variablebindings_iter* hx_variablebindings_new_empty_iter_with_names ( int size, char** names ) {
+	return hx_new_materialize_iter_with_data( size, names, 0, NULL );
+}
+
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
 	if (iter == NULL) {
@@ -538,14 +678,12 @@ hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_ite
 	return iter;
 }
 
-int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable ) {
+int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter ) {
 	if (iter->vtable != NULL) {
 		iter->vtable->free( iter->ptr );
-		if (free_vtable) {
-			free( iter->vtable );
-			iter->vtable	= NULL;
-		}
-		iter->ptr	= NULL;
+		free( iter->vtable );
+		iter->vtable	= NULL;
+		iter->ptr		= NULL;
 	}
 	free( iter );
 	return 0;
@@ -650,7 +788,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		// so, materialize the iterator
 		hx_variablebindings_iter* sorted	= hx_new_materialize_iter( iter );
 		if (sorted == NULL) {
-			hx_free_variablebindings_iter( iter, 1 );
+			hx_free_variablebindings_iter( iter );
 			return NULL;
 		}
 		
@@ -661,7 +799,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		if (r == 0) {
 			return sorted;
 		} else {
-			hx_free_variablebindings_iter( sorted, 1 );
+			hx_free_variablebindings_iter( sorted );
 			return NULL;
 		}
 	}

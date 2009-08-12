@@ -13,6 +13,7 @@
 #include "node.h"
 
 typedef struct {
+	FILE* f;
 	TCBDB* cabinet;
 	uint64_t count;
 	uint64_t next_bnode;
@@ -24,7 +25,7 @@ void help (int argc, char** argv);
 int main (int argc, char** argv);
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s nodemap.tcb data.rdf\n\n", argv[0] );
+	fprintf( stderr, "Usage: %s nodemap.tcb data.rdf triples.data\n\n", argv[0] );
 }
 
 void logger ( uint64_t _count ) {
@@ -72,7 +73,7 @@ unsigned char* generate_id_handler (void *user_data, raptor_genid_type type, uns
 	return id;
 }
 
-hx_node* parser_node ( parser_t* parser, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
+hx_node_id parser_node ( parser_t* parser, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
 	int ecode;
 	hx_node_id id	= 0;
 	char node_type;
@@ -138,16 +139,21 @@ hx_node* parser_node ( parser_t* parser, void* node, raptor_identifier_type type
 	} else {
 //		fprintf(stderr, "skipping: %s\n", string);
 	}
+	
+	int len;
+	void* p		= tcbdbget(parser->cabinet, string, strlen(string), &len);
+	id			= *((hx_node_id*) p);
 	free(string);
 	
 	if (needs_free) {
 		free( value );
 		needs_free	= 0;
 	}
-	return newnode;
+	hx_free_node( newnode );
+	return id;
 }
 
-int get_triple_nodes ( parser_t* parser, const raptor_statement* triple, hx_node** s, hx_node** p, hx_node** o ) {
+int get_triple_nodes ( parser_t* parser, const raptor_statement* triple, hx_node_id* s, hx_node_id* p, hx_node_id* o ) {
 	*s	= parser_node( parser, (void*) triple->subject, triple->subject_type, NULL, NULL );
 	*p	= parser_node( parser, (void*) triple->predicate, triple->predicate_type, NULL, NULL );
 	*o	= parser_node( parser, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
@@ -156,9 +162,14 @@ int get_triple_nodes ( parser_t* parser, const raptor_statement* triple, hx_node
 
 void statement_handler (void* user_data, const raptor_statement* triple)	{
 	parser_t* parser	= (parser_t*) user_data;
-	hx_node *s, *p, *o;
+	hx_node_id s, p, o;
 	
 	get_triple_nodes( parser, triple, &s, &p, &o );
+	
+	fwrite( &s, sizeof( hx_node_id ), 1, parser->f );
+	fwrite( &p, sizeof( hx_node_id ), 1, parser->f );
+	fwrite( &o, sizeof( hx_node_id ), 1, parser->f );
+	
 	int i	= parser->count++;
 	if (i % 25000 == 0) {
 		logger( i );
@@ -169,6 +180,7 @@ int main (int argc, char** argv) {
 	int ecode;
 	const char* rdf_filename		= NULL;
 	const char* nodemap_filename	= NULL;
+	const char* triples_filename	= NULL;
 	
 	if (argc < 2) {
 		help(argc, argv);
@@ -182,7 +194,10 @@ int main (int argc, char** argv) {
 	parser->next_bnode	= 0;
 	gettimeofday( &( parser->tv ), NULL );
 	parser->cabinet	= tcbdbnew();
-	tcbdbsetcache(parser->cabinet, 1024*1024, 1024*1024);
+
+	if (argc >= 4) {
+		tcbdbsetcache(parser->cabinet, 1024*1024, 1024*1024);
+	}
 
 	if(!tcbdbopen(parser->cabinet, nodemap_filename, HDBOWRITER | HDBOCREAT)) {
 		ecode = tcbdbecode(parser->cabinet);
@@ -193,8 +208,11 @@ int main (int argc, char** argv) {
 	
 	int len;
 	void* p;
-	if (argc >= 3) {
+	if (argc >= 4) {
 		rdf_filename		= argv[2];
+		triples_filename	= argv[3];
+		parser->f			= fopen( triples_filename, "a" );
+		
 		raptor_init();
 		unsigned char* uri_string	= raptor_uri_filename_to_uri_string( rdf_filename );
 		raptor_uri* uri				= raptor_new_uri(uri_string);
@@ -208,12 +226,13 @@ int main (int argc, char** argv) {
 		}
 		
 		raptor_set_statement_handler(rdf_parser, parser, statement_handler);
-		raptor_set_generate_id_handler(rdf_parser, parser, generate_id_handler);
+//		raptor_set_generate_id_handler(rdf_parser, parser, generate_id_handler);
 		raptor_parse_file(rdf_parser, uri, base_uri);
 		logger( parser->count );
 		fprintf( stderr, "\n" );
 		tcbdbput(parser->cabinet, "   NEXTID", 9, &( parser->next_id ), sizeof( uint64_t ));
 		
+		fclose( parser->f );
 		raptor_free_parser(rdf_parser);
 		free( uri_string );
 		free( base_uri );

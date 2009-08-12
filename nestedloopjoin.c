@@ -187,10 +187,13 @@ int _hx_nestedloopjoin_iter_vb_free ( void* data ) {
 	}
 	info->lhs_size	= 0;
 	info->rhs_size	= 0;
-	hx_free_variablebindings_iter( info->lhs, 1 );
-	hx_free_variablebindings_iter( info->rhs, 1 );
+	hx_free_variablebindings_iter( info->lhs );
+	hx_free_variablebindings_iter( info->rhs );
 	free( info->rhs_batch );
 	free( info->lhs_batch );
+	for (i = 0; i < info->size; i++) {
+		free( info->names[i] );
+	}
 	free( info->names );
 	free( info );
 	return 0;
