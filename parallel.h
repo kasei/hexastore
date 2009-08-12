@@ -26,6 +26,11 @@ extern "C" {
 #include "async_mpi.h"
 #include "genmap/map.h"
 
+typedef enum {
+	HX_JOIN_LHS,
+	HX_JOIN_RHS
+} hx_join_side;
+
 typedef struct {
 	hx_storage_manager* storage;
 	int root;
@@ -41,7 +46,7 @@ int hx_parallel_distribute_triples_from_hexastore ( int rank, hx_hexastore* sour
 int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, hx_storage_manager* st, hx_hexastore* destination, hx_nodemap* map );
 int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_hexastore* destination );
 hx_node_id* hx_parallel_lookup_node_ids ( hx_parallel_execution_context* ctx, int count, hx_node** n );
-hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination );
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination, hx_join_side side );
 int hx_parallel_collect_variablebindings ( int rank, hx_storage_manager* st, hx_variablebindings_iter* iter );
 hx_variablebindings_iter* hx_parallel_new_rendezvousjoin_bgp ( hx_hexastore* hx, hx_storage_manager* st, hx_bgp* b );
 char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_node **nodes, size_t len, int* maxiv);
