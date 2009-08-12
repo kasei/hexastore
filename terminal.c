@@ -1,35 +1,35 @@
 #include "terminal.h"
 
-hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
-	hx_terminal* terminal	= (hx_terminal*) hx_storage_new_block( s, sizeof( hx_terminal ) );
-	hx_btree* tree			= hx_new_btree( s, TERMINAL_TREE_BRANCHING_SIZE );
-	terminal->tree			= hx_storage_id_from_block( s, tree );
+hx_terminal* hx_new_terminal( void* world ) {
+	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal )  );
+	hx_btree* tree			= hx_new_btree( NULL, TERMINAL_TREE_BRANCHING_SIZE );
+	terminal->tree			= ((uintptr_t) tree);
 	terminal->refcount		= 0;
 	terminal->triples_count	= 0;
 	return terminal;
 }
 
-int hx_free_terminal ( hx_terminal* t, hx_storage_manager* st ) {
-	hx_free_btree( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ) );
-	hx_storage_release_block( st, t );
+int hx_free_terminal ( hx_terminal* t ) {
+	hx_free_btree( (hx_btree*) t->tree );
+	free( t );
 	return 0;
 }
 
-int hx_terminal_inc_refcount ( hx_terminal* t, hx_storage_manager* st ) {
+int hx_terminal_inc_refcount ( hx_terminal* t ) {
 	return ++(t->refcount);
 }
 
-int hx_terminal_dec_refcount ( hx_terminal* t, hx_storage_manager* st ) {
+int hx_terminal_dec_refcount ( hx_terminal* t ) {
 	--(t->refcount);
 	if (t->refcount <= 0) {
-		hx_free_terminal( t, st );
+		hx_free_terminal( t );
 	}
 	return 0;
 }
 
-int hx_terminal_debug ( const char* header, hx_terminal* t, hx_storage_manager* st, int newline ) {
+int hx_terminal_debug ( const char* header, hx_terminal* t, int newline ) {
 	fprintf( stderr, "%s[", header );
-	hx_terminal_iter* iter	= hx_terminal_new_iter( t, st );
+	hx_terminal_iter* iter	= hx_terminal_new_iter( t );
 	int i	= 0;
 	while (!hx_terminal_iter_finished( iter )) {
 		hx_node_id n;
@@ -47,23 +47,21 @@ int hx_terminal_debug ( const char* header, hx_terminal* t, hx_storage_manager* 
 	return 0;
 }
 
-int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
-	int i;
-	
+int hx_terminal_add_node ( hx_terminal* t, hx_node_id n ) {
 	if (n == (hx_node_id) 0) {
 		fprintf( stderr, "*** hx_node_id cannot be zero in hx_terminal_add_node\n" );
 		return 1;
 	}
 	
-	int r	= hx_btree_insert( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n, (hx_storage_id_t) 1 );
+	int r	= hx_btree_insert( (hx_btree*) t->tree, n, (uintptr_t) 1 );
 	if (r == 0) {
 		t->triples_count++;
 	}
 	return r;
 }
 
-int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
-	hx_storage_id_t r	= hx_btree_search( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n );
+int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n ) {
+	uintptr_t r	= hx_btree_search( (hx_btree*) t->tree, n );
 	if (r == 0) {
 		// not found
 		return 0;
@@ -73,9 +71,9 @@ int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_
 	}
 }
 
-int hx_terminal_remove_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
+int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n ) {
 //	fprintf( stderr, "%p\n", t->tree->root );
-	int r	= hx_btree_remove( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n );
+	int r	= hx_btree_remove( (hx_btree*) t->tree, n );
 //	fprintf( stderr, "after removing node from terminal, tree root = %p\n", t->tree->root );
 	if (r == 0) {
 		t->triples_count--;
@@ -83,15 +81,14 @@ int hx_terminal_remove_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id
 	return r;
 }
 
-list_size_t hx_terminal_size ( hx_terminal* t, hx_storage_manager* st ) {
+list_size_t hx_terminal_size ( hx_terminal* t ) {
 	return t->triples_count;
 }
 
-hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* t, hx_storage_manager* st ) {
+hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* t ) {
 	hx_terminal_iter* iter	= (hx_terminal_iter*) calloc( 1, sizeof( hx_terminal_iter ) );
 	iter->terminal	= t;
-	iter->storage	= st;
-	iter->t			= hx_btree_new_iter( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ) );
+	iter->t			= hx_btree_new_iter( (hx_btree*) t->tree );
 	return iter;
 }
 
@@ -118,11 +115,11 @@ int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n ) {
 }
 
 
-int hx_terminal_write( hx_terminal* t, hx_storage_manager* st, FILE* f ) {
+int hx_terminal_write( hx_terminal* t, FILE* f ) {
 	fputc( 'T', f );
 	fwrite( &( t->triples_count ), sizeof( list_size_t ), 1, f );
 	
-	hx_terminal_iter* iter	= hx_terminal_new_iter( t, st );
+	hx_terminal_iter* iter	= hx_terminal_new_iter( t );
 	while (!hx_terminal_iter_finished( iter )) {
 		hx_node_id n;
 		hx_terminal_iter_current( iter, &n );
@@ -133,7 +130,7 @@ int hx_terminal_write( hx_terminal* t, hx_storage_manager* st, FILE* f ) {
 	return 0;
 }
 
-hx_terminal* hx_terminal_read( hx_storage_manager* s, FILE* f, int buffer ) {
+hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
 	list_size_t used;
 	int c	= fgetc( f );
 	if (c != 'T') {
@@ -152,16 +149,17 @@ hx_terminal* hx_terminal_read( hx_storage_manager* s, FILE* f, int buffer ) {
 			allocated	= used * 1.5;
 		}
 		
-		hx_terminal* terminal	= hx_new_terminal( s );
+		hx_terminal* terminal	= hx_new_terminal( NULL );
 		hx_node_id* p	= (hx_node_id*) calloc( used, sizeof( hx_node_id ) );
 		size_t ptr_read	= fread( p, sizeof( hx_node_id ), used, f );
 		if (ptr_read == 0) {
-			hx_free_terminal( terminal, s );
+			hx_free_terminal( terminal );
 			return NULL;
 		} else {
-			int i;
-			for (i = 0; i < used; i++) {
-				hx_terminal_add_node( terminal, s, p[i] );
+			int i	= 0;
+			for (i = 0; i < (int) used; i++) {
+				hx_node_id id	= p[i];
+				hx_terminal_add_node( terminal, id );
 			}
 			free( p );
 			return terminal;

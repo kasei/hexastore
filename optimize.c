@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
-#include "storage.h"
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id );
 void help (int argc, char** argv) {
@@ -33,10 +32,8 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_storage_manager* st	= hx_new_memory_storage_manager();
-	
 	fprintf( stderr, "reading hexastore from file...\n" );
-	hx_hexastore* hx	= hx_read( st, inf, 0 );
+	hx_hexastore* hx	= hx_read( inf, 0 );
 	fprintf( stderr, "reading nodemap from file...\n" );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
@@ -45,8 +42,8 @@ int main (int argc, char** argv) {
 	
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
-	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( st, smap );
-	hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st );
+	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( NULL, smap );
+	hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx->spo );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
 		hx_index_iter_current( iter, &s, &p, &o );
@@ -54,14 +51,14 @@ int main (int argc, char** argv) {
 		hx_node* pn	= hx_nodemap_get_node( hx->map, p );
 		hx_node* on	= hx_nodemap_get_node( hx->map, o );
 		
-		hx_add_triple( shx, st, sn, pn, on );
+		hx_add_triple( shx, sn, pn, on );
 		hx_index_iter_next( iter );
 		if ((++count % 25000) == 0)
 			fprintf( stderr, "\rfinished %d triples", count );
 	}
 	hx_free_index_iter( iter );
 	
-	if (hx_write( shx, st, outf ) != 0) {
+	if (hx_write( shx, outf ) != 0) {
 		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 		return 1;
 	}
@@ -71,9 +68,8 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_free_hexastore( hx, st );
+	hx_free_hexastore( hx );
 	hx_free_nodemap( smap );
-	hx_free_storage_manager( st );
 	fclose( inf );
 	fclose( outf );
 	return 0;

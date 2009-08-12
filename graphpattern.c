@@ -69,9 +69,6 @@ hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size
 	hx_graphpattern* pat	= (hx_graphpattern*) calloc( 1, sizeof( hx_graphpattern ) );
 	pat->type	= type;
 	hx_graphpattern** p;
-	hx_node* n;
-	void** vp;
-	hx_bgp* bgp;
 	pat->arity	= size;
 	hx_graphpattern** patterns	= (hx_graphpattern**) ptr;
 	p			= calloc( pat->arity, sizeof( hx_graphpattern* ) );
@@ -122,7 +119,6 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 }
 
 hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, hx_variablebindings* b, hx_nodemap* map ) {
-	int i;
 	void** vp;
 	hx_expr *e, *e2;
 	hx_graphpattern *gp1, *gp2;
@@ -149,7 +145,7 @@ hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, h
 	}
 }
 
-hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hexastore* hx, hx_storage_manager* s ) {
+hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hexastore* hx ) {
 	int i;
 	void** vp;
 	hx_expr* e;
@@ -160,13 +156,13 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 	hx_nodemap* map	= hx_get_nodemap( hx );
 	switch (pat->type) {
 		case HX_GRAPHPATTERN_BGP:
-			return hx_bgp_execute( pat->data, hx, s );
+			return hx_bgp_execute( pat->data, hx );
 		case HX_GRAPHPATTERN_GROUP:
 			p		= (hx_graphpattern**) pat->data;
-			iter	= hx_graphpattern_execute( p[0], hx, s );
+			iter	= hx_graphpattern_execute( p[0], hx );
 			for (i = 1; i < pat->arity; i++) {
 				gp2		= (hx_graphpattern*) p[i];
-				iter2	= hx_graphpattern_execute( gp2, hx, s );
+				iter2	= hx_graphpattern_execute( gp2, hx );
 				iter	= hx_new_mergejoin_iter( iter, iter2 );
 			}
 			return iter;
@@ -174,7 +170,7 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 			vp		= (void**) pat->data;
 			e		= (hx_expr*) vp[0];
 			gp		= (hx_graphpattern*) vp[1];
-			iter2	= hx_graphpattern_execute( gp, hx, s );
+			iter2	= hx_graphpattern_execute( gp, hx );
 			iter	= hx_new_filter_iter( iter2, e, map );
 			return iter;
 		case HX_GRAPHPATTERN_GRAPH:

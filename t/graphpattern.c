@@ -2,7 +2,7 @@
 #include "graphpattern.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
+void _add_data ( hx_hexastore* hx );
 hx_bgp* _test_bgp1 ( void );
 hx_bgp* _test_bgp2 ( void );
 hx_bgp* _test_bgp3 ( void );
@@ -59,14 +59,13 @@ int main ( void ) {
 void eval_test1 ( void ) {
 	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( s );
+	hx_hexastore* hx		= hx_new_hexastore( NULL );
 	hx_nodemap* map			= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	_add_data( hx );
 	
 	hx_bgp* b				= _test_bgp1();
 	hx_graphpattern* p		= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
-	hx_variablebindings_iter* iter	= hx_graphpattern_execute( p, hx, s );
+	hx_variablebindings_iter* iter	= hx_graphpattern_execute( p, hx );
 	
 	int counter	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
@@ -90,22 +89,20 @@ void eval_test1 ( void ) {
 	ok1( counter == 2 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 }
 
 void eval_test2 ( void ) {
 	fprintf( stdout, "# eval test 2\n" );
 	hx_expr_debug	= 1;
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( s );
+	hx_hexastore* hx		= hx_new_hexastore( NULL );
 	hx_nodemap* map			= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	_add_data( hx );
 	
 	hx_expr* e				= hx_new_builtin_expr2( HX_EXPR_OP_EQUAL, hx_new_node_expr(v1), hx_new_node_expr(l5) );
 	hx_graphpattern* b		= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
 	hx_graphpattern* p		= hx_new_graphpattern( HX_GRAPHPATTERN_FILTER, e, b );
-	hx_variablebindings_iter* iter	= hx_graphpattern_execute( p, hx, s );
+	hx_variablebindings_iter* iter	= hx_graphpattern_execute( p, hx );
 	
 	int counter	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
@@ -129,8 +126,7 @@ void eval_test2 ( void ) {
 	ok1( counter == 1 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 }
 
 void serialization_test ( void ) {
@@ -272,7 +268,6 @@ void gp_varsub_test1 ( void ) {
 	{
 		hx_nodemap* map			= hx_new_nodemap();
 		hx_node_id l4_id		= hx_nodemap_add_node( map, l4 );
-		hx_node_id l5_id		= hx_nodemap_add_node( map, l5 );
 		
 		hx_expr* e			= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, hx_new_node_expr(v1) );
 		hx_graphpattern* be	= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
@@ -318,12 +313,12 @@ hx_bgp* _test_bgp3 ( void ) {
 	return b;
 }
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
-	hx_add_triple( hx, s, r2, p2, r1 );
-	hx_add_triple( hx, s, r1, p1, l1 );
-	hx_add_triple( hx, s, r1, p2, l2 );
-	hx_add_triple( hx, s, r1, p2, l5 );
-	hx_add_triple( hx, s, r1, p1, l6 );
-	hx_add_triple( hx, s, r1, p1, l4 );
-	hx_add_triple( hx, s, r1, p1, l3 );
+void _add_data ( hx_hexastore* hx ) {
+	hx_add_triple( hx, r2, p2, r1 );
+	hx_add_triple( hx, r1, p1, l1 );
+	hx_add_triple( hx, r1, p2, l2 );
+	hx_add_triple( hx, r1, p2, l5 );
+	hx_add_triple( hx, r1, p1, l6 );
+	hx_add_triple( hx, r1, p1, l4 );
+	hx_add_triple( hx, r1, p1, l3 );
 }

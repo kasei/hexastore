@@ -10,7 +10,6 @@ extern "C" {
 #include "hexastore_types.h"
 #include "avl.h"
 #include "node.h"
-#include "storage.h"
 
 typedef struct avl_table avl;
 typedef struct {
@@ -37,7 +36,7 @@ int hx_nodemap_debug ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
 
-hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
+hx_nodemap* hx_nodemap_read( FILE* f, int buffer );
 
 #ifdef __cplusplus
 }

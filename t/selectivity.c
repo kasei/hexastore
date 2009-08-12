@@ -2,11 +2,10 @@
 #include "hexastore.h"
 #include "nodemap.h"
 #include "node.h"
-#include "storage.h"
 #include "parser.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
+void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
 
@@ -14,10 +13,8 @@ void test_small_iter ( void );
 
 int main ( void ) {
 	plan_tests(10);
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_new_hexastore( s );
-	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	_add_data( hx );
 	
 	hx_node* x			= hx_new_variable( hx );
 	hx_node* y			= hx_new_variable( hx );
@@ -30,63 +27,60 @@ int main ( void ) {
 	hx_node* sl			= hx_new_node_literal( "s" );
 
 	{	// ALL TRIPLES
-		hx_storage_id_t total	= hx_triples_count( hx, s );
+		uintptr_t total	= hx_triples_count( hx );
 		ok1( total == 31 );
 	}
 	
 	{	// fff
-		hx_storage_id_t total	= hx_count_statements( hx, s, x, y, z );
+		uintptr_t total	= hx_count_statements( hx, x, y, z );
 		ok1( total == 31 );
 	}
 	
 	{	// fbf
-		hx_storage_id_t total	= hx_count_statements( hx, s, x, binding, z );
+		uintptr_t total	= hx_count_statements( hx, x, binding, z );
 		ok1( total == 8 );
 	}
 	
 	{	// bff
-		hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, y );
+		uintptr_t total	= hx_count_statements( hx, rs, x, y );
 		ok1( total == 7 );
 	}
 	
 	{	// ffb
-		hx_storage_id_t total	= hx_count_statements( hx, s, x, y, sl );
+		uintptr_t total	= hx_count_statements( hx, x, y, sl );
 		ok1( total == 3 );
 	}
 	
 	{	// fbb
-		hx_storage_id_t total	= hx_count_statements( hx, s, x, variable, sl );
+		uintptr_t total	= hx_count_statements( hx, x, variable, sl );
 		ok1( total == 2 );
 	}
 	
 	{	// bfb
-		hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, rstype );
+		uintptr_t total	= hx_count_statements( hx, rs, x, rstype );
 		ok1( total == 1 );
 	}
 
 	{	// bbf
-		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, y );
+		uintptr_t total	= hx_count_statements( hx, rs, resvar, y );
 		ok1( total == 4 );
 	}
 	
 	{	// bbb
-		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, sl );
+		uintptr_t total	= hx_count_statements( hx, rs, resvar, sl );
 		ok1( total == 1 );
 	}
 	
 	{	// bbb
-		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, rstype );
+		uintptr_t total	= hx_count_statements( hx, rs, resvar, rstype );
 		ok1( total == 0 );
 	}
 	
-	hx_variablebindings* b;
-	
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	return exit_status();
 }
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
+void _add_data ( hx_hexastore* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \
@@ -125,7 +119,7 @@ void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
                     ] . \
 ";
 	hx_parser* parser	= hx_new_parser();
-	hx_parser_parse_string_into_hexastore( parser, hx, s, rdf, "http://example.org/", "turtle" );
+	hx_parser_parse_string_into_hexastore( parser, hx, rdf, "http://example.org/", "turtle" );
 	hx_free_parser(parser);
 }
 

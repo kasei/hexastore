@@ -37,8 +37,7 @@ int main( int argc, char** argv ) {
 		return 1;
 	}
 	
-	hx_storage_manager* st	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_read( st, f, 0 );
+	hx_hexastore* hx	= hx_read( f, 0 );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
 	hx_bgp* b;
@@ -88,7 +87,7 @@ int main( int argc, char** argv ) {
 	if (!dryrun) {
 		clock_t st_time	= clock();
 		uint64_t count	= 0;
-		hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, st );
+		hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 		int size		= hx_variablebindings_iter_size( iter );
 		char** names	= hx_variablebindings_iter_names( iter );
 	// 	for (int i = 0; i < size; i++) {
@@ -121,8 +120,7 @@ int main( int argc, char** argv ) {
 		fprintf( stderr, "query execution time: %lfs\n", DIFFTIME(st_time, end_time) );
 	}
 	
-	hx_free_hexastore( hx, st );
-	hx_free_storage_manager( st );
+	hx_free_hexastore( hx );
 	return 0;
 }
 

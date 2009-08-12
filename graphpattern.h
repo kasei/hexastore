@@ -45,7 +45,7 @@ int hx_free_graphpattern ( hx_graphpattern* p );
 
 hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* pat, hx_variablebindings* b, hx_nodemap* map );
 
-hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore*, hx_storage_manager* );
+hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore* );
 
 int hx_graphpattern_variables ( hx_graphpattern* p, hx_node*** vars );
 int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );

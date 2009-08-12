@@ -27,7 +27,6 @@ extern "C" {
 #include "terminal.h"
 #include "vector.h"
 #include "head.h"
-#include "storage.h"
 #include "triple.h"
 
 typedef enum {
@@ -45,17 +44,16 @@ static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOU
 
 typedef struct {
 	hx_nodemap* map;
-	hx_storage_id_t spo;
-	hx_storage_id_t sop;
-	hx_storage_id_t pso;
-	hx_storage_id_t pos;
-	hx_storage_id_t osp;
-	hx_storage_id_t ops;
+	uintptr_t spo;
+	uintptr_t sop;
+	uintptr_t pso;
+	uintptr_t pos;
+	uintptr_t osp;
+	uintptr_t ops;
 	int next_var;
 } hx_hexastore;
 
 typedef struct {
-	hx_storage_manager* s;
 	hx_hexastore* hx;
 	hx_index* index;
 	hx_index* secondary;
@@ -64,7 +62,6 @@ typedef struct {
 } hx_thread_info;
 
 typedef struct {
-	hx_storage_manager* s;
 	hx_index_iter* iter;
 	int size;
 	char** names;
@@ -74,33 +71,39 @@ typedef struct {
 	hx_variablebindings* current;
 } _hx_iter_vb_info;
 
-hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map );
-hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
-hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
-int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s );
+typedef struct {
+	void* world;
+} hx_execution_context;
 
-int hx_add_triple_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
-int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
-int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count );
+hx_execution_context* hx_new_execution_context ( void );
+int hx_free_execution_context ( hx_execution_context* c );
 
-int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
-int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
-int hx_get_ordered_index_id( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count );
-hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o, int order_position );
-int hx_debug ( hx_hexastore* hx, hx_storage_manager* st );
+hx_hexastore* hx_new_hexastore ( void* world );
+hx_hexastore* hx_new_hexastore_with_nodemap ( void* world, hx_nodemap* map );
+int hx_free_hexastore ( hx_hexastore* hx );
 
-hx_storage_id_t hx_triples_count( hx_hexastore* hx, hx_storage_manager* s );
-hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o );
+int hx_add_triple_id( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
+int hx_add_triple( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
+int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count );
+
+int hx_remove_triple( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
+int hx_get_ordered_index( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
+int hx_get_ordered_index_id( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes, int* var_count );
+hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o, int order_position );
+int hx_debug ( hx_hexastore* hx );
+
+uintptr_t hx_triples_count( hx_hexastore* hx );
+uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
 
 hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name );
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 
-int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f );
-hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );
+int hx_write( hx_hexastore* h, FILE* f );
+hx_hexastore* hx_read( FILE* f, int buffer );
 
 #ifdef __cplusplus
 }
