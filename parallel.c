@@ -33,6 +33,9 @@ typedef struct {
 	int used;
 	hx_variablebindings** buffer;
 	hx_nodemap* map;
+	hx_join_side side;
+	char** join_variables;
+	int join_variables_count;
 } hx_parallel_recv_vb_args_t;
 
 typedef struct {
@@ -247,7 +250,7 @@ int _hx_parallel_recv_triples_handler(async_mpi_session* ses, void* args) {
 	return 1;
 }
 
-hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination ) {
+hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination, hx_join_side side ) {
 	int mysize, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -263,12 +266,14 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 	send_args.map				= source;
 		
 	hx_parallel_recv_vb_args_t recv_args;
-	recv_args.allocated			= 0;
-	recv_args.used				= 0;
-	recv_args.buffer			= NULL;
-	recv_args.map				= destination;
-	
-	async_des_session* ses		= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 10, &_hx_parallel_recv_vb_handler, &recv_args, -1);
+	recv_args.allocated				= 0;
+	recv_args.used					= 0;
+	recv_args.buffer				= NULL;
+	recv_args.map					= destination;
+	recv_args.side					= side;
+	recv_args.join_variables		= shared_names;
+	recv_args.join_variables_count	= shared_columns;
+	async_des_session* ses		= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 20, &_hx_parallel_recv_vb_handler, &recv_args, -1);
 	
 //	int i	= 0;
 	// while (async_des(ses) == ASYNC_PENDING) {
@@ -393,7 +398,17 @@ int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
 // 	fprintf( stderr, "node %d entered recv handler\n", myrank );
 	hx_parallel_recv_vb_args_t* recv_args	= (hx_parallel_recv_vb_args_t*) args;
 	
-	hx_variablebindings* b	= hx_variablebindings_thaw( ses->buf, ses->count, recv_args->map );	
+	hx_variablebindings* b;
+	if (recv_args->side == HX_JOIN_RHS) {
+		b	= hx_variablebindings_thaw_noadd( ses->buf, ses->count, recv_args->map, recv_args->join_variables_count, recv_args->join_variables );
+		if (b == NULL) {
+//			fprintf( stderr, "throwing away intermediate result that won't join\n" );
+			return 1;
+		}
+	} else {
+		b	= hx_variablebindings_thaw( ses->buf, ses->count, recv_args->map );
+	}
+	
 	if (0) {
 		char* string;
 		hx_variablebindings_string( b, NULL, &string );
@@ -1219,7 +1234,7 @@ int _hx_parallel_variablebindings_iter_shared_columns( hx_triple* t, char** node
 			c[ j++ ]	= variable_names[i];
 		}
 	}
-	
+	free( shared );
 	*columns	= c;
 //	fprintf( stderr, "(%d) shared_count = %d\n", myrank, shared_count );
 	return shared_count;
@@ -1249,7 +1264,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		}
 	}
 	
-	char** variable_names	= (char**) calloc( maxiv, sizeof( char* ) );
+	char** variable_names	= (char**) calloc( maxiv+1, sizeof( char* ) );
 	hx_node** variables;
 	int var_count	= hx_bgp_variables ( b, &variables );
 	for (i = 0; i < var_count; i++) {
@@ -1257,7 +1272,8 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		int id		= hx_node_iv(v);
 		hx_node_variable_name(v, &(variable_names[-1 * id]));
 	}
-
+	free( variables );
+	
 	hx_nodemap* triples_map				= hx_get_nodemap( hx );
 	hx_nodemap* lhs_map					= triples_map;
 	hx_triple* t0						= hx_bgp_triple( b, 0 );
@@ -1297,9 +1313,9 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		/**********************************************************************/
 		
 // 		fprintf(stderr, "%i: _hx_parallelhx_parallel_distribute_variablebindings(1)\n", myrank);
-		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx, lhs, shared_count, columns, lhs_map, vb_map );
+		hx_variablebindings_iter* lhsr	= hx_parallel_distribute_variablebindings( ctx, lhs, shared_count, columns, lhs_map, vb_map, HX_JOIN_LHS );
 // 		fprintf(stderr, "%i: _hx_parallelhx_parallel_distribute_variablebindings(2)\n", myrank);
-		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx, rhs, shared_count, columns, triples_map, vb_map );
+		hx_variablebindings_iter* rhsr	= hx_parallel_distribute_variablebindings( ctx, rhs, shared_count, columns, triples_map, vb_map, HX_JOIN_RHS );
 		
 		if (shared_count > 0) {
 			lhs		= hx_new_mergejoin_iter( lhsr, rhsr );
@@ -1322,14 +1338,23 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 			all_names[ all_count++ ]	= variable_names[i];
 		}
 	}
+	free( variable_names );
 	
 	if (lhs == NULL) {
 		lhs	= hx_variablebindings_new_empty_iter();
 	}
 	
 	*results_map	= hx_new_nodemap();
-	hx_variablebindings_iter* results	= hx_parallel_distribute_variablebindings( ctx, lhs, all_count, all_names, lhs_map, *results_map );
+	hx_variablebindings_iter* results	= hx_parallel_distribute_variablebindings( ctx, lhs, all_count, all_names, lhs_map, *results_map, HX_JOIN_LHS );
 	hx_free_nodemap( lhs_map );
+	for (i = 0; i < 3*triple_count; i++) {
+		free( node_names[i] );
+	}
+	free( node_names );
+	for (i = 0; i < all_count; i++) {
+		free( all_names[i] );
+	}
+	free( all_names );
 	
 // 	fprintf( stderr, "node %d returning results iterator %p\n", myrank, (void*) lhsr );
 	return results;
