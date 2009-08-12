@@ -256,7 +256,6 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node_id 
 	hx_node_id triple_id[3]	= { s, p, o };
 //	hx_node* triple[3]		= { sn, pn, on };
 	int index_order[3]		= { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
-	char* pnames[3]			= { "SUBJECT", "PREDICATE", "OBJECT" };
 	
 	if (s > (hx_node_id) 0) {
 #ifdef DEBUG_INDEX_SELECTION
@@ -572,7 +571,6 @@ int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f ) {
 }
 
 hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
-	size_t read;
 	int c	= fgetc( f );
 	if (c != 'X') {
 		fprintf( stderr, "*** Bad header cookie trying to read hexastore from file.\n" );

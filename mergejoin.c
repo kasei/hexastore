@@ -240,7 +240,9 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	if (set == 0) {
 		// no shared variables were found.
 		// return NULL since mergejoin isn't meant for handling cartesian joins
+#ifdef DEBUG
 		fprintf( stderr, "*** merge join cannot be used on iterators that have no shared variables\n" );
+#endif
 		return NULL;
 	}
 	
