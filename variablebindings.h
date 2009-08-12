@@ -15,6 +15,7 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include "zlib.h"
 
 #include "hexastore_types.h"
 #include "nodemap.h"
@@ -80,6 +81,7 @@ char** hx_variablebindings_names ( hx_variablebindings* b );
 int hx_variablebindings_cmp ( void* a, void* b );
 
 hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len, hx_nodemap* map );
+hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nodemap* map, int join_vars_count, char** join_vars );
 char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* len );
 
 hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right );
