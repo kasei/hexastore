@@ -40,20 +40,14 @@ int main ( int argc, char** argv ) {
 	
 	hx_triple* triples[5];
 	{
-		hx_triple t0, t1, t2, t3, t4;
-		_fill_triple( &t0, x, type, prof );
-		_fill_triple( &t1, x, worksFor, univ0 );
-		_fill_triple( &t2, x, name, y1 );
-		_fill_triple( &t3, x, email, y2 );
-		_fill_triple( &t4, x, tel, y3 );
-		triples[0]	= &t0;
-		triples[1]	= &t1;
-		triples[2]	= &t2;
-		triples[3]	= &t3;
-		triples[4]	= &t4;
+		triples[0]	= hx_new_triple( x, type, prof );
+		triples[1]	= hx_new_triple( x, worksFor, univ0 );
+		triples[2]	= hx_new_triple( x, name, y1 );
+		triples[3]	= hx_new_triple( x, email, y2 );
+		triples[4]	= hx_new_triple( x, tel, y3 );
 	}
 	
-	hx_bgp* b	= hx_new_bgp( 4, triples );
+	hx_bgp* b	= hx_new_bgp( 5, triples );
 	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
 	
 	int size		= hx_variablebindings_iter_size( iter );
@@ -112,6 +106,9 @@ int main ( int argc, char** argv ) {
 	hx_free_node( name );
 	hx_free_node( email );
 	hx_free_node( tel );
+	
+	hx_free_hexastore( hx, s );
+	hx_free_storage_manager( s );
 	
 	return 0;
 }
