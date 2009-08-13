@@ -5,7 +5,7 @@ CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggd
 CC			= gcc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o
 MPI_OBJECTS	= safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
 default: parse print optimize tests examples parse_query dumpmap assign_ids
@@ -15,7 +15,7 @@ all: sparql parse print optimize tests examples parse_query
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
 
-assign_ids: assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+assign_ids: assign_ids.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
 
 parse: parse.c $(OBJECTS)
@@ -89,6 +89,9 @@ graphpattern.o: graphpattern.c graphpattern.h hexastore_types.h
 
 project.o: project.c project.h hexastore_types.h
 	$(CC) $(INC) -c project.c
+
+util.o: util.c util.h
+	$(CC) $(INC) -c util.c
 
 safealloc.o: safealloc.c safealloc.h
 	$(CC) $(INC) -c safealloc.c

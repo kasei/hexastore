@@ -1,3 +1,4 @@
+#include "util.h"
 #include "parallel.h"
 #include "nodemap.h"
 #include "mergejoin.h"
@@ -352,7 +353,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 			hx_node* n		= hx_nodemap_get_node( send_args->map, id );
 			char* string;
 			hx_node_string( n, &string );
-			hash			+= hx_triple_hash_string( string );
+			hash			+= hx_util_hash_string( string );
 			free(string);
 		}
 		

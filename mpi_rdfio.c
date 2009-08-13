@@ -3,6 +3,7 @@
 #include "async_des.h"
 #include "genmap/avl_tree_map.h"
 #include "parallel.h"
+#include "util.h"
 
 typedef struct {
 	hx_node_id gid;
@@ -171,7 +172,7 @@ int _mpi_rdfio_send_lookup(async_mpi_session* ses, void* p) {
 	memcpy(buf, lid, sizeof(int));
 	strcpy((char*)&buf[sizeof(int)], node);
 
-	int hash = hx_triple_hash_string(node) % *commsize;
+	int hash = hx_util_hash_string(node) % *commsize;
 
 	MPI_RDFIO_DEBUG("\tSending %i %s to %i.\n", *lid, node, hash);
 
