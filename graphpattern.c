@@ -243,6 +243,8 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 	
 	if (pat->type == HX_GRAPHPATTERN_BGP) {
 		hx_bgp* b	= (hx_bgp*) pat->data;
+		free(indent1);
+		free(indent2);
 		return hx_bgp_sse( b, string, indent, level );
 	} else if (pat->type == HX_GRAPHPATTERN_GRAPH || pat->type == HX_GRAPHPATTERN_FILTER) {
 		void** vp	= pat->data;

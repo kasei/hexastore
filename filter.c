@@ -157,6 +157,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int r		= hx_expr_eval( e, b, map, &value );
 		if (r != 0) {
 // 			fprintf( stderr, "type error in filter\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}
@@ -164,12 +165,14 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int ebv	= hx_node_ebv(value);
 		if (ebv == -1) {
 // 			fprintf( stderr, "type error in EBV\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}
 		
 		if (ebv == 0) {
 // 			fprintf( stderr, "false EBV in filter\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}

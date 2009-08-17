@@ -267,6 +267,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 				char* vname;
 				hx_node_variable_name( n, &vname );
 				hx_node* v	= hx_variablebindings_node_for_binding_name( b, map, vname );
+				free( vname );
 				if (v == NULL) {
 					return 1;
 				} else {

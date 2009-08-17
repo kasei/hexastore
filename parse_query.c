@@ -1,10 +1,12 @@
 #include "SPARQLParser.h"
 #include <time.h>
 #include "bgp.h"
+#include "graphpattern.h"
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
 extern hx_bgp* parse_bgp_query ( void );
 extern hx_bgp* parse_bgp_query_string ( char* );
+extern hx_graphpattern* parse_query_string ( char* );
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage:\n" );
@@ -41,6 +43,7 @@ int main( int argc, char** argv ) {
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
 	hx_bgp* b;
+	hx_graphpattern* g;
 	if (argi >= argc) {
 		b	= parse_bgp_query();
 		if (b == NULL) {
@@ -72,6 +75,8 @@ int main( int argc, char** argv ) {
 		fread(query, st.st_size, 1, f);
 		query[ st.st_size ]	= 0;
 		b	= parse_bgp_query_string( query );
+		g	= parse_query_string( query );
+		hx_graphpattern_debug( g );
 		free( query );
 		if (b == NULL) {
 			fprintf( stderr, "Failed to parse query\n" );
@@ -87,7 +92,13 @@ int main( int argc, char** argv ) {
 	if (!dryrun) {
 		clock_t st_time	= clock();
 		uint64_t count	= 0;
-		hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+		
+		hx_variablebindings_iter* iter;
+		if (g) {
+			iter	= hx_graphpattern_execute( g, hx );
+		} else {
+			iter	= hx_bgp_execute( b, hx );
+		}
 		int size		= hx_variablebindings_iter_size( iter );
 		char** names	= hx_variablebindings_iter_names( iter );
 	// 	for (int i = 0; i < size; i++) {
@@ -113,6 +124,7 @@ int main( int argc, char** argv ) {
 				hx_free_variablebindings(b);
 				hx_variablebindings_iter_next( iter );
 			}
+			hx_free_variablebindings_iter( iter );
 		}
 		clock_t end_time	= clock();
 		
@@ -120,6 +132,9 @@ int main( int argc, char** argv ) {
 		fprintf( stderr, "query execution time: %lfs\n", DIFFTIME(st_time, end_time) );
 	}
 	
+	if (g)
+		hx_free_graphpattern(g);
+	hx_free_bgp(b);
 	hx_free_hexastore( hx );
 	return 0;
 }
