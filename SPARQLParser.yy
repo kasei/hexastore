@@ -930,7 +930,9 @@ Constraint:
 ;
 
 FunctionCall:
-	IRIref ArgList	{}
+	IRIref ArgList	{
+		fprintf( stderr, "*** FunctionCall not implemented yet\n" );
+	}
 ;
 
 ArgList:
@@ -1157,19 +1159,19 @@ PrimaryExpression:
 	}
 
 	| RDFLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| NumericLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| BooleanLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| Var	{
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 ;
 
@@ -1822,7 +1824,9 @@ hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_
 		if (arity == 1) {
 			expr_t* d	= c->items[0];
 			hx_expr* e1	= generate_expr( d, p, vmap );
-			return hx_new_builtin_expr1( e->op, e1 );
+			hx_expr* r	= hx_new_builtin_expr1( e->op, e1 );
+			
+			return r;
 		} else if (arity == 2) {
 			expr_t* a	= c->items[0];
 			expr_t* b	= c->items[1];
