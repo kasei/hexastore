@@ -1783,7 +1783,9 @@ void free_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variabl
 			}
 			break;
 		case TYPE_BGP:
+/* XXX
 			free_bgp( gp, p, vmap );
+*/
 			break;
 		case TYPE_FILTER:
 			/* XXX */
@@ -2034,6 +2036,9 @@ container_t* new_container ( char type, int size ) {
 int free_container ( container_t* c, int free_contained_objects ) {
 	int i;
 	switch (c->type) {
+		case TYPE_GGP:
+			/* XXX */
+			break;
 		case TYPE_BGP:
 			if (free_contained_objects) {
 				for (i = 0; i < c->count; i++) {
