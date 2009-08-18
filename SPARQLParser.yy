@@ -392,10 +392,10 @@ TriplesSameSubject:
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->subject	= subject;
 		}
-		/*XXX
-		free_node( subject, 1 );
+		
+		/*XXX free_node( subject, 1 ); */
 		free_container( subj_triples, 0 );
-		*/
+		
 		$$	= triples;
 	}
 
@@ -1699,8 +1699,9 @@ hx_graphpattern* parse_query ( void ) {
 		prologue_t* prologue	= q->prologue;
 		
 		hx_graphpattern* pat	= generate_graphpattern( q->gp, prologue, vmap );
+		free_graphpattern( q->gp, prologue, vmap );
 		free_prologue( prologue );
-		
+		_free_vmap( vmap );
 		return pat;
 	}
 	return NULL;
@@ -1757,6 +1758,46 @@ hx_bgp* parse_bgp_query ( void ) {
 	return NULL;
 }
 
+void free_bgp ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
+	int i;
+	for (i = 0; i < bgp->count; i++) {
+		triple_t* t		= (triple_t*) bgp->items[i];
+		free_node( t->subject, 0 );
+		free_node( t->predicate, 0 );
+		free_node( t->object, 0 );
+		free( t );
+	}
+	
+	free_container( bgp, 0 );
+	return;
+}
+
+void free_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
+	int i;
+	hx_sparqlparser_pattern_t type	= gp->type;
+	
+	switch (type) {
+		case TYPE_GGP:
+			for (i = 0; i < gp->count; i++) {
+				free_graphpattern( gp->items[i], p, vmap );
+			}
+			break;
+		case TYPE_BGP:
+			free_bgp( gp, p, vmap );
+			break;
+		case TYPE_FILTER:
+			/* XXX */
+			break;
+		default:
+			fprintf( stderr, "*** Unimplemented graphpattern type %c in free_graphpattern\n", type );
+			return;
+	};
+	
+	free_container( gp, 0 );
+	
+	return;
+}
+
 hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	int i;
 	hx_bgp* b;
@@ -1771,7 +1812,9 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_spar
 			for (i = 0; i < gp->count; i++) {
 				patterns[i]	= generate_graphpattern( gp->items[i], p, vmap );
 			}
-			return hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
+			hx_graphpattern* pattern	= hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
+			free( patterns );
+			return pattern;
 		case TYPE_BGP:
 			b	= generate_bgp( gp, p, vmap );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
@@ -2002,6 +2045,9 @@ int free_container ( container_t* c, int free_contained_objects ) {
 				}
 			}
 			free(c->items);
+			break;
+		case TYPE_FILTER:
+			/* XXX */
 			break;
 		default:
 			fprintf( stderr, "*** unrecognized container type '%c' in free_container()\n", c->type );
