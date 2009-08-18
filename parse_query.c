@@ -136,8 +136,10 @@ int main( int argc, char** argv ) {
 		fprintf( stderr, "query execution time: %lfs\n", DIFFTIME(st_time, end_time) );
 	}
 	
-	if (g)
+	if (g) {
 		hx_free_graphpattern(g);
+	}
+	
 	hx_free_bgp(b);
 	hx_free_hexastore( hx );
 	return 0;
