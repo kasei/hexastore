@@ -8,6 +8,9 @@ hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, h
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_filter_iter\n" );
 	}
+	if (iter == NULL) {
+		fprintf( stderr, "*** NULL iterator passed to hx_new_filter_iter\n" );
+	}
 	vtable->finished	= _hx_filter_iter_vb_finished;
 	vtable->current		= _hx_filter_iter_vb_current;
 	vtable->next		= _hx_filter_iter_vb_next;
