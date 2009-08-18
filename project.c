@@ -25,6 +25,9 @@ hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter,
 	for (i = 0; i < size; i++) {
 		int len	= strlen( names[i] );
 		info->names[i]	= (char*) calloc( len, sizeof( char ) );
+		if (names[i] == NULL) {
+			fprintf( stderr, "*** hx_new_project_iter called with NULL project variable name\n" );
+		}
 		strcpy( info->names[i], names[i] );
 		info->columns[i]	= hx_variablebindings_column_index( info->iter, names[i] );
 	}
