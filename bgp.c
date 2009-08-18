@@ -1,5 +1,6 @@
 #include "bgp.h"
 #include "mergejoin.h"
+#include "project.h"
 
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
@@ -423,6 +424,31 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			iter					= hx_new_nestedloopjoin_iter( interm, iter );
 		}
 	}
+	
+	hx_node** variables;
+	int count	= hx_bgp_variables( b, &variables );
+	char** proj_nodes	= (char**) calloc( count, sizeof( char* ) );
+	int proj_count	= 0;
+	
+	// Now project away any variables that are non-distinguished
+	int i;
+	for (i = 0; i < count; i++) {
+		hx_node* v	= variables[i];
+		if (hx_node_is_distinguished_variable( v )) {
+			char* string;
+			hx_node_variable_name( v, &string );
+			proj_nodes[ proj_count++ ]	= string;
+		}
+	}
+	
+	if (proj_count < count) {
+		iter	= hx_new_project_iter( iter, proj_count, proj_nodes );
+	}
+	for (i = 0; i < proj_count; i++) {
+		free( proj_nodes[i] );
+	}
+	free( proj_nodes );
+	
 	return iter;
 }
 
