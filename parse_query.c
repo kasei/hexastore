@@ -76,18 +76,22 @@ int main( int argc, char** argv ) {
 		query[ st.st_size ]	= 0;
 		b	= parse_bgp_query_string( query );
 		g	= parse_query_string( query );
-		hx_graphpattern_debug( g );
 		free( query );
+		
 		if (b == NULL) {
 			fprintf( stderr, "Failed to parse query\n" );
 			return 1;
 		}
 	}
 	
-	char* sse;
-	hx_bgp_sse( b, &sse, "  ", 0 );
-	fprintf( stdout, sse );
-	free( sse );
+	if (g) {
+		hx_graphpattern_debug( g );
+	} else {
+		char* sse;
+		hx_bgp_sse( b, &sse, "  ", 0 );
+		fprintf( stdout, sse );
+		free( sse );
+	}
 	
 	if (!dryrun) {
 		clock_t st_time	= clock();
