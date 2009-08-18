@@ -418,10 +418,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			free(pname);
 			free(oname);
 			
-			// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-			// mergejoin has a memory leak, but we really should be using it here:
-// 			iter					= hx_new_mergejoin_iter( interm, iter );
-			iter					= hx_new_nestedloopjoin_iter( interm, iter );
+			iter					= hx_new_mergejoin_iter( interm, iter );
 		}
 	}
 	
@@ -440,6 +437,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			proj_nodes[ proj_count++ ]	= string;
 		}
 	}
+	free( variables );
 	
 	if (proj_count < count) {
 		iter	= hx_new_project_iter( iter, proj_count, proj_nodes );
