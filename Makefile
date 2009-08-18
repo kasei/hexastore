@@ -8,15 +8,15 @@ LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/includ
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o
 MPI_OBJECTS	= safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
-default: parse print optimize tests examples parse_query dumpmap assign_ids
+default: parse print optimize tests examples parse_query
 
-all: sparql parse print optimize tests examples parse_query
+all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
 
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
 
 assign_ids: assign_ids.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c $(OBJECTS)
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
