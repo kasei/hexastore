@@ -72,6 +72,7 @@ typedef struct {
 	hx_sparqlparser_pattern_t type;
 	void* ptr;
 	char* datatype;
+	int nondistinguished;
 } node_t;
 
 typedef struct {
@@ -891,16 +892,11 @@ PrefixedName:
 
 BlankNode:
 	BLANK_NODE_LABEL {
-		node_t* r;
-		char* string;
-		hx_node* b	= hx_new_node_blank( (char*) $1 );
-		hx_node_string( b, &string );
-		free( string );
-		
-		r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= TYPE_FULL_NODE;
-		r->ptr			= b;
-		$$	= (void*) r;
+		node_t* n			= (node_t*) calloc( 1, sizeof( node_t ) );
+		n->type				= TYPE_VARIABLE;
+		n->ptr				= (void*) $1;
+		n->nondistinguished	= 1;
+		$$	= n;
 	}
 
 	| ANON	{}
@@ -1570,7 +1566,7 @@ _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_
 		_O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{
 			$$	= $1;
 			if ($3 != NULL) {
-				/* XXX */
+				/* XXX handle extra triples after a filter here #20090816 */
 			}
 		}
 ;
@@ -1582,7 +1578,7 @@ _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Op
 
 		| _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
 			$$	= $2;
-			/* XXX handle the stuff in $1 */
+			/* XXX handle the stuff in $1 (more filters and stuff) #20090816 */
 		}
 ;
 
@@ -1884,7 +1880,11 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 		char* name	= (char*) n->ptr;
 		hx_node* v;
 		int id	= variable_id_with_name( vmap, name );
-		v	= hx_new_node_named_variable( id, name );
+		if (n->nondistinguished) {
+			v	= hx_new_node_named_variable_nondistinguished( id, name );
+		} else {
+			v	= hx_new_node_named_variable( id, name );
+		}
 		return v;
 	} else if (n->type == TYPE_QNAME) {
 		hx_node* u;
