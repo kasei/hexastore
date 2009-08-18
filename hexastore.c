@@ -696,6 +696,9 @@ int _hx_iter_vb_free ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	hx_index_iter* iter		= (hx_index_iter*) info->iter;
 	hx_free_index_iter( iter );
+	if (info->current != NULL) {
+		hx_free_variablebindings( info->current );
+	}
 	free( info->names );
 	free( info->triple_pos_to_index );
 	free( info->index_to_triple_pos );
