@@ -217,13 +217,16 @@ int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level ) {
 				char* nstring;
 				hx_expr_sse( n, &nstring, indent, level+1 );
 				if (_hx_expr_string_concat( &str, " ", &alloc )) {
+					free( nstring );
 					free( str );
 					return 1;
 				}
 				if (_hx_expr_string_concat( &str, nstring, &alloc )) {
+					free( nstring );
 					free( str );
 					return 1;
 				}
+				free( nstring );
 			}
 			if (_hx_expr_string_concat( &str, ")", &alloc )) {
 				free( str );
