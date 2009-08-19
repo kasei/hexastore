@@ -333,6 +333,14 @@ int hx_node_string ( hx_node* n, char** str ) {
 	return alloc;
 }
 
+int hx_node_debug ( hx_node* n ) {
+	char* string;
+	hx_node_string( n, &string );
+	fprintf( stderr, "%s\n", string );
+	free(string);
+	return 0;
+}
+
 hx_node* hx_node_parse ( char* ntnode ) {
 	switch(ntnode[0]) {
 		case '<': {
