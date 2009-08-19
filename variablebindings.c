@@ -469,19 +469,8 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_nodemap* map ) {
 	char* ptr;
 	void* needs_free	= NULL;
-	if (*compressed == 1) { //compressed
-		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
-		char* compressed_data	= &( compressed[5] );
-		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
-		unsigned long destlen	= buffer_length;
-		uncompress(uncompressed, &destlen, compressed_data, len-5);
-		ptr	= uncompressed;
-		needs_free	= ptr;
-		len			= buffer_length;
-	} else {
-		ptr	= &( compressed[1] );
-		len--;
-	}
+	ptr	= &( compressed[1] );
+	len--;
 	
 	int i;
 	int size;
@@ -523,19 +512,8 @@ hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_no
 hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len, hx_nodemap* map, int join_vars_count, char** join_vars ) {
 	char* ptr;
 	void* needs_free	= NULL;
-	if (*compressed == 1) { //compressed
-		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
-		char* compressed_data	= &( compressed[5] );
-		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
-		unsigned long destlen	= buffer_length;
-		uncompress(uncompressed, &destlen, compressed_data, len-5);
-		ptr	= uncompressed;
-		needs_free	= ptr;
-		len			= buffer_length;
-	} else {
-		ptr	= &( compressed[1] );
-		len--;
-	}
+	ptr	= &( compressed[1] );
+	len--;
 	
 	int i, j;
 	int size;
@@ -635,23 +613,9 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* 
 	free( node_strings );
 	free( name_lengths );
 	
-//	if (buffer_length < 60) {
-	if (1) {
-		*ptr		= 0;	// uncompressed
-		*len	= buffer_length + 1;
-		return ptr;
-	} else {
-		unsigned long compressed_length	= 13 + buffer_length;
-		char* compressed				= calloc( 5 + compressed_length, sizeof(char) );
-		*compressed	= 1;	// compressed
-		char* compressed_data			= &( compressed[5] );
-		compress( compressed_data, &compressed_length, &(ptr[1]), buffer_length );
-		*( (uint32_t*) &( compressed[1] ) )		= (uint32_t) buffer_length;
-		free( ptr );
-		
-		*len	= compressed_length;
-		return compressed;
-	}
+	*ptr		= 0;	// uncompressed
+	*len	= buffer_length + 1;
+	return ptr;
 }
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
