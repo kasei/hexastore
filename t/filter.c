@@ -3,8 +3,8 @@
 #include "expr.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort );
+void _add_data ( hx_hexastore* hx );
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
 
 void filter_test1 ( void );
 void filter_test2 ( void );
@@ -44,15 +44,14 @@ int main ( void ) {
 
 void filter_test1 ( void ) {
 	fprintf( stdout, "# isliteral filter test\n" );
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_new_hexastore( s );
+	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	_add_data( hx );
 	
 	hx_node* x						= hx_new_named_variable( hx, "obj" );
 	hx_expr* x_e					= hx_new_node_expr( x );
 	hx_expr* e						= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
-	hx_variablebindings_iter* _iter	= _get_triples( hx, s, HX_OBJECT );
+	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, map );
 	
 	int counter	= 0;
@@ -73,23 +72,21 @@ void filter_test1 ( void ) {
 	}
 	ok1( counter == 6 );
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 }
 
 void filter_test2 ( void ) {
 	hx_expr_debug	= 1;
 	fprintf( stdout, "# term equal filter test\n" );
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( s );
+	hx_hexastore* hx		= hx_new_hexastore( NULL );
 	hx_nodemap* map			= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	_add_data( hx );
 	
 	hx_node* v						= hx_new_named_variable( hx, "obj" );
 	hx_expr* v_e					= hx_new_node_expr( v );
 	hx_expr* lit_e					= hx_new_node_expr( r1 );
 	hx_expr* e						= hx_new_builtin_expr2( HX_EXPR_OP_EQUAL, v_e, lit_e );
-	hx_variablebindings_iter* _iter	= _get_triples( hx, s, HX_OBJECT );
+	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	int counter	= 0;
 	
 	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, map );
@@ -112,27 +109,26 @@ void filter_test2 ( void ) {
 	}
 	ok1( counter == 1 );
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 }
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
-	hx_add_triple( hx, s, r2, p1, r1 );
-	hx_add_triple( hx, s, r1, p1, l2 );
-	hx_add_triple( hx, s, r1, p1, l1 );
-	hx_add_triple( hx, s, r1, p1, l5 );
-	hx_add_triple( hx, s, r1, p1, l6 );
-	hx_add_triple( hx, s, r1, p1, l4 );
-	hx_add_triple( hx, s, r1, p1, l3 );
+void _add_data ( hx_hexastore* hx ) {
+	hx_add_triple( hx, r2, p1, r1 );
+	hx_add_triple( hx, r1, p1, l2 );
+	hx_add_triple( hx, r1, p1, l1 );
+	hx_add_triple( hx, r1, p1, l5 );
+	hx_add_triple( hx, r1, p1, l6 );
+	hx_add_triple( hx, r1, p1, l4 );
+	hx_add_triple( hx, r1, p1, l3 );
 }
 
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort ) {
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
 	hx_node* v1	= hx_new_node_variable( -1 );
 	hx_node* v2	= hx_new_node_variable( -2 );
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
-	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
+	hx_index_iter* titer	= hx_get_statements( hx, v1, v2, v3, HX_OBJECT );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, "subj", "pred", "obj" );
 	return iter;
 }
 

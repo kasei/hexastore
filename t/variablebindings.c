@@ -3,11 +3,10 @@
 #include "variablebindings.h"
 #include "nodemap.h"
 #include "node.h"
-#include "storage.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort );
+void _add_data ( hx_hexastore* hx );
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
 
 hx_node* p1;
 hx_node* p2;

@@ -33,8 +33,7 @@ int main (int argc, char** argv) {
 	rdf_filename	= argv[1];
 	output_filename	= argv[2];
 	
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( s );
+	hx_hexastore* hx		= hx_new_hexastore( NULL );
 	
 	FILE* f	= NULL;
 	if (strcmp(output_filename, "/dev/null") != 0) {
@@ -49,7 +48,7 @@ int main (int argc, char** argv) {
 	hx_parser_set_logger( parser, logger );
 	
 	clock_t st_time	= clock();
-	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, s, rdf_filename );
+	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
 	clock_t end_time	= clock();
 	
 	double elapsed	= DIFFTIME(st_time, end_time);
@@ -57,7 +56,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "\rParsed %lu triples in %.1lf seconds (%.1lf triples/second)\n", (unsigned long) total, elapsed, tps );
 	
 	if (f != NULL) {
-		if (hx_write( hx, s, f ) != 0) {
+		if (hx_write( hx, f ) != 0) {
 			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 			return 1;
 		}
@@ -65,8 +64,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "\n" );
 	
 	hx_free_parser( parser );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	return 0;
 }
 

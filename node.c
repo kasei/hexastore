@@ -30,8 +30,18 @@ hx_node* hx_new_node_variable ( int value ) {
 	return n;
 }
 
+hx_node* hx_new_node_variable_nondistinguished ( int value ) {
+	hx_node* n	= _hx_new_node( '[', NULL, 0, HX_NODE_IOK, value, 0.0 );
+	return n;
+}
+
 hx_node* hx_new_node_named_variable( int value, char* name ) {
 	hx_node* n	= _hx_new_node( '?', name, 0, HX_NODE_IOK, value, 0.0 );
+	return n;
+}
+
+hx_node* hx_new_node_named_variable_nondistinguished( int value, char* name ) {
+	hx_node* n	= _hx_new_node( '[', name, 0, HX_NODE_IOK, value, 0.0 );
 	return n;
 }
 
@@ -125,11 +135,17 @@ hx_node* hx_node_copy( hx_node* n ) {
 	} else if (hx_node_is_blank( n )) {
 		hx_node* copy	= hx_new_node_blank( n->value );
 		return copy;
-	} else if (hx_node_is_variable( n )) {
+	} else if (hx_node_is_distinguished_variable( n )) {
 		if (n->value == NULL) {
 			return hx_new_node_variable( n->iv );
 		} else {
 			return hx_new_node_named_variable( n->iv, n->value );
+		}
+	} else if (hx_node_is_variable( n )) {
+		if (n->value == NULL) {
+			return hx_new_node_variable_nondistinguished( n->iv );
+		} else {
+			return hx_new_node_named_variable_nondistinguished( n->iv, n->value );
 		}
 	} else {
 		fprintf( stderr, "*** not a recognized node type in hx_node_copy\n" );
@@ -175,6 +191,10 @@ size_t hx_node_alloc_size( hx_node* n ) {
 }
 
 int hx_node_is_variable ( hx_node* n ) {
+	return ((n->type == '?') || (n->type == '['));
+}
+
+int hx_node_is_distinguished_variable ( hx_node* n ) {
 	return (n->type == '?');
 }
 
@@ -203,20 +223,29 @@ char* hx_node_value ( hx_node* n ) {
 }
 
 int hx_node_variable_name ( hx_node* n, char** name ) {
-	if (n->type == '?') {
+	if (n->type == '?' || n->type == '[') {
 		if (n->value == NULL) {
-			int alloc	= 10 + 6;
+			int alloc	= 10 + 7;
 			*name	= (char*) calloc( 1, alloc );
 			if (*name == NULL) {
-				return 0;
+				fprintf( stderr, "*** malloc failed in hx_node_variable_name\n" );
+				return 1;
 			}
-			sprintf( *name, "__var%d", n->iv );
-		} else {
+			sprintf( *name, "__%s_%d", (n->type == '?' ? "var" : "ndv"), n->iv );
+		} else if (n->type == '?') {
 			*name	= (char*) malloc( strlen( n->value ) + 1 );
 			if (*name == NULL) {
 				fprintf( stderr, "*** malloc failed in hx_node_variable_name\n" );
+				return 1;
 			}
 			strcpy( *name, n->value );
+		} else {
+			*name	= (char*) malloc( strlen( n->value ) + 10 );
+			if (*name == NULL) {
+				fprintf( stderr, "*** malloc failed in hx_node_variable_name\n" );
+				return 1;
+			}
+			sprintf( *name, "__ndv_%s", n->value );
 		}
 	} else {
 		*name	= NULL;
@@ -302,6 +331,14 @@ int hx_node_string ( hx_node* n, char** str ) {
 		return 0;
 	}
 	return alloc;
+}
+
+int hx_node_debug ( hx_node* n ) {
+	char* string;
+	hx_node_string( n, &string );
+	fprintf( stderr, "%s\n", string );
+	free(string);
+	return 0;
 }
 
 hx_node* hx_node_parse ( char* ntnode ) {
@@ -538,7 +575,7 @@ int hx_node_ebv ( hx_node* n ) {
 }
 
 int hx_node_write( hx_node* n, FILE* f ) {
-	if (n->type == '?') {
+	if (n->type == '?' || n->type == '[') {
 //		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
 		return 1;
 	}

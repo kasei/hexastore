@@ -14,10 +14,6 @@ hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_i
 		strcpy( b->names[i], names[i] );
 	}
 	
-// 	if (free_names) {
-// 		free(names);
-// 	}
-	
 	return b;
 }
 
@@ -33,6 +29,7 @@ hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 		c->names[i]	= _new;
 		c->nodes[i]	= b->nodes[i];
 	}
+
 	return c;
 }
 
@@ -53,6 +50,7 @@ hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** name
 
 int hx_free_variablebindings ( hx_variablebindings* b ) {
 	int i;
+
 	for (i = 0; i < b->size; i++) {
 		if (b->names[i] != NULL) {
 			free( b->names[i] );
@@ -105,6 +103,7 @@ hx_variablebindings* hx_variablebindings_project ( hx_variablebindings* b, int n
 			c->nodes[i]	= b->nodes[ col ];
 		}
 	}
+
 	return c;
 }
 
@@ -134,6 +133,7 @@ hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b,
 			c->nodes[i]	= b->nodes[ col ];
 		}
 	}
+
 	return c;
 }
 
@@ -180,8 +180,8 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		p	+= 1;
 		
 		strcpy( p, nodestrs[i] );
-		free( nodestrs[i] );
 		p	+= strlen( nodestrs[i] );
+		free( nodestrs[i] );
 		if (i == size-1) {
 			strcpy( p, " }" );
 		} else {

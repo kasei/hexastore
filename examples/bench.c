@@ -17,7 +17,7 @@
 #include "bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s );
+double bench ( hx_hexastore* hx, hx_bgp* b );
 
 static hx_node* x;
 static hx_node* y;
@@ -30,20 +30,20 @@ static hx_node* degFrom;
 static hx_node* gradstudent;
 static hx_node* member;
 
-double average ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s, int count ) {
+double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
 	double total	= 0.0;
 	int i;
 	for (i = 0; i < count; i++) {
-		total	+= bench( hx, b, s );
+		total	+= bench( hx, b );
 	}
 	return (total / (double) count);
 }
 
-double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
+double bench ( hx_hexastore* hx, hx_bgp* b ) {
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	clock_t st_time	= clock();
 	
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 //	hx_variablebindings_iter_debug( iter, "lubm8> ", 0 );
 	
 	int size		= hx_variablebindings_iter_size( iter );
@@ -100,27 +100,25 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_read( s, f, 0 );
+	hx_hexastore* hx		= hx_read( f, 0 );
 	hx_nodemap* map			= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
 	{
 		hx_bgp* b	= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x :undergraduateDegreeFrom ?y ; a :GraduateStudent ; :memberOf ?z . ?z a :Department ; :subOrganizationOf ?y . ?y a :University }" );
 		hx_bgp_debug( b );
-		fprintf( stderr, "running time: %lf\n", average( hx, b, s, 4 ) );
+		fprintf( stderr, "running time: %lf\n", average( hx, b, 4 ) );
 		hx_free_bgp( b );
 	}
 	{
 		hx_bgp* b	= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x :undergraduateDegreeFrom ?y ; a :GraduateStudent ; :memberOf ?z . ?z a :Department ; :subOrganizationOf ?y . ?y a :University }" );
-		hx_bgp_reorder( b, hx, s );
+		hx_bgp_reorder( b, hx );
 		hx_bgp_debug( b );
-		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, s, 4 ) );
+		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, 4 ) );
 		hx_free_bgp( b );
 	}
 	
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	
 	return 0;
 }

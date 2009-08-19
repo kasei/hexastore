@@ -69,7 +69,6 @@ typedef struct
   drizzle_result_st result;
   drizzle_column_st column;
   hx_hexastore* db;
-  hx_storage_manager* storage;
   bool send_columns;
   uint8_t verbose;
   uint64_t rows;
@@ -96,7 +95,6 @@ int main(int argc, char *argv[])
   hx_server server;
 
   server.db= NULL;
-  server.storage= NULL;
   server.verbose= 0;
 
   while((c = getopt(argc, argv, "c:mv")) != EOF)
@@ -132,9 +130,7 @@ int main(int argc, char *argv[])
     perror( "Failed to open hexastore file for reading: " );
     return 1;
   }
-  hx_storage_manager* s = hx_new_memory_storage_manager();
-  server.db			= hx_read( s, f, 0 );
-  server.storage	= s;
+  server.db			= hx_read( f, 0 );
   
   if (server.db == NULL)
   {
@@ -197,8 +193,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_free(&(server.drizzle));
-  hx_free_hexastore( server.db, s );
-  hx_free_storage_manager( s );
+  hx_free_hexastore( server.db );
 
   return 0;
 }
@@ -303,7 +298,7 @@ static void server_run(hx_server *server)
 		return;
 	}
 	
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, server->db, server->storage );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, server->db );
 	int size		= hx_variablebindings_iter_size( iter );
 	char** columns	= hx_variablebindings_iter_names( iter );
 	

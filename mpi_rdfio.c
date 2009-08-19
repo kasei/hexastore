@@ -3,6 +3,7 @@
 #include "async_des.h"
 #include "genmap/avl_tree_map.h"
 #include "parallel.h"
+#include "util.h"
 
 typedef struct {
 	hx_node_id gid;
@@ -25,7 +26,7 @@ hx_node* _mpi_rdfio_to_hx_node_p(char* ntnode);
 // #define MPI_RDFIO_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define MPI_RDFIO_DEBUG(s, ...)
 
-int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexastore **store, hx_storage_manager **manager, MPI_Comm comm) {
+int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexastore **store, MPI_Comm comm) {
 	MPI_File file;
 	MPI_Offset filesize;
 	MPI_Info info;
@@ -34,28 +35,12 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &commsize);
 	
-	int created_manager = 0;
-
-	MPI_RDFIO_DEBUG("%i: Creating manager if %p == %p.\n", rank, *manager, NULL);
-
-	if(*manager == NULL) {
-		*manager = hx_new_memory_storage_manager();
-		if(*manager == NULL) {
-			fprintf(stderr, "%s:%u: Error; cannot allocate storage manager.\n", __FILE__, __LINE__);
-			return -1;
-		}
-		created_manager = 1;
-	}
-
 	MPI_RDFIO_DEBUG("%i: Creating store if %p == %p.\n", rank, *store, NULL);
 
 	if(*store == NULL) {
-		*store = hx_new_hexastore(*manager);
+		*store = hx_new_hexastore(NULL);
 		if(*store == NULL) {
 			fprintf(stderr, "%s:%u: Error; cannot allocate hexastore.\n", __FILE__, __LINE__);
-			if(created_manager) {
-				hx_free_storage_manager(*manager);
-			}
 			return -1;
 		}
 	}
@@ -84,7 +69,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexas
 		char *nodestr = iterator_next(iter);
 		nodes[nodecnt++] = hx_node_parse(nodestr);
 		if(nodecnt == 3) {
-			hx_add_triple(*store, *manager, nodes[0], nodes[1], nodes[2]);
+			hx_add_triple(*store, nodes[0], nodes[1], nodes[2]);
 			hx_free_node(nodes[0]);
 			hx_free_node(nodes[1]);
 			hx_free_node(nodes[2]);
@@ -187,7 +172,7 @@ int _mpi_rdfio_send_lookup(async_mpi_session* ses, void* p) {
 	memcpy(buf, lid, sizeof(int));
 	strcpy((char*)&buf[sizeof(int)], node);
 
-	int hash = hx_triple_hash_string(node) % *commsize;
+	int hash = hx_util_hash_string(node) % *commsize;
 
 	MPI_RDFIO_DEBUG("\tSending %i %s to %i.\n", *lid, node, hash);
 
@@ -271,7 +256,7 @@ int _mpi_rdfio_recv_answer(async_mpi_session* ses, void* p) {
 	return 1;
 }
 
-int mpi_rdfio_readids(char *filename, size_t bufsize, hx_hexastore **store, hx_storage_manager **manager, MPI_Comm comm) {
+int mpi_rdfio_readids(char *filename, size_t bufsize, hx_hexastore **store, MPI_Comm comm) {
 	MPI_File file;
 	MPI_Info info;
 	MPI_Offset size, triplesize;
@@ -311,24 +296,10 @@ int mpi_rdfio_readids(char *filename, size_t bufsize, hx_hexastore **store, hx_s
 		mychunk += numtriples % commsize;
 	}
 
-	int created_manager = 0;
-
-	if(*manager == NULL) {
-		*manager = hx_new_memory_storage_manager();
-		if(*manager == NULL) {
-			fprintf(stderr, "%s:%u: Error; cannot allocate storage manager.\n", __FILE__, __LINE__);
-			return -1;
-		}
-		created_manager = 1;
-	}
-
 	if(*store == NULL) {
-		*store = hx_new_hexastore(*manager);
+		*store = hx_new_hexastore(NULL);
 		if(*store == NULL) {
 			fprintf(stderr, "%s:%u: Error; cannot allocate hexastore.\n", __FILE__, __LINE__);
-			if(created_manager) {
-				hx_free_storage_manager(*manager);
-			}
 			return -1;
 		}
 	}
@@ -352,8 +323,8 @@ int mpi_rdfio_readids(char *filename, size_t bufsize, hx_hexastore **store, hx_s
 			size_t x = i / sizeof(hx_node_id);
 			ids[x%3] = *((hx_node_id*)&(buffer[i]));
 			if(x % 3 == 2) {
-//				fprintf(stderr, "hx_add_triple_id(%p, %p, %llu, %llu, %llu)\n", *store, *manager, ids[0], ids[1], ids[2]);
-				hx_add_triple_id(*store, *manager, ids[0], ids[1], ids[2]);
+//				fprintf(stderr, "hx_add_triple_id(%p, %p, %llu, %llu, %llu)\n", *store, ids[0], ids[1], ids[2]);
+				hx_add_triple_id(*store, ids[0], ids[1], ids[2]);
 			}
 		}
 	}

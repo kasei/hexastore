@@ -217,13 +217,16 @@ int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level ) {
 				char* nstring;
 				hx_expr_sse( n, &nstring, indent, level+1 );
 				if (_hx_expr_string_concat( &str, " ", &alloc )) {
+					free( nstring );
 					free( str );
 					return 1;
 				}
 				if (_hx_expr_string_concat( &str, nstring, &alloc )) {
+					free( nstring );
 					free( str );
 					return 1;
 				}
+				free( nstring );
 			}
 			if (_hx_expr_string_concat( &str, ")", &alloc )) {
 				free( str );
@@ -267,6 +270,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 				char* vname;
 				hx_node_variable_name( n, &vname );
 				hx_node* v	= hx_variablebindings_node_for_binding_name( b, map, vname );
+				free( vname );
 				if (v == NULL) {
 					return 1;
 				} else {

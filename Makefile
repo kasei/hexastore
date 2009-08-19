@@ -1,20 +1,23 @@
 CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall
+# CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-variable -std=c99
+# CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
+MPI_OBJECTS	= safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
-default: parse print optimize tests examples parse_query dumpmap assign_ids
+default: parse print optimize tests examples parse_query
 
-all: sparql parse print optimize tests examples parse_query
+all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
 
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
 
-assign_ids: assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
-	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o storage.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o
+assign_ids: assign_ids.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -ltokyocabinet -o assign_ids assign_ids.c $(OBJECTS)
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
@@ -82,14 +85,14 @@ bgp.o: bgp.c bgp.h hexastore_types.h
 expr.o: expr.c expr.h hexastore_types.h
 	$(CC) $(INC) -c expr.c
 
-storage.o: storage.c storage.h hexastore_types.h
-	$(CC) $(INC) -c storage.c
-
 graphpattern.o: graphpattern.c graphpattern.h hexastore_types.h
 	$(CC) $(INC) -c graphpattern.c
 
 project.o: project.c project.h hexastore_types.h
 	$(CC) $(INC) -c project.c
+
+util.o: util.c util.h
+	$(CC) $(INC) -c util.c
 
 safealloc.o: safealloc.c safealloc.h
 	$(CC) $(INC) -c safealloc.c
@@ -247,8 +250,8 @@ examples/lubm8_6m: examples/lubm8_6m.c $(OBJECTS)
 examples/lubm16_6m: examples/lubm16_6m.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c $(OBJECTS)
 
-examples/mpi: examples/mpi.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o examples/mpi examples/mpi.c $(OBJECTS)
+examples/mpi: examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
+	$(CC) -lmpi $(INC) $(LIBS) -o examples/mpi examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
 
 ########
 

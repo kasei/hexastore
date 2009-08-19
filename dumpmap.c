@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
-#include "storage.h"
 #include "node.h"
 #include "mergejoin.h"
 #include "avl.h"
@@ -59,10 +58,7 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_storage_manager* st	= hx_new_memory_storage_manager();
-	hx_nodemap* map			= hx_nodemap_read( st, f, 0 );
-	
-	fprintf( stderr, "finished loading nodemap from file...\n" );
+	hx_nodemap* map			= hx_nodemap_read( f, 0 );
 	
 	// print out the nodemap
 	size_t used	= avl_count( map->id2node );
@@ -77,7 +73,6 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_free_nodemap( map );
-	hx_free_storage_manager( st );
 	return 0;
 }
 

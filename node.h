@@ -65,7 +65,9 @@ typedef struct {
 } hx_node_dt_literal;
 
 hx_node* hx_new_node_variable ( int value );
+hx_node* hx_new_node_variable_nondistinguished ( int value );
 hx_node* hx_new_node_named_variable( int value, char* name );
+hx_node* hx_new_node_named_variable_nondistinguished( int value, char* name );
 hx_node* hx_new_node_resource ( char* value );
 hx_node* hx_new_node_blank ( char* value );
 hx_node* hx_new_node_literal ( char* value );
@@ -76,6 +78,7 @@ int hx_free_node( hx_node* n );
 
 size_t hx_node_alloc_size( hx_node* n );
 
+int hx_node_is_distinguished_variable ( hx_node* n );
 int hx_node_is_variable ( hx_node* n );
 int hx_node_is_literal ( hx_node* n );
 int hx_node_is_lang_literal ( hx_node* n );
@@ -93,6 +96,7 @@ double hx_node_nv ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );
 char* hx_node_dt ( hx_node_dt_literal* n );
 int hx_node_string ( hx_node* n, char** string );
+int hx_node_debug ( hx_node* n );
 hx_node* hx_node_parse ( char* string );
 
 int hx_node_uniq_set ( int size, hx_node** set, hx_node*** new, int copy );

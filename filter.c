@@ -8,6 +8,9 @@ hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, h
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_filter_iter\n" );
 	}
+	if (iter == NULL) {
+		fprintf( stderr, "*** NULL iterator passed to hx_new_filter_iter\n" );
+	}
 	vtable->finished	= _hx_filter_iter_vb_finished;
 	vtable->current		= _hx_filter_iter_vb_current;
 	vtable->next		= _hx_filter_iter_vb_next;
@@ -157,6 +160,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int r		= hx_expr_eval( e, b, map, &value );
 		if (r != 0) {
 // 			fprintf( stderr, "type error in filter\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}
@@ -164,12 +168,14 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int ebv	= hx_node_ebv(value);
 		if (ebv == -1) {
 // 			fprintf( stderr, "type error in EBV\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}
 		
 		if (ebv == 0) {
 // 			fprintf( stderr, "false EBV in filter\n" );
+			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}

@@ -72,6 +72,7 @@ typedef struct {
 	hx_sparqlparser_pattern_t type;
 	void* ptr;
 	char* datatype;
+	int nondistinguished;
 } node_t;
 
 typedef struct {
@@ -391,10 +392,10 @@ TriplesSameSubject:
 			triple_t* t	= (triple_t*) triples->items[i];
 			t->subject	= subject;
 		}
-		/*XXX
-		free_node( subject, 1 );
+		
+		/*XXX free_node( subject, 1 ); */
 		free_container( subj_triples, 0 );
-		*/
+		
 		$$	= triples;
 	}
 
@@ -891,16 +892,11 @@ PrefixedName:
 
 BlankNode:
 	BLANK_NODE_LABEL {
-		node_t* r;
-		char* string;
-		hx_node* b	= hx_new_node_blank( (char*) $1 );
-		hx_node_string( b, &string );
-		free( string );
-		
-		r	= (node_t*) calloc( 1, sizeof( node_t ) );
-		r->type			= TYPE_FULL_NODE;
-		r->ptr			= b;
-		$$	= (void*) r;
+		node_t* n			= (node_t*) calloc( 1, sizeof( node_t ) );
+		n->type				= TYPE_VARIABLE;
+		n->ptr				= (void*) $1;
+		n->nondistinguished	= 1;
+		$$	= n;
 	}
 
 	| ANON	{}
@@ -930,7 +926,9 @@ Constraint:
 ;
 
 FunctionCall:
-	IRIref ArgList	{}
+	IRIref ArgList	{
+		fprintf( stderr, "*** FunctionCall not implemented yet\n" );
+	}
 ;
 
 ArgList:
@@ -1157,19 +1155,19 @@ PrimaryExpression:
 	}
 
 	| RDFLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| NumericLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| BooleanLiteral {
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 
 	| Var	{
-			$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
+		$$	= new_expr_data( HX_EXPR_OP_NODE, $1 );
 	}
 ;
 
@@ -1568,7 +1566,7 @@ _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_
 		_O_QGraphPatternNotTriples_E_Or_QFilter_E_C _QGT_DOT_E_Opt _QTriplesBlock_E_Opt	{
 			$$	= $1;
 			if ($3 != NULL) {
-				/* XXX */
+				/* XXX handle extra triples after a filter here #20090816 */
 			}
 		}
 ;
@@ -1580,7 +1578,7 @@ _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Op
 
 		| _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
 			$$	= $2;
-			/* XXX handle the stuff in $1 */
+			/* XXX handle the stuff in $1 (more filters and stuff) #20090816 */
 		}
 ;
 
@@ -1701,8 +1699,9 @@ hx_graphpattern* parse_query ( void ) {
 		prologue_t* prologue	= q->prologue;
 		
 		hx_graphpattern* pat	= generate_graphpattern( q->gp, prologue, vmap );
+		free_graphpattern( q->gp, prologue, vmap );
 		free_prologue( prologue );
-		
+		_free_vmap( vmap );
 		return pat;
 	}
 	return NULL;
@@ -1759,6 +1758,48 @@ hx_bgp* parse_bgp_query ( void ) {
 	return NULL;
 }
 
+void free_bgp ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
+	int i;
+	for (i = 0; i < bgp->count; i++) {
+		triple_t* t		= (triple_t*) bgp->items[i];
+		free_node( t->subject, 0 );
+		free_node( t->predicate, 0 );
+		free_node( t->object, 0 );
+		free( t );
+	}
+	
+	free_container( bgp, 0 );
+	return;
+}
+
+void free_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
+	int i;
+	hx_sparqlparser_pattern_t type	= gp->type;
+	
+	switch (type) {
+		case TYPE_GGP:
+			for (i = 0; i < gp->count; i++) {
+				free_graphpattern( gp->items[i], p, vmap );
+			}
+			break;
+		case TYPE_BGP:
+/* XXX
+			free_bgp( gp, p, vmap );
+*/
+			break;
+		case TYPE_FILTER:
+			/* XXX */
+			break;
+		default:
+			fprintf( stderr, "*** Unimplemented graphpattern type %c in free_graphpattern\n", type );
+			return;
+	};
+	
+	free_container( gp, 0 );
+	
+	return;
+}
+
 hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap ) {
 	int i;
 	hx_bgp* b;
@@ -1773,7 +1814,9 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_spar
 			for (i = 0; i < gp->count; i++) {
 				patterns[i]	= generate_graphpattern( gp->items[i], p, vmap );
 			}
-			return hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
+			hx_graphpattern* pattern	= hx_new_graphpattern_ptr( HX_GRAPHPATTERN_GROUP, gp->count, patterns );
+			free( patterns );
+			return pattern;
 		case TYPE_BGP:
 			b	= generate_bgp( gp, p, vmap );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
@@ -1822,7 +1865,9 @@ hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_
 		if (arity == 1) {
 			expr_t* d	= c->items[0];
 			hx_expr* e1	= generate_expr( d, p, vmap );
-			return hx_new_builtin_expr1( e->op, e1 );
+			hx_expr* r	= hx_new_builtin_expr1( e->op, e1 );
+			
+			return r;
 		} else if (arity == 2) {
 			expr_t* a	= c->items[0];
 			expr_t* b	= c->items[1];
@@ -1880,7 +1925,11 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 		char* name	= (char*) n->ptr;
 		hx_node* v;
 		int id	= variable_id_with_name( vmap, name );
-		v	= hx_new_node_named_variable( id, name );
+		if (n->nondistinguished) {
+			v	= hx_new_node_named_variable_nondistinguished( id, name );
+		} else {
+			v	= hx_new_node_named_variable( id, name );
+		}
 		return v;
 	} else if (n->type == TYPE_QNAME) {
 		hx_node* u;
@@ -1987,6 +2036,9 @@ container_t* new_container ( char type, int size ) {
 int free_container ( container_t* c, int free_contained_objects ) {
 	int i;
 	switch (c->type) {
+		case TYPE_GGP:
+			/* XXX */
+			break;
 		case TYPE_BGP:
 			if (free_contained_objects) {
 				for (i = 0; i < c->count; i++) {
@@ -1998,6 +2050,9 @@ int free_container ( container_t* c, int free_contained_objects ) {
 				}
 			}
 			free(c->items);
+			break;
+		case TYPE_FILTER:
+			/* XXX */
 			break;
 		default:
 			fprintf( stderr, "*** unrecognized container type '%c' in free_container()\n", c->type );

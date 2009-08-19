@@ -19,6 +19,7 @@ extern "C" {
 #include "hexastore_types.h"
 #include "nodemap.h"
 #include "node.h"
+#include "util.h"
 
 typedef struct {
 	hx_node* subject;
@@ -40,11 +41,8 @@ hx_node* hx_triple_node ( hx_triple* t, int i );
 int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string );
 int hx_triple_string ( hx_triple* t, char** string );
 
-typedef uint64_t hx_hash_function ( char* s );
 uint64_t hx_triple_hash_on_node ( hx_triple* t, hx_node_position_t pos, hx_hash_function* func );
 uint64_t hx_triple_hash ( hx_triple* t, hx_hash_function* func );
-
-uint64_t hx_triple_hash_string ( char* s );
 
 #ifdef __cplusplus
 }

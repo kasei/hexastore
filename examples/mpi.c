@@ -14,7 +14,7 @@
 int DEBUG_NODE	= -1;
 
 extern hx_bgp* parse_bgp_query_string ( char* );
-hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, hx_storage_manager* st, const char* filename );
+hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, const char* filename );
 
 char* read_file ( const char* qf ) {
 	MPI_File file;
@@ -39,7 +39,6 @@ char* read_file ( const char* qf ) {
 }
 
 int main ( int argc, char** argv ) {
-	int i;
 	MPI_Init(&argc, &argv);
 	
 	int mysize, myrank;
@@ -47,7 +46,7 @@ int main ( int argc, char** argv ) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 
-	if (0) { // XXX
+	if (1) { // XXX
 		char hostname[256];
 		gethostname(hostname, sizeof(hostname));
 		printf("\n\n*** Rank %d PID %d on %s ready for attach\n\n", myrank, getpid(), hostname);
@@ -55,15 +54,13 @@ int main ( int argc, char** argv ) {
 		sleep(5);
 	}
 
-	hx_storage_manager* st	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_new_hexastore( st );
+	hx_hexastore* hx		= hx_new_hexastore( NULL );
 	
-	int ecode;
 	const char* data_filename	= argv[1];
 	const char* query_filename	= argv[2];
 	
 	char* job				= (argc > 3) ? argv[3] : "";
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/tmp", job );
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( "/tmp", job );
 //  	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
 	
 	TIME_T(load_start, load_end);
@@ -94,13 +91,7 @@ int main ( int argc, char** argv ) {
 		hx_bgp_debug( b );
 	}
 	
-	int triple_count			= hx_bgp_size(b);
-	int node_count				= triple_count * 3;
-	
-	hx_nodemap* nodemap	= hx_get_nodemap( hx );
-	
 	exec_start	= TIME();
-	hx_variablebindings_nodes** nodes;
 	
 	hx_nodemap* results_map;
 	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, hx, b, &results_map );
@@ -149,8 +140,7 @@ int main ( int argc, char** argv ) {
 		hx_free_variablebindings_iter(iter);
 		hx_free_nodemap( results_map );
 		hx_free_bgp(b);
-		hx_free_hexastore( hx, st );
-		hx_free_storage_manager( st );
+		hx_free_hexastore( hx );
 		hx_parallel_free_parallel_execution_context( ctx );
 	}
 	

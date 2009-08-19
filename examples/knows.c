@@ -12,8 +12,7 @@ int main ( int argc, char** argv ) {
 		perror( "Failed to open hexastore file for reading: " );
 		return 1;
 	}
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_read( s, f, 0 );
+	hx_hexastore* hx	= hx_read( f, 0 );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -34,7 +33,7 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 3, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -82,8 +81,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( person );
 	hx_free_node( knows );
 	hx_free_node( name );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	
 	return 0;
 }

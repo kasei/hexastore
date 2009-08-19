@@ -74,7 +74,6 @@ unsigned char* generate_id_handler (void *user_data, raptor_genid_type type, uns
 }
 
 hx_node_id parser_node ( parser_t* parser, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
-	int ecode;
 	hx_node_id id	= 0;
 	char node_type;
 	char* value;
@@ -240,7 +239,7 @@ int main (int argc, char** argv) {
 	} else {
 		BDBCUR *cur	= tcbdbcurnew(parser->cabinet);
 		tcbdbcurfirst(cur);
-		while((p = tcbdbcurkey3(cur, &len)) != NULL) {
+		while((p = (void*) tcbdbcurkey3(cur, &len)) != NULL) {
 			uint64_t* idp;
 			int idlen;
 			idp	= (uint64_t*) tcbdbcurval3(cur, &idlen);

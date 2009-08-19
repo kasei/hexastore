@@ -31,7 +31,6 @@ typedef struct {
 	int count;
 	uint64_t total;
 	hx_hexastore* hx;
-	hx_storage_manager* storage;
 	hx_triple* triples;
 	hx_parser_logger logger;
 } hx_parser;
@@ -39,8 +38,8 @@ typedef struct {
 hx_parser* hx_new_parser ( void );
 int hx_parser_set_logger( hx_parser* p, hx_parser_logger l );
 
-uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, hx_storage_manager* s, const char* filename );
-int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx, hx_storage_manager* s, const char* string, const char* base, char* parser_name );
+uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
+int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* string, const char* base, char* parser_name );
 int hx_free_parser ( hx_parser* p );
 
 #ifdef __cplusplus
