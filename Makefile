@@ -6,7 +6,7 @@ CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/re
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o
 MPI_OBJECTS	= safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
 default: parse print optimize tests examples parse_query
