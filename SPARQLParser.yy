@@ -1669,6 +1669,8 @@ hx_node* generate_node ( node_t* n, prologue_t* p, hx_sparqlparser_variable_map_
 hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
 hx_bgp* generate_bgp ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
 hx_graphpattern* generate_graphpattern ( container_t* bgp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
+void _free_vmap ( hx_sparqlparser_variable_map_list* vmap );
+void free_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variable_map_list* vmap );
 
 hx_bgp* parse_bgp_query ( void );
 hx_bgp* parse_bgp_query_string ( char* string );
