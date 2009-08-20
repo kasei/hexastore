@@ -2,13 +2,14 @@
 #include "mergejoin.h"
 #include "project.h"
 
+extern hx_bgp* parse_bgp_query_string ( char* );
+
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
 int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size );
 void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size );
 	
-
 typedef struct {
 	uint64_t cost;
 	hx_triple* triple;
@@ -77,6 +78,10 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 	triples[1]	= t2;
 	hx_bgp* b	= hx_new_bgp( 2, triples );
 	return b;	
+}
+
+hx_bgp* hx_bgp_parse_string ( const char* string ) {
+	return parse_bgp_query_string( (char*) string );
 }
 
 int hx_free_bgp ( hx_bgp* b ) {
