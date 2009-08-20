@@ -37,7 +37,7 @@ uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* 
 	parser->triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
 	raptor_set_statement_handler(rdf_parser, parser, _hx_parser_handle_triple);
-	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
+//	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
 	
 	raptor_parse_file(rdf_parser, uri, base_uri);
 	if (parser->count > 0) {
@@ -63,7 +63,7 @@ int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx,
 	parser->triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
 	raptor_set_statement_handler(rdf_parser, parser, _hx_parser_handle_triple);
-	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
+//	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
 	
 	raptor_parse_chunk(rdf_parser, (const unsigned char*)string, strlen(string), 1);
 	if (parser->count > 0) {
