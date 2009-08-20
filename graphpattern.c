@@ -151,7 +151,7 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 	hx_expr* e;
 	hx_graphpattern *gp		= NULL;
 	hx_graphpattern *gp2	= NULL;
-	hx_variablebindings_iter *iter, *iter2;
+	hx_variablebindings_iter *iter, *iter2, *iter3;
 	hx_graphpattern** p;
 	hx_nodemap* map	= hx_get_nodemap( hx );
 	switch (pat->type) {
@@ -176,8 +176,15 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 		case HX_GRAPHPATTERN_GRAPH:
 			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );
 			return NULL;
-		case HX_GRAPHPATTERN_UNION:
 		case HX_GRAPHPATTERN_OPTIONAL:
+			vp		= (void**) pat->data;
+			gp		= (hx_graphpattern*) vp[0];
+			iter	= hx_graphpattern_execute( gp, hx );
+			gp2		= (hx_graphpattern*) vp[1];
+			iter2	= hx_graphpattern_execute( gp2, hx );
+			iter3	= hx_new_nestedloopjoin_iter2( iter, iter2, 1 );
+			return iter3;
+		case HX_GRAPHPATTERN_UNION:
 			fprintf( stderr, "*** Unimplemented graph pattern type '%c' in hx_graphpattern_execute\n", pat->type );
 			return NULL;
 		default:
