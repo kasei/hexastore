@@ -5,6 +5,7 @@
 #include "nestedloopjoin.h"
 #include "node.h"
 #include "tap.h"
+#include "bgp.h"
 
 void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );
@@ -19,9 +20,10 @@ hx_node* l2;
 
 void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) );
 void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ), int expect );
+void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) );
 
 int main ( void ) {
-	plan_tests(20 + 14 + 2);
+	plan_tests(20 + 14 + 2 + 7);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
@@ -34,6 +36,8 @@ int main ( void ) {
 	
 	test_cartesian_join( hx_new_nestedloopjoin_iter, 1 );	// the 1 signifies that we expect the join to work and produce 1 result
 	test_cartesian_join( hx_new_mergejoin_iter, 0 );		// the 0 signifies that we don't expect the join to work, since mergejoin isn't implemented for the cartesian join case (with no shared variables)
+	
+	test_left_join( hx_new_nestedloopjoin_iter2 );
 	
 	return exit_status();
 }
@@ -251,6 +255,78 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	hx_free_hexastore( hx );
 }
 
+void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) ) {
+	fprintf( stdout, "# test_left_join\n" );
+	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_nodemap* map		= hx_get_nodemap( hx );
+	_add_data( hx );
+	
+	{
+		hx_bgp* lhs	= hx_bgp_parse_string("{ ?x <p1> ?y }");
+		hx_bgp* rhs	= hx_bgp_parse_string("{ ?x <p2> \"l1\" }");
+		hx_variablebindings_iter* lhsi	= hx_bgp_execute( lhs, hx );
+		hx_variablebindings_iter* rhsi	= hx_bgp_execute( rhs, hx );
+		
+		int counter	= 0;
+		hx_variablebindings_iter* iter	= join_constructor( lhsi, rhsi, 1 );
+		while (!hx_variablebindings_iter_finished(iter)) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			int size	= hx_variablebindings_size( b );
+			ok1( size == 2 );
+			counter++;
+			
+// 			char* string;
+// 			hx_variablebindings_string( b, map, &string );
+// 			fprintf( stderr, "*** %s\n", string );
+// 			free( string );
+			
+			hx_free_variablebindings( b );
+			hx_variablebindings_iter_next( iter );
+		}
+	
+		ok1( counter == 2 );
+		
+		hx_free_variablebindings_iter( iter );
+		hx_free_bgp( lhs );
+		hx_free_bgp( rhs );
+	}
+	
+	{
+		hx_bgp* lhs	= hx_bgp_parse_string("{ ?x <p1> _:a }");
+		hx_bgp* rhs	= hx_bgp_parse_string("{ ?x ?p \"l1\" }");
+		hx_variablebindings_iter* lhsi	= hx_bgp_execute( lhs, hx );
+		hx_variablebindings_iter* rhsi	= hx_bgp_execute( rhs, hx );
+		
+		int* sizes	= calloc( 3, sizeof( int ) );
+		int counter	= 0;
+		hx_variablebindings_iter* iter	= join_constructor( lhsi, rhsi, 1 );
+		while (!hx_variablebindings_iter_finished(iter)) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			int size	= hx_variablebindings_size( b );
+			sizes[size]++;
+			counter++;
+			
+			hx_free_variablebindings( b );
+			hx_variablebindings_iter_next( iter );
+		}
+		
+		ok1( counter == 2 );
+		ok1( sizes[0] == 0 );
+		ok1( sizes[1] == 1 );
+		ok1( sizes[2] == 1 );
+		
+		hx_free_variablebindings_iter( iter );
+		hx_free_bgp( lhs );
+		hx_free_bgp( rhs );
+	}
+	
+	
+	
+	hx_free_hexastore( hx );
+}
+
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
 	hx_node* v1	= hx_new_node_variable( -1 );
 	hx_node* v2	= hx_new_node_variable( -2 );
@@ -273,4 +349,3 @@ void _debug_node ( char* h, hx_node* node ) {
 	hx_node_string( node, &string );
 	fprintf( stderr, "%s %s\n", h, string );
 }
-
