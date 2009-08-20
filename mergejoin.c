@@ -426,7 +426,6 @@ int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names,
 	return 0;
 }
 
-// return the natural join of two variable bindings 
 hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right ) {
 	int size;
 	char** names;

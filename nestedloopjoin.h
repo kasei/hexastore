@@ -37,6 +37,8 @@ typedef struct {
 	int rhs_batch_alloc_size;
 	int lhs_batch_index;
 	int rhs_batch_index;
+	int leftjoin;
+	int leftjoin_seen_lhs_result;
 } _hx_nestedloopjoin_iter_vb_info;
 
 int _hx_nestedloopjoin_iter_vb_finished ( void* iter );
@@ -47,6 +49,7 @@ int _hx_nestedloopjoin_iter_vb_size ( void* iter );
 char** _hx_nestedloopjoin_iter_vb_names ( void* iter );
 
 hx_variablebindings_iter* hx_new_nestedloopjoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs );
+hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, int leftjoin );
 hx_variablebindings* hx_nestedloopjoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right );
 
 

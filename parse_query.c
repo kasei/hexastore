@@ -103,8 +103,6 @@ int main( int argc, char** argv ) {
 		} else {
 			iter	= hx_bgp_execute( b, hx );
 		}
-		int size		= hx_variablebindings_iter_size( iter );
-		char** names	= hx_variablebindings_iter_names( iter );
 	// 	for (int i = 0; i < size; i++) {
 	// 		fprintf( stderr, "column: %s\n", names[i] );
 	// 	}
@@ -114,6 +112,8 @@ int main( int argc, char** argv ) {
 				count++;
 				hx_variablebindings* b;
 				hx_variablebindings_iter_current( iter, &b );
+				int size		= hx_variablebindings_size( b );
+				char** names	= hx_variablebindings_names( b );
 				
 				fprintf( stdout, "Row %d:\n", (int) count );
 				int i;

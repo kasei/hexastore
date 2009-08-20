@@ -35,6 +35,8 @@ typedef struct {
 hx_bgp* hx_new_bgp ( int size, hx_triple** triples );
 hx_bgp* hx_new_bgp1 ( hx_triple* t1 );
 hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 );
+hx_bgp* hx_bgp_parse_string ( const char* string );
+
 int hx_free_bgp ( hx_bgp* b );
 
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );

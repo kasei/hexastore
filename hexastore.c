@@ -473,7 +473,6 @@ uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node*
 		if (aid == 0 || bid == 0 || cid == 0) {
 			return (uint64_t) 0;
 		}
-		
 		hx_node_id index_ordered_id[3]	= { aid, bid, cid };
 		
 		uint64_t size;
