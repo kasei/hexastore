@@ -15,6 +15,7 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include <mpi.h>
 
 #include "hexastore.h"
 #include "bgp.h"
@@ -61,6 +62,7 @@ hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n );
 int hx_parallel_nodemap_get_process_id ( hx_node_id id );
 
 int hx_parallel_get_nodes ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, hx_variablebindings_nodes*** varbinds );
+int hx_bgp_reorder_mpi ( hx_bgp* b, hx_hexastore* hx );
 
 #ifdef __cplusplus
 }

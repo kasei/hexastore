@@ -2,18 +2,9 @@
 #include "mergejoin.h"
 #include "project.h"
 
-int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
-int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size );
-void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size );
 	
-
-typedef struct {
-	uint64_t cost;
-	hx_triple* triple;
-} _hx_bgp_selectivity_t;
-
 hx_bgp* hx_new_bgp ( int size, hx_triple** triples ) {
 	hx_bgp* b	= (hx_bgp*) calloc( 1, sizeof( hx_bgp ) );
 	b->size		= size;
@@ -339,7 +330,16 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 				s[i].triple	= temp_t;
 			}
 		}
-		_hx_bgp_triple_add_seen_variables( b, t, seen, size );
+
+		if (hx_node_is_variable( t->subject )) {
+			seen[ abs(hx_node_iv( t->subject )) ]++;
+		}
+		if (hx_node_is_variable( t->predicate )) {
+			seen[ abs(hx_node_iv( t->predicate )) ]++;
+		}
+		if (hx_node_is_variable( t->object )) {
+			seen[ abs(hx_node_iv( t->object )) ]++;
+		}
 	}
 	
 	for (i = 0; i < size; i++) {
@@ -349,18 +349,6 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 	free( seen );
 	free( s );
 	return 0;
-}
-
-void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size ) {
-	if (hx_node_is_variable( t->subject )) {
-		seen[ abs(hx_node_iv( t->subject )) ]++;
-	}
-	if (hx_node_is_variable( t->predicate )) {
-		seen[ abs(hx_node_iv( t->predicate )) ]++;
-	}
-	if (hx_node_is_variable( t->object )) {
-		seen[ abs(hx_node_iv( t->object )) ]++;
-	}
 }
 
 int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size ) {
