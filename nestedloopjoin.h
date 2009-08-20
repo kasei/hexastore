@@ -38,6 +38,7 @@ typedef struct {
 	int lhs_batch_index;
 	int rhs_batch_index;
 	int leftjoin;
+	int leftjoin_seen_lhs_result;
 } _hx_nestedloopjoin_iter_vb_info;
 
 int _hx_nestedloopjoin_iter_vb_finished ( void* iter );

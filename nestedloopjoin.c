@@ -47,24 +47,22 @@ int _hx_nestedloopjoin_prime_results ( _hx_nestedloopjoin_iter_vb_info* info ) {
 		for (j = 0; j < info->rhs_size; j++) {
 			hx_variablebindings* rhs	= info->rhs_batch[j];
 			hx_variablebindings* joined	= hx_variablebindings_natural_join( lhs, rhs );
-			if (info->leftjoin) {
-				if (joined == NULL) {
-					info->lhs_batch_index	= i;
-					info->rhs_batch_index	= j;
-					info->current			= hx_copy_variablebindings( lhs );
-					return 0;
-				} else {
-					info->lhs_batch_index	= i;
-					info->rhs_batch_index	= j;
-					info->current			= joined;
-					return 0;
-				}
-			} else if (joined != NULL) {
+			if (joined != NULL) {
 				info->lhs_batch_index	= i;
 				info->rhs_batch_index	= j;
 				info->current			= joined;
+				info->leftjoin_seen_lhs_result	= 1;
 				return 0;
 			}
+		}
+		
+		if (info->leftjoin) {
+//			fprintf( stderr, "in leftjoin, first result is from LHS\n" );
+			info->lhs_batch_index	= i;
+			info->rhs_batch_index	= info->rhs_size;
+			info->current			= hx_copy_variablebindings( lhs );
+			info->leftjoin_seen_lhs_result	= 1;
+			return 0;
 		}
 	}
 	
@@ -110,8 +108,17 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		info->rhs_batch_index++;
 		if (info->rhs_batch_index >= info->rhs_size) {
 // 			fprintf( stderr, "- end of RHS. incrementing LHS index and resetting RHS index to 0\n" );
+			if (info->leftjoin) {
+				if (info->leftjoin_seen_lhs_result == 0) {
+//					fprintf( stderr, "- in a leftjoin and no RHS result used in a join. using LHS as a join result\n" );
+					info->leftjoin_seen_lhs_result	= 1;
+					info->current	= hx_copy_variablebindings( info->lhs_batch[info->lhs_batch_index] );
+					return 0;
+				}
+			}
 			info->rhs_batch_index	= 0;
 			info->lhs_batch_index++;
+			info->leftjoin_seen_lhs_result	= 0;
 			if (info->lhs_batch_index >= info->lhs_size) {
 // 				fprintf( stderr, "- end of LHS. finding new matching batches...\n" );
 				info->finished	= 1;
@@ -123,19 +130,10 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		hx_variablebindings* rhs	= info->rhs_batch[info->rhs_batch_index];
 		
 		hx_variablebindings* joined	= hx_variablebindings_natural_join( lhs, rhs );
-		if (info->leftjoin) {
-			if (joined == NULL) {
-				info->current	= hx_copy_variablebindings( lhs );
-				return 0;
-			} else {
-				info->current	= joined;
-				return 0;
-			}
-		} else {
-			if (joined != NULL) {
-				info->current	= joined;
-				return 0;
-			}
+		if (joined != NULL) {
+			info->current	= joined;
+			info->leftjoin_seen_lhs_result	= 1;
+			return 0;
 		}
 	}
 	
@@ -204,6 +202,10 @@ int _hx_nestedloopjoin_debug ( void* data, char* header, int indent ) {
 	return 0;
 }
 
+hx_variablebindings_iter* hx_new_nestedloopjoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs ) {
+	return hx_new_nestedloopjoin_iter2( lhs, rhs, 0 );
+}
+
 hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, int leftjoin ) {
 	int asize		= hx_variablebindings_iter_size( lhs );
 	char** anames	= hx_variablebindings_iter_names( lhs );
@@ -236,6 +238,7 @@ hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter
 	info->finished			= 0;
 	info->started			= 0;
 	info->leftjoin			= leftjoin;
+	info->leftjoin_seen_lhs_result	= 0;
 	
 	info->lhs_size			= 0;
 	info->rhs_size			= 0;
@@ -251,10 +254,6 @@ hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter
 	
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return iter;
-}
-
-hx_variablebindings_iter* hx_new_nestedloopjoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs ) {
-	return hx_new_nestedloopjoin_iter2( lhs, rhs, 0 );
 }
 
 int _hx_nestedloopjoin_get_batch ( _hx_nestedloopjoin_iter_vb_info* info, hx_variablebindings_iter* iter, int* batch_size, int* batch_alloc_size, hx_variablebindings*** batch ) {
