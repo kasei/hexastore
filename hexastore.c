@@ -460,7 +460,7 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx
 	return iter;
 }
 
-uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
+uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
 	{
 		int vars;
 		hx_index* index;
@@ -470,9 +470,13 @@ uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node
 		hx_node_id aid	= hx_get_node_id( hx, index_ordered[0] );
 		hx_node_id bid	= hx_get_node_id( hx, index_ordered[1] );
 		hx_node_id cid	= hx_get_node_id( hx, index_ordered[2] );
+		if (aid == 0 || bid == 0 || cid == 0) {
+			return (uint64_t) 0;
+		}
+		
 		hx_node_id index_ordered_id[3]	= { aid, bid, cid };
 		
-		uintptr_t size;
+		uint64_t size;
 		hx_head* head;
 		hx_index_iter* iter;
 		hx_vector* vector;
@@ -483,13 +487,13 @@ uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node
 			case 2:
 				head	= hx_index_head( index );
 				if (head == NULL) {
-					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
-					return (uintptr_t) 0;
+// 					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
 				}
 				vector	= hx_head_get_vector( head, index_ordered_id[0] );
 				if (vector == NULL) {
-					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
-					return (uintptr_t) 0;
+//					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
 				}
 				size	= hx_vector_triples_count( vector );
 				return size;
@@ -497,29 +501,29 @@ uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node
 			case 1:
 				head	= hx_index_head( index );
 				if (head == NULL) {
-					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
-					return (uintptr_t) 0;
+//					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
 				}
 				vector	= hx_head_get_vector( head, index_ordered_id[0] );
 				if (vector == NULL) {
-					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
-					return (uintptr_t) 0;
+//					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
 				}
 				terminal	= hx_vector_get_terminal( vector, index_ordered_id[1] );
 				if (terminal == NULL) {
-					fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
-					return (uintptr_t) 0;
+//					fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
 				}
-				size	= (uintptr_t) hx_terminal_size( terminal );
+				size	= (uint64_t) hx_terminal_size( terminal );
 				return size;
 			case 0:
 				iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
 				break;
-				return (uintptr_t) ((hx_index_iter_finished(iter)) ? 0 : 1);
+				return (uint64_t) ((hx_index_iter_finished(iter)) ? 0 : 1);
 		};
 	}
 	// XXX NOT EFFICIENT... Needs to be updated to use the {head,vector,terminal} structs' triples_count field
-	uintptr_t count	= 0;
+	uint64_t count	= 0;
 	hx_index_iter* iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
 	while (!hx_index_iter_finished(iter)) {
 		count++;
@@ -529,7 +533,7 @@ uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node
 	return count;
 }
 
-uintptr_t hx_triples_count ( hx_hexastore* hx ) {
+uint64_t hx_triples_count ( hx_hexastore* hx ) {
 	hx_index* i	= (hx_index*) hx->spo;
 	return hx_index_triples_count( i );
 }
