@@ -470,6 +470,9 @@ uintptr_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node
 		hx_node_id aid	= hx_get_node_id( hx, index_ordered[0] );
 		hx_node_id bid	= hx_get_node_id( hx, index_ordered[1] );
 		hx_node_id cid	= hx_get_node_id( hx, index_ordered[2] );
+		if (aid == 0 || bid == 0 || cid == 0) {
+			return (uint64_t) 0;
+		}
 		hx_node_id index_ordered_id[3]	= { aid, bid, cid };
 		
 		uintptr_t size;
