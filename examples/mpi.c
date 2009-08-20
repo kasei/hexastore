@@ -46,7 +46,7 @@ int main ( int argc, char** argv ) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 
-	if (1) { // XXX
+	if (0) { // XXX
 		char hostname[256];
 		gethostname(hostname, sizeof(hostname));
 		printf("\n\n*** Rank %d PID %d on %s ready for attach\n\n", myrank, getpid(), hostname);
@@ -78,6 +78,7 @@ int main ( int argc, char** argv ) {
 
 	char* query	= read_file( query_filename );
 	hx_bgp* b	= parse_bgp_query_string( query );
+	hx_bgp_reorder_mpi( b, hx );
 	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
