@@ -1526,6 +1526,11 @@ GroupGraphPattern:
 					container_t* filter	= nottriples;
 					container_push_item( filter, set );
 					$$	= filter;
+				} else if (nottriples->type == TYPE_OPT) {
+					/* right now, we're only going to be dealing with the BGP on the LHS of the OPTIONAL, but in reality, it also needs to be able to take filters and other things from $3 on the LHS */
+					fprintf( stderr, "GOT OPTIONAL in GROUP GRAPH PATTERN\n" );
+					container_unshift_item( nottriples, set );
+					$$	= nottriples;
 				}
 			}
 			
@@ -1538,11 +1543,6 @@ GroupGraphPattern:
 			q->filter		= NULL;
 			parsedBGPPattern		= (void*) q;
 			/** XXXXXXXXXXXXXXXXXXXX **/
-			
-			
-			
-			
-			
 			
 		}
 ;
@@ -1578,12 +1578,14 @@ _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Op
 
 		| _Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star _O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C	{
 			$$	= $2;
-			/* XXX handle the stuff in $1 (more filters and stuff) #20090816 */
+			/* XXX handle the stuff in $1 which is self-recursive on this rule (more filters and stuff) #20090816 */
 		}
 ;
 
 GraphPatternNotTriples:
-		OptionalGraphPattern {}
+		OptionalGraphPattern {
+			$$	= $1;
+		}
 
 		| GroupOrUnionGraphPattern	{}
 
@@ -1591,7 +1593,11 @@ GraphPatternNotTriples:
 ;
 
 OptionalGraphPattern:
-		IT_OPTIONAL GroupGraphPattern	{}
+		IT_OPTIONAL GroupGraphPattern	{
+			container_t* set	= new_container( TYPE_OPT, 2 );
+			container_push_item( set, $2 );
+			$$	= set;
+		}
 ;
 
 GraphGraphPattern:
@@ -1792,6 +1798,10 @@ void free_graphpattern ( container_t* gp, prologue_t* p, hx_sparqlparser_variabl
 		case TYPE_FILTER:
 			/* XXX */
 			break;
+		case TYPE_OPT:
+			free_graphpattern( gp->items[0], p, vmap );
+			free_graphpattern( gp->items[1], p, vmap );
+			break;
 		default:
 			fprintf( stderr, "*** Unimplemented graphpattern type %c in free_graphpattern\n", type );
 			return;
@@ -1807,7 +1817,7 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_spar
 	hx_bgp* b;
 	hx_expr* e;
 	hx_graphpattern** patterns;
-	hx_graphpattern *pat;
+	hx_graphpattern *pat, *pat2;
 	hx_sparqlparser_pattern_t type	= gp->type;
 
 	switch (type) {
@@ -1826,6 +1836,10 @@ hx_graphpattern* generate_graphpattern ( container_t* gp, prologue_t* p, hx_spar
 			e	= generate_expr( gp->items[0], p, vmap );
 			pat	= generate_graphpattern( gp->items[1], p, vmap );
 			return hx_new_graphpattern( HX_GRAPHPATTERN_FILTER, e, pat );
+		case TYPE_OPT:
+			pat		= generate_graphpattern( gp->items[0], p, vmap );
+			pat2	= generate_graphpattern( gp->items[1], p, vmap );
+			return hx_new_graphpattern( HX_GRAPHPATTERN_OPTIONAL, pat, pat2 );
 		default:
 			fprintf( stderr, "*** Unimplemented graphpattern type %c in generate_graphpattern\n", type );
 			return NULL;
@@ -2051,6 +2065,9 @@ int free_container ( container_t* c, int free_contained_objects ) {
 					free(t);
 				}
 			}
+			free(c->items);
+			break;
+		case TYPE_OPT:
 			free(c->items);
 			break;
 		case TYPE_FILTER:
