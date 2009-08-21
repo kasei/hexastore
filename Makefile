@@ -5,7 +5,7 @@ CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggd
 CC			= gcc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o misc/avl.o misc/nodemap.o rdf/node.o engine/variablebindings.o engine/nestedloopjoin.o engine/rendezvousjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o rdf/triple.o store/hexastore/btree.o parser/parser.o algebra/bgp.o algebra/expr.o SPARQLParser.o SPARQLScanner.o algebra/graphpattern.o engine/project.o misc/util.o
+OBJECTS	=	hexastore.o index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o misc/avl.o misc/nodemap.o rdf/node.o engine/variablebindings.o engine/nestedloopjoin.o engine/rendezvousjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o rdf/triple.o store/hexastore/btree.o parser/parser.o algebra/bgp.o algebra/expr.o parser/SPARQLParser.o parser/SPARQLScanner.o algebra/graphpattern.o engine/project.o misc/util.o
 MPI_OBJECTS	= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
 
 default: parse print optimize tests examples parse_query
@@ -27,7 +27,7 @@ optimize: cli/optimize.c $(OBJECTS)
 print: cli/print.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o print cli/print.c $(OBJECTS)
 
-parse_query: cli/parse_query.c SPARQLParser.o SPARQLScanner.o $(OBJECTS)
+parse_query: cli/parse_query.c parser/SPARQLParser.o parser/SPARQLScanner.o $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse_query cli/parse_query.c $(OBJECTS)
 
 dumpmap: cli/dumpmap.c $(OBJECTS)
@@ -112,19 +112,19 @@ parallel/parallel.o: parallel/parallel.c parallel/parallel.h parallel/async_des.
 
 # SPARQLParser.c:
 # SPARQLParser.h: SPARQLParser.yy
-sparql: SPARQLParser.yy SPARQLScanner.ll
-	bison -o SPARQLParser.c SPARQLParser.yy
-	flex -o SPARQLScanner.c SPARQLScanner.ll
+sparql: parser/SPARQLParser.yy parser/SPARQLScanner.ll
+	bison -o parser/SPARQLParser.c parser/SPARQLParser.yy
+	flex -o parser/SPARQLScanner.c parser/SPARQLScanner.ll
 
-SPARQLScanner.h: SPARQLScanner.c SPARQLScanner.ll
+parser/SPARQLScanner.h: parser/SPARQLScanner.c parser/SPARQLScanner.ll
 
-SPARQLScanner.c: SPARQLScanner.ll
+parser/SPARQLScanner.c: parser/SPARQLScanner.ll
 
-SPARQLParser.o: SPARQLParser.yy SPARQLScanner.ll SPARQLParser.h SPARQLScanner.h
-	$(CC) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.c
+parser/SPARQLParser.o: parser/SPARQLParser.yy parser/SPARQLScanner.ll parser/SPARQLParser.h parser/SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o parser/SPARQLParser.o parser/SPARQLParser.c
 
-SPARQLScanner.o: SPARQLScanner.c SPARQLParser.h SPARQLScanner.h
-	$(CC) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.c
+parser/SPARQLScanner.o: parser/SPARQLScanner.c parser/SPARQLParser.h parser/SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o parser/SPARQLScanner.o parser/SPARQLScanner.c
 
 ########
 # jesse's mpi file io stuff:
@@ -270,5 +270,5 @@ clean:
 	rm -f *.o */*.o */*/*.o parallel/genmap/*.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
-	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.c SPARQLScanner.c SPARQLParser.h
+	rm -f SPARQL parser/SPARQLParser.o parser/SPARQLScanner.o parser/SPARQLParser.c parser/SPARQLScanner.c parser/SPARQLParser.h
 	rm -f stack.h position.h location.h

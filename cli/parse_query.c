@@ -1,11 +1,10 @@
-#include "SPARQLParser.h"
+#include "parser/SPARQLParser.h"
 #include <time.h>
 #include "algebra/bgp.h"
 #include "algebra/graphpattern.h"
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
 extern hx_bgp* parse_bgp_query ( void );
-extern hx_bgp* parse_bgp_query_string ( char* );
 extern hx_graphpattern* parse_query_string ( char* );
 
 void help (int argc, char** argv) {
@@ -74,7 +73,7 @@ int main( int argc, char** argv ) {
 		}
 		fread(query, st.st_size, 1, f);
 		query[ st.st_size ]	= 0;
-		b	= parse_bgp_query_string( query );
+		b	= hx_bgp_parse_string( query );
 		g	= parse_query_string( query );
 		free( query );
 		

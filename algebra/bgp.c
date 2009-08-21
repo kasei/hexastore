@@ -1,6 +1,7 @@
 #include "algebra/bgp.h"
 #include "engine/mergejoin.h"
 #include "engine/project.h"
+#include "parser/SPARQLParser.h"
 
 extern hx_bgp* parse_bgp_query_string ( char* );
 
