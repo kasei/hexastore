@@ -109,8 +109,9 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		if (info->rhs_batch_index >= info->rhs_size) {
 // 			fprintf( stderr, "- end of RHS. incrementing LHS index and resetting RHS index to 0\n" );
 			if (info->leftjoin) {
+// 				fprintf( stderr, "  - in leftjoin\n" );
 				if (info->leftjoin_seen_lhs_result == 0) {
-//					fprintf( stderr, "- in a leftjoin and no RHS result used in a join. using LHS as a join result\n" );
+// 					fprintf( stderr, "- in a leftjoin and no RHS result used in a join. using LHS as a join result\n" );
 					info->leftjoin_seen_lhs_result	= 1;
 					info->current	= hx_copy_variablebindings( info->lhs_batch[info->lhs_batch_index] );
 					return 0;
@@ -118,6 +119,7 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 			}
 			info->rhs_batch_index	= 0;
 			info->lhs_batch_index++;
+			
 			info->leftjoin_seen_lhs_result	= 0;
 			if (info->lhs_batch_index >= info->lhs_size) {
 // 				fprintf( stderr, "- end of LHS. finding new matching batches...\n" );
@@ -129,6 +131,14 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		hx_variablebindings* lhs	= info->lhs_batch[info->lhs_batch_index];
 		hx_variablebindings* rhs	= info->rhs_batch[info->rhs_batch_index];
 		
+// 		char* string;
+// 		hx_variablebindings_string( info->lhs_batch[ info->lhs_batch_index ], NULL, &string );
+// 		fprintf( stderr, "- new lhs result in nestedloopjoin: %s\n", string );
+// 		free(string);
+// 		hx_variablebindings_string( info->rhs_batch[ info->rhs_batch_index ], NULL, &string );
+// 		fprintf( stderr, "- new rhs result in nestedloopjoin: %s\n", string );
+// 		free(string);
+		
 		hx_variablebindings* joined	= hx_variablebindings_natural_join( lhs, rhs );
 		if (joined != NULL) {
 			info->current	= joined;
@@ -137,6 +147,16 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		}
 	}
 	
+	if (info->leftjoin) {
+		if (info->leftjoin_seen_lhs_result == 0) {
+// 			fprintf( stderr, "- at end of iterator, in a leftjoin and no RHS result used in a join. using LHS as a join result\n" );
+			info->leftjoin_seen_lhs_result	= 1;
+			info->current	= hx_copy_variablebindings( info->lhs_batch[info->lhs_batch_index] );
+			return 0;
+		}
+	}
+	
+// 	fprintf( stderr, "- exhausted iterator in _hx_nestedloopjoin_iter_vb_next\n" );
 	info->finished	= 1;
 	return 1;
 }
