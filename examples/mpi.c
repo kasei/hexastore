@@ -6,10 +6,10 @@
 #include "parallel/parallel.h"
 #include "engine/materialize.h"
 
-#include "timing_choices.h"
+#include "misc/timing_choices.h"
 #define TIMING_CPU_FREQUENCY 2600000000.0
 #define TIMING_USE TIMING_RDTSC
-#include "timing.h"
+#include "misc/timing.h"
 
 int DEBUG_NODE	= -1;
 
