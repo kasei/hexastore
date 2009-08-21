@@ -1,7 +1,7 @@
 #include "hexastore.h"
-#include "filter.h"
-#include "expr.h"
-#include "tap.h"
+#include "engine/filter.h"
+#include "algebra/expr.h"
+#include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );

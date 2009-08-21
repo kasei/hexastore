@@ -17,7 +17,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
-#include "head.h"
+#include "store/hexastore/head.h"
 
 typedef struct {
 	int order[3];

@@ -1,6 +1,6 @@
 #include "hexastore.h"
-#include "graphpattern.h"
-#include "tap.h"
+#include "algebra/graphpattern.h"
+#include "test/tap.h"
 
 extern hx_bgp* parse_bgp_query ( void );
 extern hx_bgp* parse_bgp_query_string ( char* );

@@ -11,10 +11,10 @@
 #include <time.h>
 #include <stdio.h>
 #include "hexastore.h"
-#include "variablebindings.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "engine/variablebindings.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
 	t->subject		= s;

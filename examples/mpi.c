@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include "hexastore.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
-#include "parallel.h"
-#include "materialize.h"
+#include "rdf/node.h"
+#include "engine/mergejoin.h"
+#include "engine/materialize.h"
+#include "algebra/bgp.h"
+#include "parallel/parallel.h"
 
-#include "timing_choices.h"
+#include "misc/timing_choices.h"
 #define TIMING_CPU_FREQUENCY 2600000000.0
 #define TIMING_USE TIMING_RDTSC
-#include "timing.h"
+#include "misc/timing.h"
 
 int DEBUG_NODE	= -1;
 
@@ -22,7 +22,6 @@ char* read_file ( const char* qf ) {
 	MPI_Status status;
 	MPI_Offset filesize;
 	MPI_Info_create(&info);
-	//MPI_File_open(MPI_COMM_SELF, (char*) qf, MPI_MODE_RDONLY, info, &file);
 	MPI_File_open(MPI_COMM_WORLD, (char*) qf, MPI_MODE_RDONLY, info, &file);
 	MPI_File_get_size(file, &filesize);
 

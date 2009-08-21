@@ -1,6 +1,6 @@
 #include "hexastore.h"
-#include "bgp.h"
-#include "tap.h"
+#include "algebra/bgp.h"
+#include "test/tap.h"
 
 void bgp1_test ( void );
 void bgp2_test ( void );

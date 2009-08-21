@@ -8,9 +8,9 @@
 
 #include <stdio.h>
 #include "hexastore.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 int main ( int argc, char** argv ) {
