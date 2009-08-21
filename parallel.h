@@ -19,7 +19,7 @@ extern "C" {
 #include "hexastore.h"
 #include "bgp.h"
 #include "variablebindings.h"
-#include "triple.h"
+#include "rdf/triple.h"
 #include "genmap/avl_tree_map.h"
 #include "genmap/iterator.h"
 #include "async_des.h"

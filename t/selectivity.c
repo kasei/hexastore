@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include "hexastore.h"
 #include "nodemap.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "parser.h"
 #include "tap.h"
 

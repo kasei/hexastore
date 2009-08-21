@@ -3,7 +3,7 @@
 #include <raptor.h>
 #include <inttypes.h>
 #include "hexastore.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "parser.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)

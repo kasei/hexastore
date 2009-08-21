@@ -13,7 +13,7 @@
 #include "hexastore.h"
 #include "variablebindings.h"
 #include "mergejoin.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "bgp.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {

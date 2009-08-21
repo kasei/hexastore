@@ -20,7 +20,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "hexastore.h"
-#include "node.h"
+#include "rdf/node.h"
 
 static int TRIPLES_BATCH_SIZE	= 5000;
 typedef void (*hx_parser_logger)( uint64_t count );

@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "node.h"
+#include "rdf/node.h"
 #include "tap.h"
 
 void test_variables ( void );

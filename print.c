@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "mergejoin.h"
 #include "avl.h"
 

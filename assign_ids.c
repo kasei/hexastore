@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 #include "hexastore.h"
-#include "node.h"
+#include "rdf/node.h"
 
 typedef struct {
 	FILE* f;

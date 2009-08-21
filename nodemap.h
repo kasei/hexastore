@@ -9,7 +9,7 @@ extern "C" {
 #include <string.h>
 #include "hexastore_types.h"
 #include "avl.h"
-#include "node.h"
+#include "rdf/node.h"
 
 typedef struct avl_table avl;
 typedef struct {

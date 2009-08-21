@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "hexastore.h"
 #include "mergejoin.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "bgp.h"
 #include "parallel.h"
 #include "materialize.h"

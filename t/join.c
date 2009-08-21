@@ -3,7 +3,7 @@
 #include "nodemap.h"
 #include "mergejoin.h"
 #include "nestedloopjoin.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "tap.h"
 #include "bgp.h"
 

@@ -19,7 +19,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "nodemap.h"
-#include "node.h"
+#include "rdf/node.h"
 
 enum {
 	HX_VARIABLEBINDINGS_FREE_NAMES		= 1,

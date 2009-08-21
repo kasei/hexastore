@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "hexastore.h"
-#include "triple.h"
+#include "rdf/triple.h"
 #include "mergejoin.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "bgp.h"
 
 int main ( int argc, char** argv ) {

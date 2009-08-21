@@ -18,7 +18,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "nodemap.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "util.h"
 
 typedef struct {

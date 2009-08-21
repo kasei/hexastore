@@ -1,4 +1,4 @@
-#include "triple.h"
+#include "rdf/triple.h"
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o ) {
 	hx_triple* t	= (hx_triple*) calloc( 1, sizeof( hx_triple ) );

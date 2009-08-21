@@ -25,7 +25,7 @@
 %{ /*** C/C++ Declarations ***/
 
 #include <stdio.h>
-#include "node.h"
+#include "rdf/node.h"
 #include "expr.h"
 #include "graphpattern.h"
 
@@ -1655,8 +1655,8 @@ _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star:
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "triple.h"
-#include "node.h"
+#include "rdf/triple.h"
+#include "rdf/node.h"
 #include "bgp.h"
 
 typedef struct {

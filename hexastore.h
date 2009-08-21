@@ -27,7 +27,7 @@ extern "C" {
 #include "terminal.h"
 #include "vector.h"
 #include "head.h"
-#include "triple.h"
+#include "rdf/triple.h"
 
 typedef enum {
 	RDF_ITER_FLAGS_BOUND_A	= 1,

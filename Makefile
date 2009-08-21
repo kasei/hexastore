@@ -5,7 +5,7 @@ CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggd
 CC			= gcc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o rdf/node.o variablebindings.o nestedloopjoin.o rendezvousjoin.o mergejoin.o materialize.o filter.o rdf/triple.o btree.o parser.o bgp.o expr.o SPARQLParser.o SPARQLScanner.o graphpattern.o project.o util.o
 MPI_OBJECTS	= safealloc.o async_mpi.o async_des.o parallel.o mpi_file_iterator.o mpi_file_ntriples_iterator.o mpi_file_ntriples_node_iterator.o mpi_rdfio.o genmap/avl_tree_map.o genmap/iterator.o genmap/map.o
 
 default: parse print optimize tests examples parse_query
@@ -45,8 +45,8 @@ vector.o: vector.c vector.h terminal.h hexastore_types.h
 head.o: head.c head.h vector.h terminal.h btree.h hexastore_types.h
 	$(CC) $(INC) -c head.c
 
-node.o: node.c node.h hexastore_types.h
-	$(CC) $(INC) -c node.c
+rdf/node.o: rdf/node.c rdf/node.h hexastore_types.h
+	$(CC) $(INC) -c -o rdf/node.o rdf/node.c
 	
 nodemap.o: nodemap.c nodemap.h avl.h hexastore_types.h
 	$(CC) $(INC) -c nodemap.c
@@ -60,17 +60,17 @@ rendezvousjoin.o: rendezvousjoin.c rendezvousjoin.h hexastore_types.h variablebi
 nestedloopjoin.o: nestedloopjoin.c nestedloopjoin.h hexastore_types.h variablebindings.h
 	$(CC) $(INC) -c nestedloopjoin.c
 
-variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
+variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h rdf/node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
 
-materialize.o: materialize.c materialize.h hexastore_types.h node.h index.h nodemap.h
+materialize.o: materialize.c materialize.h hexastore_types.h rdf/node.h index.h nodemap.h
 	$(CC) $(INC) -c materialize.c
 
-filter.o: filter.c filter.h hexastore_types.h node.h index.h nodemap.h
+filter.o: filter.c filter.h hexastore_types.h rdf/node.h index.h nodemap.h
 	$(CC) $(INC) -c filter.c
 
-triple.o: triple.c triple.h hexastore_types.h
-	$(CC) $(INC) -c triple.c
+rdf/triple.o: rdf/triple.c rdf/triple.h hexastore_types.h
+	$(CC) $(INC) -c -o rdf/triple.o rdf/triple.c
 
 btree.o: btree.c btree.h hexastore_types.h
 	$(CC) $(INC) -c btree.c
@@ -166,7 +166,7 @@ mpi: examples/mpi
 bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 
 ########
-t/node.t: tap.o t/node.c node.h node.o $(OBJECTS) tap.o
+t/node.t: tap.o t/node.c rdf/node.h rdf/node.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS) tap.o
 
 t/expr.t: tap.o t/expr.c expr.h expr.o $(OBJECTS) tap.o
@@ -267,7 +267,7 @@ clean:
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f test parse print optimize a.out server parse_query dumpmap assign_ids
-	rm -f *.o genmap/*.o
+	rm -f *.o rdf/*.o genmap/*.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.c SPARQLScanner.c SPARQLParser.h

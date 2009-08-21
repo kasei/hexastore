@@ -15,7 +15,7 @@
 #include "hexastore.h"
 #include "variablebindings.h"
 #include "mergejoin.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)

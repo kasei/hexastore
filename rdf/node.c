@@ -1,4 +1,4 @@
-#include "node.h"
+#include "rdf/node.h"
 
 int _hx_node_parse_datatypes ( hx_node* n );
 int _hx_node_array_cmp( const void* _a, const void* _b );

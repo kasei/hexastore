@@ -18,7 +18,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "hexastore.h"
-#include "node.h"
+#include "rdf/node.h"
 
 typedef struct {
 	int size;

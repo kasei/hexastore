@@ -19,7 +19,7 @@ extern "C" {
 #include "hexastore_types.h"
 #include "hexastore.h"
 #include "variablebindings.h"
-#include "node.h"
+#include "rdf/node.h"
 #include "nodemap.h"
 
 static int hx_expr_debug	= 0;
