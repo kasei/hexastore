@@ -1355,19 +1355,28 @@ int hx_bgp_reorder_mpi ( hx_bgp* b, hx_hexastore* hx ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	int size	= hx_bgp_size( b );
 	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );
-	uint64_t* recv_cost	= calloc( size, sizeof( uint64_t ) );
-	uint64_t* send_cost	= calloc( size, sizeof( uint64_t ) );
-	
-	int i;
-	for (i = 0; i < size; i++) {
-		hx_triple* t	= hx_bgp_triple( b, i );
-		s[i].triple		= t;
-		send_cost[i]	= hx_count_statements( hx, t->subject, t->predicate, t->object );
+	double* recv_cost	= calloc( size, sizeof( double ) );
+	double* send_cost	= calloc( size, sizeof( double ) );
+	if (send_cost == NULL || recv_cost == NULL) {
+		fprintf( stderr, "Failed to allocate memory in hx_bgp_reorder_mpi\n" );
 	}
 	
-	MPI_Allreduce( send_cost, recv_cost, size, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+	int i;
+	fprintf( stderr, "hx_bgp_reorder_mpi %d\n", myrank );
 	for (i = 0; i < size; i++) {
-		s[i].cost	= recv_cost[i];
+		fprintf( stderr, "loop %d %d\n", myrank, i );
+		hx_triple* t	= hx_bgp_triple( b, i );
+		s[i].triple		= t;
+		fprintf( stderr, "rank %d triple %d getting cost\n", myrank, i );
+		send_cost[i]	= (double) hx_count_statements( hx, t->subject, t->predicate, t->object );
+		fprintf( stderr, "rank %d triple %d has cost %f\n", myrank, i, send_cost[i] );
+	}
+	
+	MPI_Allreduce( send_cost, recv_cost, size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	for (i = 0; i < size; i++) {
+		double cost	= recv_cost[i];
+		s[i].cost	= (uint64_t) cost;
+		fprintf( stderr, "allreduced: rank %d triple %d has cost %f\n", myrank, i, cost );
 // 		if (s[i].cost == 0) {
 // 			// fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
 // 			return 1;
