@@ -1,6 +1,6 @@
 #include "hexastore.h"
-#include "graphpattern.h"
-#include "tap.h"
+#include "algebra/graphpattern.h"
+#include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
 hx_bgp* _test_bgp1 ( void );

@@ -14,10 +14,10 @@
 #include <time.h>
 #include <stdio.h>
 #include "hexastore.h"
-#include "variablebindings.h"
-#include "mergejoin.h"
+#include "engine/variablebindings.h"
+#include "engine/mergejoin.h"
 #include "rdf/node.h"
-#include "bgp.h"
+#include "algebra/bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_hexastore* hx, hx_bgp* b );

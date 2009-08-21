@@ -1,6 +1,6 @@
 #include <unistd.h>
-#include "head.h"
-#include "tap.h"
+#include "store/hexastore/head.h"
+#include "test/tap.h"
 
 void head_test ( void );
 void head_iter_test1 ( void );

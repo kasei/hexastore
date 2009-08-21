@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include "rdf/node.h"
-#include "tap.h"
+#include "test/tap.h"
 
 void test_variables ( void );
 void test_literals ( void );

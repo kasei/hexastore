@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include "hexastore.h"
-#include "nodemap.h"
+#include "misc/nodemap.h"
 #include "rdf/node.h"
-#include "project.h"
-#include "tap.h"
+#include "engine/project.h"
+#include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );

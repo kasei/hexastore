@@ -1,7 +1,7 @@
 #include <unistd.h>
-#include "expr.h"
-#include "nodemap.h"
-#include "tap.h"
+#include "algebra/expr.h"
+#include "misc/nodemap.h"
+#include "test/tap.h"
 
 void test_serialization ( void );
 void test_constructors ( void );

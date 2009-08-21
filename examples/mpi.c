@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "hexastore.h"
-#include "mergejoin.h"
+#include "engine/mergejoin.h"
 #include "rdf/node.h"
-#include "bgp.h"
-#include "parallel.h"
-#include "materialize.h"
+#include "algebra/bgp.h"
+#include "parallel/parallel.h"
+#include "engine/materialize.h"
 
 #include "timing_choices.h"
 #define TIMING_CPU_FREQUENCY 2600000000.0

@@ -17,9 +17,9 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
-#include "nodemap.h"
+#include "misc/nodemap.h"
 #include "rdf/node.h"
-#include "util.h"
+#include "misc/util.h"
 
 typedef struct {
 	hx_node* subject;

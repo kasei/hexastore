@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "hexastore.h"
 #include "rdf/triple.h"
-#include "mergejoin.h"
+#include "engine/mergejoin.h"
 #include "rdf/node.h"
-#include "bgp.h"
+#include "algebra/bgp.h"
 
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];

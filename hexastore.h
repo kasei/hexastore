@@ -21,12 +21,12 @@ extern "C" {
 #endif
 
 #include "hexastore_types.h"
-#include "variablebindings.h"
-#include "nodemap.h"
+#include "engine/variablebindings.h"
+#include "misc/nodemap.h"
 #include "index.h"
-#include "terminal.h"
-#include "vector.h"
-#include "head.h"
+#include "store/hexastore/terminal.h"
+#include "store/hexastore/vector.h"
+#include "store/hexastore/head.h"
 #include "rdf/triple.h"
 
 typedef enum {

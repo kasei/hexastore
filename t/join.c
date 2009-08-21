@@ -1,11 +1,11 @@
 #include <unistd.h>
 #include "hexastore.h"
-#include "nodemap.h"
-#include "mergejoin.h"
-#include "nestedloopjoin.h"
+#include "misc/nodemap.h"
+#include "engine/mergejoin.h"
+#include "engine/nestedloopjoin.h"
 #include "rdf/node.h"
-#include "tap.h"
-#include "bgp.h"
+#include "test/tap.h"
+#include "algebra/bgp.h"
 
 void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );

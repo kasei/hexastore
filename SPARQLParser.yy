@@ -26,8 +26,8 @@
 
 #include <stdio.h>
 #include "rdf/node.h"
-#include "expr.h"
-#include "graphpattern.h"
+#include "algebra/expr.h"
+#include "algebra/graphpattern.h"
 
 int yylex ( void );
 void yyerror (char const *s);
@@ -1657,7 +1657,7 @@ _Q_O_QIT_UNION_E_S_QGroupGraphPattern_E_C_E_Star:
 #include <stdlib.h>
 #include "rdf/triple.h"
 #include "rdf/node.h"
-#include "bgp.h"
+#include "algebra/bgp.h"
 
 typedef struct {
 	char* name;

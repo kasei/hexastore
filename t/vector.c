@@ -1,6 +1,6 @@
 #include <unistd.h>
-#include "vector.h"
-#include "tap.h"
+#include "store/hexastore/vector.h"
+#include "test/tap.h"
 
 void vector_test ( void );
 void vector_iter_test ( void );

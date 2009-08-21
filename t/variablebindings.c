@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include "hexastore.h"
-#include "variablebindings.h"
-#include "nodemap.h"
+#include "engine/variablebindings.h"
+#include "misc/nodemap.h"
 #include "rdf/node.h"
-#include "tap.h"
+#include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );

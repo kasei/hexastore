@@ -1,6 +1,6 @@
 #include <unistd.h>
-#include "terminal.h"
-#include "tap.h"
+#include "store/hexastore/terminal.h"
+#include "test/tap.h"
 
 void terminal_test ( void );
 void terminal_iter_test ( void );

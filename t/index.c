@@ -1,5 +1,5 @@
 #include "index.h"
-#include "tap.h"
+#include "test/tap.h"
 
 void spo_test1 ( void );
 void spo_test2 ( void );
