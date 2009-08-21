@@ -27,7 +27,7 @@ optimize: cli/optimize.c $(OBJECTS)
 print: cli/print.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o print cli/print.c $(OBJECTS)
 
-parse_query: cli/parse_query.c parser/SPARQLParser.o parser/SPARQLScanner.o $(OBJECTS)
+parse_query: cli/parse_query.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse_query cli/parse_query.c $(OBJECTS)
 
 dumpmap: cli/dumpmap.c $(OBJECTS)
@@ -166,28 +166,28 @@ mpi: examples/mpi
 bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 
 ########
-t/node.t: test/tap.o t/node.c rdf/node.h rdf/node.o $(OBJECTS) test/tap.o
+t/node.t: test/tap.o t/node.c rdf/node.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS) test/tap.o
 
-t/expr.t: test/tap.o t/expr.c algebra/expr.h algebra/expr.o $(OBJECTS) test/tap.o
+t/expr.t: test/tap.o t/expr.c algebra/expr.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/expr.t t/expr.c $(OBJECTS) test/tap.o
 
-t/nodemap.t: test/tap.o t/nodemap.c misc/nodemap.h misc/nodemap.o $(OBJECTS) test/tap.o
+t/nodemap.t: test/tap.o t/nodemap.c misc/nodemap.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/nodemap.t t/nodemap.c $(OBJECTS) test/tap.o
 
-t/index.t: test/tap.o t/index.c index.h index.o $(OBJECTS) test/tap.o
+t/index.t: test/tap.o t/index.c index.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/index.t t/index.c $(OBJECTS) test/tap.o
 
-t/terminal.t: test/tap.o t/terminal.c store/hexastore/terminal.h store/hexastore/terminal.o $(OBJECTS) test/tap.o
+t/terminal.t: test/tap.o t/terminal.c store/hexastore/terminal.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/terminal.t t/terminal.c $(OBJECTS) test/tap.o
 
-t/vector.t: test/tap.o t/vector.c store/hexastore/vector.h store/hexastore/vector.o $(OBJECTS) test/tap.o
+t/vector.t: test/tap.o t/vector.c store/hexastore/vector.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/vector.t t/vector.c $(OBJECTS) test/tap.o
 
-t/head.t: test/tap.o t/head.c store/hexastore/head.h store/hexastore/head.o $(OBJECTS) test/tap.o
+t/head.t: test/tap.o t/head.c store/hexastore/head.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/head.t t/head.c $(OBJECTS) test/tap.o
 
-t/btree.t: test/tap.o t/btree.c store/hexastore/btree.h store/hexastore/btree.o $(OBJECTS) test/tap.o
+t/btree.t: test/tap.o t/btree.c store/hexastore/btree.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/btree.t t/btree.c $(OBJECTS) test/tap.o
 
 t/join.t: test/tap.o t/join.c $(OBJECTS) test/tap.o
