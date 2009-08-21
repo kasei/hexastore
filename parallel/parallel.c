@@ -1,9 +1,9 @@
-#include "misc/util.h"
 #include "parallel/parallel.h"
+#include "parallel/mpi_rdfio.h"
 #include "misc/nodemap.h"
+#include "misc/util.h"
 #include "engine/mergejoin.h"
 #include "engine/nestedloopjoin.h"
-#include "parallel/mpi_rdfio.h"
 
 // #define HPGN_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define HPGN_DEBUG(s, ...)
@@ -1351,3 +1351,84 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	return results;
 }
 
+int hx_bgp_reorder_mpi ( hx_bgp* b, hx_hexastore* hx ) {
+	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	int size	= hx_bgp_size( b );
+	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );
+	double* recv_cost	= calloc( size, sizeof( double ) );
+	double* send_cost	= calloc( size, sizeof( double ) );
+	if (send_cost == NULL || recv_cost == NULL) {
+		fprintf( stderr, "Failed to allocate memory in hx_bgp_reorder_mpi\n" );
+	}
+	
+	int i;
+	fprintf( stderr, "hx_bgp_reorder_mpi %d\n", myrank );
+	for (i = 0; i < size; i++) {
+		fprintf( stderr, "loop %d %d\n", myrank, i );
+		hx_triple* t	= hx_bgp_triple( b, i );
+		s[i].triple		= t;
+		fprintf( stderr, "rank %d triple %d getting cost\n", myrank, i );
+		send_cost[i]	= (double) hx_count_statements( hx, t->subject, t->predicate, t->object );
+		fprintf( stderr, "rank %d triple %d has cost %f\n", myrank, i, send_cost[i] );
+	}
+	
+	MPI_Allreduce( send_cost, recv_cost, size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	for (i = 0; i < size; i++) {
+		double cost	= recv_cost[i];
+		s[i].cost	= (uint64_t) cost;
+		fprintf( stderr, "allreduced: rank %d triple %d has cost %f\n", myrank, i, cost );
+// 		if (s[i].cost == 0) {
+// 			// fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
+// 			return 1;
+// 		}
+	}
+	free(send_cost);
+	free(recv_cost);
+	
+	qsort( s, size, sizeof( _hx_bgp_selectivity_t ), _hx_bgp_selectivity_cmp );
+	
+	int* seen	= (int*) calloc( b->variables + 1, sizeof( int ) );
+	for (i = 0; i < size; i++) {
+		hx_triple* t	= s[i].triple;
+		if (i > 0) {
+			int joins	= _hx_bgp_triple_joins_with_seen( b, t, seen, size );
+			int j		= i;
+			while (joins == 0) {
+				j++;
+				if (j >= size) {
+					fprintf( stderr, "hx_bgp_reorder_mpi found cartesian product\n" );
+					return 1;
+				} else {
+					hx_triple* u	= s[j].triple;
+					joins			= _hx_bgp_triple_joins_with_seen( b, u, seen, size );
+				}
+			}
+			if (j != i) {
+				uint64_t temp_cost	= s[j].cost;
+				hx_triple* temp_t	= s[j].triple;
+				s[j].cost	= s[i].cost;
+				s[j].triple	= s[i].triple;
+				s[i].cost	= temp_cost;
+				s[i].triple	= temp_t;
+			}
+		}
+		
+		if (hx_node_is_variable( t->subject )) {
+			seen[ abs(hx_node_iv( t->subject )) ]++;
+		}
+		if (hx_node_is_variable( t->predicate )) {
+			seen[ abs(hx_node_iv( t->predicate )) ]++;
+		}
+		if (hx_node_is_variable( t->object )) {
+			seen[ abs(hx_node_iv( t->object )) ]++;
+		}
+	}
+	
+	for (i = 0; i < size; i++) {
+		b->triples[i]	= s[i].triple;
+	}
+	
+	free( seen );
+	free( s );
+	return 0;
+}

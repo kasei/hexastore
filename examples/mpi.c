@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "hexastore.h"
-#include "engine/mergejoin.h"
 #include "rdf/node.h"
+#include "engine/mergejoin.h"
+#include "engine/materialize.h"
 #include "algebra/bgp.h"
 #include "parallel/parallel.h"
-#include "engine/materialize.h"
 
 #include "misc/timing_choices.h"
 #define TIMING_CPU_FREQUENCY 2600000000.0
@@ -22,16 +22,24 @@ char* read_file ( const char* qf ) {
 	MPI_Status status;
 	MPI_Offset filesize;
 	MPI_Info_create(&info);
-	MPI_File_open(MPI_COMM_SELF, (char*) qf, MPI_MODE_RDONLY, info, &file);
+	MPI_File_open(MPI_COMM_WORLD, (char*) qf, MPI_MODE_RDONLY, info, &file);
 	MPI_File_get_size(file, &filesize);
 
-	char* query	= malloc( filesize + 1 );
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	
+	char* query	= calloc( filesize + 1, sizeof( char ) );
 	if (query == NULL) {
 		fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
 	}
-	MPI_File_read_shared(file, query, filesize, MPI_BYTE, &status);
-	query[ filesize ]	= 0;
-
+	
+	MPI_File_read_at(file, 0, query, filesize, MPI_BYTE, &status);
+	if (status.MPI_ERROR != MPI_SUCCESS) {
+		fprintf( stderr, "rank %d failed MPI_File_read_shared with error %d\n", myrank, status.MPI_ERROR );
+	}
+	
+	
 	MPI_File_close(&file);
 	MPI_Info_free(&info);
 	
@@ -46,7 +54,7 @@ int main ( int argc, char** argv ) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 
-	if (1) { // XXX
+	if (0) { // XXX
 		char hostname[256];
 		gethostname(hostname, sizeof(hostname));
 		printf("\n\n*** Rank %d PID %d on %s ready for attach\n\n", myrank, getpid(), hostname);
@@ -79,6 +87,18 @@ int main ( int argc, char** argv ) {
 	char* query	= read_file( query_filename );
 	hx_bgp* b	= parse_bgp_query_string( query );
 	
+	if (b == NULL) {
+		fprintf( stderr, "*** rank %d failed to parse BGP\n", myrank );
+		fflush( stderr );
+		sleep(10);
+		MPI_Barrier( MPI_COMM_WORLD );
+		MPI_Abort( MPI_COMM_WORLD, 1 );
+	}
+	MPI_Barrier( MPI_COMM_WORLD );
+	
+	
+//	hx_bgp_reorder_mpi( b, hx );
+	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );
@@ -88,7 +108,9 @@ int main ( int argc, char** argv ) {
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { <http://www.Department0.University0.edu/AssociateProfessor0> :teacherOf ?y . ?x :takesCourse ?y ; a :Student . ?y a :Course . } " ); 
 
 	if (myrank == 0) {
+		fprintf( stderr, "BGP DEBUG (on rank 0):\n" );
 		hx_bgp_debug( b );
+		fprintf( stderr, "-----------------\n" );
 	}
 	
 	exec_start	= TIME();
