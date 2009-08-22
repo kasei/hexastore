@@ -1,0 +1,24 @@
+TODO:
+
+[optimizer]
+
+Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
+
+All optimizer code should take a world object that can contain the default tuning parameters. These can include: how much memory to use for IDP, what cost function to use to evaluate joins and subplans.
+
+[hashjoin]
+
+Implement hash join (with support for left-joins).
+
+[storage]
+
+Refactor hexastore storage layer (look at librdf's storage api), and then add a persistent, tokyocabinet-based store.
+
+
+
+
+Notes:
+
+[2009.08.21]
+
+5M triples can be loaded in 4GB of RAM, tested on ccni opterons. look to load <1MT/GB of memory (maybe closer to 1/2 = 625kT/GB) to leave room for intermediate results.
