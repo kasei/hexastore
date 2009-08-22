@@ -9,7 +9,7 @@ LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/includ
 STORE_OBJECTS	= store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
 MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o
 RDF_OBJECTS		= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS	= engine/variablebindings.o engine/nestedloopjoin.o engine/rendezvousjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
+ENGINE_OBJECTS	= engine/variablebindings.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
 ALGEBRA_OBJECTS	= algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS	= parser/parser.o parser/SPARQLParser.o parser/SPARQLScanner.o
 MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
@@ -63,9 +63,6 @@ misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
 
 engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h engine/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c
-
-engine/rendezvousjoin.o: engine/rendezvousjoin.c engine/rendezvousjoin.h hexastore_types.h engine/variablebindings.h
-	$(CC) $(INC) -c -o engine/rendezvousjoin.o engine/rendezvousjoin.c
 
 engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h hexastore_types.h engine/variablebindings.h
 	$(CC) $(INC) -c -o engine/nestedloopjoin.o engine/nestedloopjoin.c
