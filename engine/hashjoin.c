@@ -265,7 +265,7 @@ hx_variablebindings_iter* hx_new_hashjoin_iter2 ( hx_variablebindings_iter* lhs,
 	info->finished			= 0;
 	info->started			= 0;
 	info->leftjoin			= leftjoin;
-	info->hash				= hx_new_hash( 10 ); // XXX the number of buckets (10) probably shouldn't be hard-coded.
+	info->hash				= hx_new_hash( 256 ); // XXX the number of buckets (256) probably shouldn't be hard-coded.
 	info->rhs_matches		= NULL;
 	info->rhs_matches_index	= -1;
 	info->rhs_shared_column	= -1;
