@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "hexastore.h"
 #include "misc/nodemap.h"
+#include "engine/hashjoin.h"
 #include "engine/mergejoin.h"
 #include "engine/nestedloopjoin.h"
 #include "rdf/node.h"
@@ -23,7 +24,7 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) );
 
 int main ( void ) {
-	plan_tests(20 + 14 + 2 + 7);
+	plan_tests((3*10) + (14 + (2+2)) + 7);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
@@ -33,9 +34,11 @@ int main ( void ) {
 	
 	test_path_join( hx_new_mergejoin_iter );
 	test_path_join( hx_new_nestedloopjoin_iter );
+	test_path_join( hx_new_hashjoin_iter );
 	
 	test_cartesian_join( hx_new_nestedloopjoin_iter, 1 );	// the 1 signifies that we expect the join to work and produce 1 result
 	test_cartesian_join( hx_new_mergejoin_iter, 0 );		// the 0 signifies that we don't expect the join to work, since mergejoin isn't implemented for the cartesian join case (with no shared variables)
+	test_cartesian_join( hx_new_hashjoin_iter, 0 );
 	
 	test_left_join( hx_new_nestedloopjoin_iter2 );
 	
@@ -94,9 +97,9 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 			}
 			
 			{
-				hx_node_id fid	= hx_variablebindings_node_id_for_binding( b, 0 );
+				hx_node_id fid	= hx_variablebindings_node_id_for_binding_name( b, "x" );
 				hx_node* x		= hx_nodemap_get_node( map, fid );
-				hx_node_id tid	= hx_variablebindings_node_id_for_binding( b, 1 );
+				hx_node_id tid	= hx_variablebindings_node_id_for_binding_name( b, "y" );
 				hx_node* y		= hx_nodemap_get_node( map, tid );
 		
 				ok1( hx_node_cmp( x, r2 ) == 0 );
@@ -224,9 +227,9 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	}
 	
 	{
-		hx_node_id fid	= hx_variablebindings_node_id_for_binding( b, 0 );
+		hx_node_id fid	= hx_variablebindings_node_id_for_binding_name( b, "from" );
 		hx_node* from	= hx_nodemap_get_node( map, fid );
-		hx_node_id tid	= hx_variablebindings_node_id_for_binding( b, 2 );
+		hx_node_id tid	= hx_variablebindings_node_id_for_binding_name( b, "to" );
 		hx_node* to		= hx_nodemap_get_node( map, tid );
 
 		ok1( hx_node_cmp( from, r2 ) == 0 );
@@ -236,9 +239,9 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	ok1( !hx_variablebindings_iter_finished( iter ) );
 	hx_variablebindings_iter_current( iter, &b );
 	{
-		hx_node_id fid	= hx_variablebindings_node_id_for_binding( b, 0 );
+		hx_node_id fid	= hx_variablebindings_node_id_for_binding_name( b, "from" );
 		hx_node* from	= hx_nodemap_get_node( map, fid );
-		hx_node_id tid	= hx_variablebindings_node_id_for_binding( b, 2 );
+		hx_node_id tid	= hx_variablebindings_node_id_for_binding_name( b, "to" );
 		hx_node* to		= hx_nodemap_get_node( map, tid );
 		
 // 		_debug_node( "from: ", from );

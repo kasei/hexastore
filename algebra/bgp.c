@@ -1,5 +1,6 @@
 #include "algebra/bgp.h"
 #include "engine/mergejoin.h"
+#include "engine/hashjoin.h"
 #include "engine/project.h"
 #include "parser/SPARQLParser.h"
 
@@ -414,7 +415,9 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			free(pname);
 			free(oname);
 			
-			iter					= hx_new_mergejoin_iter( interm, iter );
+//			iter	= hx_new_nestedloopjoin_iter( interm, iter );			
+//			iter	= hx_new_hashjoin_iter( interm, iter );
+			iter	= hx_new_mergejoin_iter( interm, iter );
 		}
 	}
 	

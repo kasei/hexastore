@@ -30,9 +30,12 @@ typedef struct {
 	int finished;
 	int started;
 	hx_variablebindings* current;
+	hx_variablebindings* current_lhs;
 	hx_hash_t* hash;
 	int rhs_shared_column;
 	int lhs_shared_column;
+	hx_container_t* rhs_matches;
+	int rhs_matches_index;
 	int leftjoin;
 } _hx_hashjoin_iter_vb_info;
 
