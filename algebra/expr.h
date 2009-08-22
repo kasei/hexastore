@@ -61,8 +61,7 @@ typedef enum {
 } hx_expr_subtype_t;
 
 typedef enum {
-	HX_EXPR_BUILTIN		= 1,
-	HX_EXPR_OP			= 2
+	HX_EXPR_BUILTIN		= 1
 } hx_expr_t;
 
 typedef struct {
@@ -79,6 +78,7 @@ hx_expr* hx_new_node_expr ( hx_node* n );
 hx_expr* hx_new_builtin_expr1 ( hx_expr_subtype_t type, hx_expr* data );
 hx_expr* hx_new_builtin_expr2 ( hx_expr_subtype_t type, hx_expr* data1, hx_expr* data2 );
 hx_expr* hx_new_builtin_expr3 ( hx_expr_subtype_t type, hx_expr* data1, hx_expr* data2, hx_expr* data3 );
+hx_expr* hx_copy_expr ( hx_expr* e );
 int hx_free_expr ( hx_expr* e );
 
 hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_nodemap* map );
