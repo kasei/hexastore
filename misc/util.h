@@ -50,7 +50,7 @@ void* hx_container_item ( hx_container_t* c, int i );
 
 hx_hash_t* hx_new_hash ( int buckets );
 int hx_hash_add ( hx_hash_t* hash, void* key, size_t klen, void* value );
-int hx_hash_apply ( hx_hash_t* hash, void* key, size_t klen, int apply_cb( void* key, void* value ) );
+int hx_hash_apply ( hx_hash_t* hash, void* key, size_t klen, int apply_cb( void* key, void* value, void* thunk ), void* thunk );
 int hx_free_hash ( hx_hash_t* hash, void free_cb( void* key, void* value ) );
 int hx_hash_debug ( hx_hash_t* h, void debug_cb( void* key, void* value ) );
 

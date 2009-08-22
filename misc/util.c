@@ -98,18 +98,23 @@ int hx_hash_add ( hx_hash_t* hash, void* key, size_t klen, void* value ) {
 	if (klen == 0) {
 		klen	= strlen( (char*) key );
 	}
-	uint64_t hv				= hx_util_hash_buffer( key, klen );
+	
+	char* keycopy	= (char*) malloc( klen );
+	memcpy( keycopy, key, klen );
+	
+	uint64_t hv;
+	hv	= hx_util_hash_buffer( keycopy, klen );
 	int bucket_number		= hv % hash->size;
 	hx_container_t* bucket	= hx_container_item( hash->buckets, bucket_number );
 	hx_hash_bucket_item_t* i	= (hx_hash_bucket_item_t*) calloc( 1, sizeof( hx_hash_bucket_item_t ) );
-	i->key		= key;
+	i->key		= keycopy;
 	i->klen		= klen;
 	i->value	= value;
 	hx_container_push_item( bucket, i );
 	return 0;
 }
 
-int _hx_hash_apply_with_bucket ( hx_container_t* bucket, void* key, size_t klen, int apply_cb( void* key, void* value ) ) {
+int _hx_hash_apply_with_bucket ( hx_container_t* bucket, void* key, size_t klen, int apply_cb( void* key, void* value, void* thunk ), void* thunk ) {
 	int i;
 	int size	= hx_container_size( bucket );
 	int counter	= 0;
@@ -117,28 +122,29 @@ int _hx_hash_apply_with_bucket ( hx_container_t* bucket, void* key, size_t klen,
 		hx_hash_bucket_item_t* item	= hx_container_item( bucket, i );
 		
 		if ((klen == 0) || (item->klen == klen && memcmp( key, item->key, klen ) == 0)) {
-			apply_cb( item->key, item->value );
+			apply_cb( item->key, item->value, thunk );
 			counter++;
 		}
 	}
 	return counter;
 }
 
-int hx_hash_apply ( hx_hash_t* hash, void* key, size_t klen, int apply_cb( void* key, void* value ) ) {
+
+int hx_hash_apply ( hx_hash_t* hash, void* key, size_t klen, int apply_cb( void* key, void* value, void* thunk ), void* thunk ) {
 	if (klen == 0) {
 		int i;
 		int counter	= 0;
 		int size	= hash->size;
 		for (i = 0; i < size; i++) {
 			hx_container_t* bucket	= hx_container_item( hash->buckets, i );
-			counter	+= _hx_hash_apply_with_bucket( bucket, key, klen, apply_cb );
+			counter	+= _hx_hash_apply_with_bucket( bucket, key, klen, apply_cb, thunk );
 		}
 		return counter;
 	} else {
-		uint64_t hv				= hx_util_hash_buffer( key, klen );
+		uint64_t hv	= hx_util_hash_buffer( key, klen );
 		int bucket_number		= hv % hash->size;
 		hx_container_t* bucket	= hx_container_item( hash->buckets, bucket_number );
-		return _hx_hash_apply_with_bucket( bucket, key, klen, apply_cb );
+		return _hx_hash_apply_with_bucket( bucket, key, klen, apply_cb, thunk );
 	}
 }
 
@@ -153,6 +159,7 @@ int hx_free_hash ( hx_hash_t* h, void free_cb( void* key, void* value ) ) {
 			if (free_cb) {
 				free_cb( i->key, i->value );
 			}
+			free( i->key );
 			free( i );
 		}
 		hx_free_container( c );
