@@ -25,6 +25,7 @@ typedef struct {
 
 typedef struct {
 	void* key;
+	size_t klen;
 	void* value;
 } hx_hash_bucket_item_t;
 
@@ -38,6 +39,7 @@ typedef uint64_t hx_hash_function ( const char* s );
 #include "hexastore_types.h"
 
 uint64_t hx_util_hash_string ( const char* s );
+uint64_t hx_util_hash_buffer ( const char* s, size_t len );
 
 hx_container_t* hx_new_container ( char type, int size );
 int hx_free_container ( hx_container_t* c );
@@ -47,7 +49,10 @@ int hx_container_size( hx_container_t* c );
 void* hx_container_item ( hx_container_t* c, int i );
 
 hx_hash_t* hx_new_hash ( int buckets );
-int hx_free_hash ( hx_hash_t* hash );
+int hx_hash_add ( hx_hash_t* hash, void* key, size_t klen, void* value );
+int hx_hash_apply ( hx_hash_t* hash, void* key, size_t klen, int apply_cb( void* key, void* value ) );
+int hx_free_hash ( hx_hash_t* hash, void free_cb( void* key, void* value ) );
+int hx_hash_debug ( hx_hash_t* h, void debug_cb( void* key, void* value ) );
 
 #ifdef __cplusplus
 }
