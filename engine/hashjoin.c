@@ -8,6 +8,27 @@ int _hx_hashjoin_debug ( void* info, char* header, int indent );
 
 // implementations
 
+void ___hash_debug_1 ( void* key, void* value ) {
+	hx_node_id id	= *( (hx_node_id*) key );
+	hx_variablebindings* b	= (hx_variablebindings*) value;
+	
+	char* string;
+	hx_variablebindings_string( b, NULL, &string );
+//	fprintf( stderr, "\t(%llu => %s)\n", (unsigned long long) id, string );
+	free(string);
+}
+
+void _hx_hashjoin_free_hash_cb ( void* key, void* value ) {
+	hx_variablebindings* b	= (hx_variablebindings*) value;
+	hx_free_variablebindings(b);
+}
+
+int _hx_hashjoin_get_matching_hash_items ( void* key, void* value, void* thunk ) {
+	hx_container_t* c	= (hx_container_t*) thunk;
+	hx_container_push_item( c, value );
+	return 0;
+}
+
 int _hx_hashjoin_prime_results ( _hx_hashjoin_iter_vb_info* info ) {
 	info->started	= 1;
 	
@@ -16,17 +37,61 @@ int _hx_hashjoin_prime_results ( _hx_hashjoin_iter_vb_info* info ) {
 	while (!hx_variablebindings_iter_finished( iter )) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
+		hx_node_id id	= hx_variablebindings_node_id_for_binding ( b, info->rhs_shared_column );
 		
-		char* string;
-		hx_variablebindings_string( b, NULL, &string );
-		fprintf( stderr, "hashing hashjoin rhs: %s\n", string );
-		free(string);
+//		fprintf( stderr, "hashing on shared column %d\n", info->rhs_shared_column );
+		hx_hash_add( info->hash, &id, sizeof(hx_node_id), b );
 		
-		hx_free_variablebindings( b );
 		hx_variablebindings_iter_next( iter );
 	}
 	
-	// XXX advance to the first result
+//	hx_hash_debug( info->hash, ___hash_debug_1 );
+	
+	// advance to the first result
+	while (!hx_variablebindings_iter_finished( info->lhs )) {
+		if (info->current_lhs) {
+			hx_free_variablebindings( info->current_lhs );
+			info->current_lhs	= NULL;
+		}
+		
+		hx_variablebindings_iter_current( info->lhs, &( info->current_lhs ) );
+		
+		char* string;
+		hx_variablebindings_string( info->current_lhs, NULL, &string );
+//		fprintf( stderr, "Looking for results that join with: %s\n", string );
+		free(string);
+
+		hx_node_id id		= hx_variablebindings_node_id_for_binding ( info->current_lhs, info->lhs_shared_column );
+		info->rhs_matches	= hx_new_container( 'C', 10 );
+		hx_hash_apply( info->hash, &id, sizeof(hx_node_id), _hx_hashjoin_get_matching_hash_items, info->rhs_matches );
+		
+		int i;
+		int size	= hx_container_size(info->rhs_matches);
+//		fprintf( stderr, "size: %d\n", size );
+		for (info->rhs_matches_index = 0; info->rhs_matches_index < size; info->rhs_matches_index++) {
+//			fprintf( stderr, "rhs_matches_index: %d\n", info->rhs_matches_index );
+			hx_variablebindings* rhs	= (hx_variablebindings*) hx_container_item( info->rhs_matches, info->rhs_matches_index );
+			char* string;
+			hx_variablebindings_string( rhs, NULL, &string );
+//			fprintf( stderr, "- matching RHS result: %s\n", string );
+			free(string);
+			
+			hx_variablebindings* joined	= hx_variablebindings_natural_join( info->current_lhs, rhs );
+			if (joined != NULL) {
+				info->current	= joined;
+				return 0;
+			} else if (info->leftjoin) {
+				info->current	= hx_copy_variablebindings( info->current_lhs );
+				return 0;
+			}
+		}
+		
+		info->rhs_matches_index	= -1;
+		hx_free_container( info->rhs_matches );
+		info->rhs_matches	= NULL;
+		
+		hx_variablebindings_iter_next( info->lhs );
+	}
 	
 	info->finished	= 1;
 	return 1;
@@ -51,6 +116,12 @@ int _hx_hashjoin_iter_vb_current ( void* data, void* results ) {
 	
 	hx_variablebindings** b	= (hx_variablebindings**) results;
 	*b	= hx_copy_variablebindings( info->current );
+	
+	char* string;
+	hx_variablebindings_string( info->current, NULL, &string );
+//	fprintf( stderr, "- hashjoin returning result: %s\n", string );
+	free(string);
+	
 	return 0;
 }
 
@@ -66,7 +137,45 @@ int _hx_hashjoin_iter_vb_next ( void* data ) {
 		info->current	= NULL;
 	}
 	
-	// XXX move to the next result
+	while (!hx_variablebindings_iter_finished( info->lhs )) {
+		int size	= hx_container_size(info->rhs_matches);
+		info->rhs_matches_index++;
+		if (info->rhs_matches_index >= size) {
+//			fprintf( stderr, "finished with matching RHS results. moving to next LHS and probing for new RHS matches\n" );
+			if (info->current_lhs) {
+				hx_free_variablebindings( info->current_lhs );
+				info->current_lhs	= NULL;
+			}
+			hx_variablebindings_iter_next( info->lhs );
+			if (hx_variablebindings_iter_finished( info->lhs )) {
+				info->finished	= 1;
+				return 1;
+			}
+			hx_variablebindings_iter_current( info->lhs, &( info->current_lhs ) );
+			hx_node_id id		= hx_variablebindings_node_id_for_binding ( info->current_lhs, info->lhs_shared_column );
+			info->rhs_matches	= hx_new_container( 'C', 10 );
+			hx_hash_apply( info->hash, &id, sizeof(hx_node_id), _hx_hashjoin_get_matching_hash_items, info->rhs_matches );
+			size	= hx_container_size(info->rhs_matches);
+			info->rhs_matches_index	= 0;
+		}
+		
+		for (; info->rhs_matches_index < size; info->rhs_matches_index++) {
+			hx_variablebindings* rhs	= (hx_variablebindings*) hx_container_item( info->rhs_matches, info->rhs_matches_index );
+			char* string;
+			hx_variablebindings_string( rhs, NULL, &string );
+//			fprintf( stderr, "- matching RHS result: %s\n", string );
+			free(string);
+			
+			hx_variablebindings* joined	= hx_variablebindings_natural_join( rhs, info->current_lhs );
+			if (joined != NULL) {
+				info->current	= joined;
+				return 0;
+			} else if (info->leftjoin) {
+				info->current	= hx_copy_variablebindings( info->current_lhs );
+				return 0;
+			}
+		}
+	}
 	
 // 	fprintf( stderr, "- exhausted iterator in _hx_hashjoin_iter_vb_next\n" );
 	info->finished	= 1;
@@ -82,8 +191,9 @@ int _hx_hashjoin_iter_vb_free ( void* data ) {
 	}
 
 	int i;
-	hx_free_variablebindings_iter( info->lhs );
+	hx_free_variablebindings_iter( info->lhs );	
 	hx_free_variablebindings_iter( info->rhs );
+	hx_free_hash( info->hash, _hx_hashjoin_free_hash_cb	);
 	for (i = 0; i < info->size; i++) {
 		free( info->names[i] );
 	}
@@ -112,7 +222,7 @@ int _hx_hashjoin_debug ( void* data, char* header, int indent ) {
 	_hx_hashjoin_iter_vb_info* info	= (_hx_hashjoin_iter_vb_info*) data;
 	int i;
 	for (i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
-	fprintf( stderr, "%s hashjoin iterator\n", header );
+//	fprintf( stderr, "%s hashjoin iterator\n", header );
 	hx_variablebindings_iter_debug( info->lhs, header, indent + 4 );
 	hx_variablebindings_iter_debug( info->rhs, header, indent + 4 );
 	return 0;
@@ -147,6 +257,7 @@ hx_variablebindings_iter* hx_new_hashjoin_iter2 ( hx_variablebindings_iter* lhs,
 	_hx_hashjoin_iter_vb_info* info	= (_hx_hashjoin_iter_vb_info*) calloc( 1, sizeof( _hx_hashjoin_iter_vb_info ) );
 	
 	info->current			= NULL;
+	info->current_lhs		= NULL;
 	info->lhs				= lhs;
 	info->rhs				= rhs;
 	info->size				= size;
@@ -154,6 +265,36 @@ hx_variablebindings_iter* hx_new_hashjoin_iter2 ( hx_variablebindings_iter* lhs,
 	info->finished			= 0;
 	info->started			= 0;
 	info->leftjoin			= leftjoin;
+	info->hash				= hx_new_hash( 10 ); // XXX the number of buckets (10) probably shouldn't be hard-coded.
+	info->rhs_matches		= NULL;
+	info->rhs_matches_index	= -1;
+	info->rhs_shared_column	= -1;
+	info->lhs_shared_column	= -1;
+	
+	int i, j;
+	int set	= 0;
+	for (i = 0; i < asize; i++) {
+		int j;
+		for (j = 0; j < bsize; j++) {
+			if (strcmp( anames[i], bnames[j] ) == 0) {
+//				fprintf( stderr, "shared column '%s' has column indexes (%d <=> %d)\n", anames[i], i, j );
+				info->lhs_shared_column	= i;
+				info->rhs_shared_column	= j;
+				set					= 1;
+				break;
+			}
+		}
+		if (set == 1)
+			break;
+	}
+	if (set == 0) {
+		// no shared variables were found.
+		// return NULL since hashjoin isn't meant for handling cartesian joins
+#ifdef DEBUG
+		fprintf( stderr, "*** hash join cannot be used on iterators that have no shared variables\n" );
+#endif
+		return NULL;
+	}
 	
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return iter;
@@ -206,8 +347,6 @@ int _hx_hashjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names, 
 	
 	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
 	for (i = 0; i < seen_names; i++) {
-		// (*merged_names)[ i ]    = names[ i ];
-		// XXXXXXXXXXXXX experimentally put in place while seeking a memory leak... maybe want to roll this back at some point in favor of the preceeding line
 		char* n		= names[i];
 		int len		= strlen(n);
 //		fprintf( stderr, "copying variable name string : '%s'\n", n );

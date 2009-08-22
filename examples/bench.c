@@ -19,6 +19,8 @@
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_hexastore* hx, hx_bgp* b );
 
+static int verbose		= 0;
+
 static hx_node* x;
 static hx_node* y;
 static hx_node* z;
@@ -85,15 +87,44 @@ double bench ( hx_hexastore* hx, hx_bgp* b ) {
 		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
-	printf( "%llu results\n", (unsigned long long) count );
+	if (verbose) {
+		printf( "%llu results\n", (unsigned long long) count );
+	}
 	clock_t end_time	= clock();
 	
 	hx_free_variablebindings_iter( iter );
 	return DIFFTIME(st_time, end_time);
 }
 
+void help (int argc, char** argv) {
+	fprintf( stderr, "Usage:\n" );
+	fprintf( stderr, "\t%s [-o] lubm.hx\n", argv[0] );
+	fprintf( stderr, "\n\n" );
+}
+
 int main ( int argc, char** argv ) {
-	const char* filename	= argv[1];
+	if (argc < 2) {
+		help(argc, argv);
+		exit(1);
+	}
+	
+	const char* filename;
+	int i;
+	int runs_count	= 5;
+	int run_optimized	= 0;
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-o") == 0) {
+			run_optimized	= 1;
+		} else if (strcmp(argv[i], "-v") == 0) {
+			verbose	= 1;
+		} else if (strcmp(argv[i], "-c") == 0) {
+			runs_count	= atoi( argv[++i] );
+		} else {
+			filename	= argv[i];
+			break;
+		}
+	}
+	
 	FILE* f	= fopen( filename, "r" );
 	if (f == NULL) {
 		perror( "Failed to open hexastore file for reading: " );
@@ -102,19 +133,31 @@ int main ( int argc, char** argv ) {
 	
 	hx_hexastore* hx		= hx_read( f, 0 );
 	hx_nodemap* map			= hx_get_nodemap( hx );
-	fprintf( stderr, "Finished loading hexastore...\n" );
+	if (verbose) {
+		fprintf( stderr, "Finished loading hexastore...\n" );
+	}
+	
+	const char* query_string	= "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x :undergraduateDegreeFrom ?y ; a :GraduateStudent ; :memberOf ?z . ?z a :Department ; :subOrganizationOf ?y . ?y a :University }";
+	
+	if (verbose) {
+		fprintf( stderr, "Benchmarking BGP with %d runs...\n", runs_count );
+	}
 	
 	{
-		hx_bgp* b	= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x :undergraduateDegreeFrom ?y ; a :GraduateStudent ; :memberOf ?z . ?z a :Department ; :subOrganizationOf ?y . ?y a :University }" );
-		hx_bgp_debug( b );
-		fprintf( stderr, "running time: %lf\n", average( hx, b, 4 ) );
+		hx_bgp* b	= hx_bgp_parse_string( query_string );
+		if (verbose) {
+			hx_bgp_debug( b );
+		}
+		fprintf( stderr, "execution time: %lf\n", average( hx, b, runs_count ) );
 		hx_free_bgp( b );
 	}
-	{
-		hx_bgp* b	= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x :undergraduateDegreeFrom ?y ; a :GraduateStudent ; :memberOf ?z . ?z a :Department ; :subOrganizationOf ?y . ?y a :University }" );
+	if (run_optimized) {
+		hx_bgp* b	= hx_bgp_parse_string( query_string );
 		hx_bgp_reorder( b, hx );
-		hx_bgp_debug( b );
-		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, 4 ) );
+		if (verbose) {
+			hx_bgp_debug( b );
+		}
+		fprintf( stderr, "BGP-optimized execution time: %lf\n", average( hx, b, runs_count ) );
 		hx_free_bgp( b );
 	}
 	
