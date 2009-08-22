@@ -20,6 +20,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "engine/variablebindings.h"
+#include "misc/util.h"
 
 typedef struct {
 	int size;
@@ -29,6 +30,9 @@ typedef struct {
 	int finished;
 	int started;
 	hx_variablebindings* current;
+	hx_hash_t* hash;
+	int rhs_shared_column;
+	int lhs_shared_column;
 	int leftjoin;
 } _hx_hashjoin_iter_vb_info;
 
