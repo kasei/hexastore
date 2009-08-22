@@ -396,37 +396,3 @@ int _hx_nestedloopjoin_join_names ( char** lhs_names, int lhs_size, char** rhs_n
 	free( names );
 	return 0;
 }
-
-hx_variablebindings* hx_nestedloopjoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right ) {
-	int size;
-	char** names;
-	_hx_nestedloopjoin_join_vb_names( left, right, &names, &size );
-// 	fprintf( stderr, "%d shared names\n", size );
-	hx_variablebindings* b;
-	
-	hx_node_id* values	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
-	int lhs_size		= hx_variablebindings_size( left );
-	char** lhs_names	= hx_variablebindings_names( left );
-	int rhs_size	= hx_variablebindings_size( right );
-	char** rhs_names	= hx_variablebindings_names( right );
-	int i;
-	for (i = 0; i < size; i++) {
-		char* name	= names[ i ];
-// 		fprintf( stderr, "filling node value for column %s (%d)\n", name, i );
-		int j;
-		for (j = 0; j < lhs_size; j++) {
-			if (strcmp( name, lhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
-			}
-		}
-		for (j = 0; j < rhs_size; j++) {
-			if (strcmp( name, rhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
-			}
-		}
-	}
-	
-	b	= hx_new_variablebindings( size, names, values );
-	free(names);
-	return b;
-}

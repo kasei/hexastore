@@ -50,8 +50,6 @@ char** _hx_nestedloopjoin_iter_vb_names ( void* iter );
 
 hx_variablebindings_iter* hx_new_nestedloopjoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs );
 hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, int leftjoin );
-hx_variablebindings* hx_nestedloopjoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right );
-
 
 #ifdef __cplusplus
 }
