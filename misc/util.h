@@ -23,17 +23,32 @@ typedef struct {
 	void** items;
 } hx_container_t;
 
+typedef struct {
+	void* key;
+	void* value;
+} hx_hash_bucket_item_t;
+
+typedef struct {
+	int size;
+	hx_container_t* buckets;
+} hx_hash_t;
+
 typedef uint64_t hx_hash_function ( const char* s );
 
 #include "hexastore_types.h"
 
 uint64_t hx_util_hash_string ( const char* s );
+
 hx_container_t* hx_new_container ( char type, int size );
 int hx_free_container ( hx_container_t* c );
 void hx_container_push_item( hx_container_t* set, void* t );
 void hx_container_unshift_item( hx_container_t* set, void* t );
 int hx_container_size( hx_container_t* c );
 void* hx_container_item ( hx_container_t* c, int i );
+
+hx_hash_t* hx_new_hash ( int buckets );
+
+hx_free_hash ( hx_hash_t* hash );
 
 #ifdef __cplusplus
 }
