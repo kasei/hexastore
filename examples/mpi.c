@@ -34,11 +34,10 @@ char* read_file ( const char* qf ) {
 		fprintf( stderr, "*** malloc failed in parse_query.c:main\n" );
 	}
 	
-	MPI_File_read_at(file, 0, query, filesize, MPI_BYTE, &status);
-	if (status.MPI_ERROR != MPI_SUCCESS) {
-		fprintf( stderr, "rank %d failed MPI_File_read_shared with error %d\n", myrank, status.MPI_ERROR );
+	int r	= MPI_File_read_at(file, 0, query, filesize, MPI_BYTE, &status);
+	if (r != MPI_SUCCESS) {
+		fprintf( stderr, "rank %d failed MPI_File_read_at with error %d\n", myrank, status.MPI_ERROR );
 	}
-	
 	
 	MPI_File_close(&file);
 	MPI_Info_free(&info);
