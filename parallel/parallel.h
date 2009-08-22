@@ -19,7 +19,7 @@ extern "C" {
 
 #include "hexastore.h"
 #include "algebra/bgp.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 #include "rdf/triple.h"
 #include "genmap/avl_tree_map.h"
 #include "genmap/iterator.h"

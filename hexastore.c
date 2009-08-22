@@ -15,13 +15,16 @@ int _hx_iter_debug ( void* info, char* header, int indent );
 char** _hx_iter_vb_names ( void* iter );
 
 
-hx_execution_context* hx_new_execution_context ( void ) {
+hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx ) {
 	hx_execution_context* c	= (hx_execution_context*) calloc( 1, sizeof( hx_execution_context ) );
-	c->world	= NULL;
+	c->world	= world;
+	c->hx		= hx;
 	return c;
 }
 
 int hx_free_execution_context ( hx_execution_context* c ) {
+	c->world	= NULL;
+	c->hx		= NULL;
 	free( c );
 	return 0;
 }
@@ -36,10 +39,10 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( void* world, hx_nodemap* map ) {
 	hx->map			= map;
 	hx->spo			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_SPO ) );
 	hx->sop			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_SOP ) );
-// 	hx->pso			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_PSO ) );
+	hx->pso			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_PSO ) );
 	hx->pos			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_POS ) );
-// 	hx->osp			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OSP ) );
-// 	hx->ops			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OPS ) );
+	hx->osp			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OSP ) );
+	hx->ops			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OPS ) );
 	hx->next_var	= -1;
 	return hx;
 }

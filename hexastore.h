@@ -21,7 +21,8 @@ extern "C" {
 #endif
 
 #include "hexastore_types.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
+#include "engine/variablebindings_iter.h"
 #include "misc/nodemap.h"
 #include "index.h"
 #include "store/hexastore/terminal.h"
@@ -73,9 +74,10 @@ typedef struct {
 
 typedef struct {
 	void* world;
+	hx_hexastore* hx;
 } hx_execution_context;
 
-hx_execution_context* hx_new_execution_context ( void );
+hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx );
 int hx_free_execution_context ( hx_execution_context* c );
 
 hx_hexastore* hx_new_hexastore ( void* world );

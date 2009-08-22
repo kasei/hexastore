@@ -11,7 +11,7 @@
 #include <time.h>
 #include <stdio.h>
 #include "hexastore.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"

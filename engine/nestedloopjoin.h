@@ -19,7 +19,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
-#include "engine/variablebindings.h"
+#include "engine/variablebindings_iter.h"
 
 typedef struct {
 	int size;

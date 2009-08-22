@@ -17,10 +17,8 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
-#include "hexastore.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 #include "rdf/node.h"
-#include "misc/nodemap.h"
 
 static int hx_expr_debug	= 0;
 
@@ -73,6 +71,9 @@ typedef struct {
 	int arity;
 	void* operands;
 } hx_expr;
+
+#include "hexastore.h"
+#include "misc/nodemap.h"
 
 hx_expr* hx_new_node_expr ( hx_node* n );
 hx_expr* hx_new_builtin_expr1 ( hx_expr_subtype_t type, hx_expr* data );

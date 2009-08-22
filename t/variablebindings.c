@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include "hexastore.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 #include "misc/nodemap.h"
 #include "rdf/node.h"
 #include "test/tap.h"

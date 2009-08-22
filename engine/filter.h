@@ -18,7 +18,7 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "hexastore.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 #include "algebra/expr.h"
 
 typedef struct {
