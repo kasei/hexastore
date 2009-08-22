@@ -32,7 +32,7 @@
 #define PRINTTIME PRIu32
 #define TIMEUNITS "seconds"
 #elif TIMING_USE == TIMING_RDTSC
-#include "rdtsc.h"
+#include "misc/rdtsc.h"
 #define TIME_T(...) unsigned long long __VA_ARGS__
 #define TIME() rdtsc()
 #define PRINTTIME PRId64
