@@ -6,7 +6,7 @@ CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/re
 CC			= mpicc $(CFLAGS)
 
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o misc/avl.o misc/nodemap.o rdf/node.o engine/variablebindings.o engine/nestedloopjoin.o engine/rendezvousjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o rdf/triple.o store/hexastore/btree.o parser/parser.o algebra/bgp.o algebra/expr.o parser/SPARQLParser.o parser/SPARQLScanner.o algebra/graphpattern.o engine/project.o misc/util.o
+OBJECTS	=	hexastore.o index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o misc/avl.o misc/nodemap.o rdf/node.o engine/variablebindings.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o rdf/triple.o store/hexastore/btree.o parser/parser.o algebra/bgp.o algebra/expr.o parser/SPARQLParser.o parser/SPARQLScanner.o algebra/graphpattern.o engine/project.o misc/util.o
 MPI_OBJECTS	= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
 
 default: parse print optimize tests examples parse_query
@@ -57,9 +57,6 @@ misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
 
 engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h engine/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c
-
-engine/rendezvousjoin.o: engine/rendezvousjoin.c engine/rendezvousjoin.h hexastore_types.h engine/variablebindings.h
-	$(CC) $(INC) -c -o engine/rendezvousjoin.o engine/rendezvousjoin.c
 
 engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h hexastore_types.h engine/variablebindings.h
 	$(CC) $(INC) -c -o engine/nestedloopjoin.o engine/nestedloopjoin.c
