@@ -47,8 +47,7 @@ int hx_container_size( hx_container_t* c );
 void* hx_container_item ( hx_container_t* c, int i );
 
 hx_hash_t* hx_new_hash ( int buckets );
-
-hx_free_hash ( hx_hash_t* hash );
+int hx_free_hash ( hx_hash_t* hash );
 
 #ifdef __cplusplus
 }
