@@ -1,5 +1,25 @@
 #include "engine/variablebindings_iter.h"
 
+hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_node_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_node* node ) {
+	hx_expr* e	= hx_new_node_expr( node );
+	hx_variablebindings_iter_sorting* s	= hx_variablebindings_iter_new_sorting( order, sparql_order, e );
+	hx_free_expr(e);
+	return s;
+}
+
+hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_expr* expr ) {
+	hx_variablebindings_iter_sorting* s	= (hx_variablebindings_iter_sorting*) calloc( 1, sizeof(hx_variablebindings_iter_sorting) );
+	s->order		= order;
+	s->sparql_order	= sparql_order;
+	s->expr			= hx_copy_expr( expr );
+	return s;
+}
+
+int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* sorting ) {
+	hx_free_expr( sorting->expr );
+	free( sorting );
+}
+
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
 	if (iter == NULL) {
@@ -89,7 +109,7 @@ int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* col
 
 int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index ) {
 	if (iter->vtable != NULL) {
-		return iter->vtable->sorted_by( iter->ptr, index );
+		return iter->vtable->sorted_by_index( iter->ptr, index );
 	} else {
 		return 0;
 	}

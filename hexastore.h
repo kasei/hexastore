@@ -21,10 +21,11 @@ extern "C" {
 #endif
 
 #include "hexastore_types.h"
+#include "index.h"
 #include "algebra/variablebindings.h"
 #include "engine/variablebindings_iter.h"
 #include "misc/nodemap.h"
-#include "index.h"
+#include "misc/util.h"
 #include "store/hexastore/terminal.h"
 #include "store/hexastore/vector.h"
 #include "store/hexastore/head.h"
@@ -51,6 +52,7 @@ typedef struct {
 	uintptr_t pos;
 	uintptr_t osp;
 	uintptr_t ops;
+	hx_container_t* indexes;
 	int next_var;
 } hx_hexastore;
 
@@ -101,6 +103,7 @@ hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
+hx_container_t* hx_get_indexes ( hx_hexastore* hx );
 
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 

@@ -248,7 +248,7 @@ hx_variablebindings_iter* hx_new_hashjoin_iter2 ( hx_variablebindings_iter* lhs,
 	vtable->free		= _hx_hashjoin_iter_vb_free;
 	vtable->names		= _hx_hashjoin_iter_vb_names;
 	vtable->size		= _hx_hashjoin_iter_vb_size;
-	vtable->sorted_by	= _hx_hashjoin_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_hashjoin_iter_sorted_by;
 	vtable->debug		= _hx_hashjoin_debug;
 	
 	int size;

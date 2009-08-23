@@ -262,7 +262,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	vtable->free		= _hx_mergejoin_iter_vb_free;
 	vtable->names		= _hx_mergejoin_iter_vb_names;
 	vtable->size		= _hx_mergejoin_iter_vb_size;
-	vtable->sorted_by	= _hx_mergejoin_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_mergejoin_iter_sorted_by;
 	vtable->debug		= _hx_mergejoin_debug;
 	
 	int size;

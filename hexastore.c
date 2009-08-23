@@ -43,6 +43,7 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( void* world, hx_nodemap* map ) {
 	hx->pos			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_POS ) );
 	hx->osp			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OSP ) );
 	hx->ops			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OPS ) );
+	hx->indexes		= NULL;
 	hx->next_var	= -1;
 	return hx;
 }
@@ -61,12 +62,33 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 		hx_free_index( (hx_index*) hx->osp );
 	if (hx->ops)
 		hx_free_index( (hx_index*) hx->ops );
+	if (hx->indexes)
+		hx_free_container( hx->indexes );
 	free( hx );
 	return 0;
 }
 
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx ) {
 	return hx->map;
+}
+
+hx_container_t* hx_get_indexes ( hx_hexastore* hx ) {
+	if (hx->indexes == NULL) {
+		hx->indexes	= hx_new_container( 'I', 6 );
+		if (hx->spo)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->spo );
+		if (hx->sop)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->sop );
+		if (hx->pso)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->pso );
+		if (hx->pos)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->pos );
+		if (hx->osp)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->osp );
+		if (hx->ops)
+			hx_container_push_item( hx->indexes, (hx_index*)hx->ops );
+	}
+	return hx->indexes;
 }
 
 int hx_add_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
@@ -590,6 +612,8 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 	hx->pos		= ((uintptr_t) hx_index_read( f, buffer ));
 	hx->osp		= ((uintptr_t) hx_index_read( f, buffer ));
 	hx->ops		= ((uintptr_t) hx_index_read( f, buffer ));
+	hx->indexes		= NULL;
+	
 	if ((hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
 		free( hx );
@@ -607,7 +631,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	vtable->free		= _hx_iter_vb_free;
 	vtable->names		= _hx_iter_vb_names;
 	vtable->size		= _hx_iter_vb_size;
-	vtable->sorted_by	= _hx_iter_vb_sorted_by;
+	vtable->sorted_by_index	= _hx_iter_vb_sorted_by;
 	vtable->debug		= _hx_iter_debug;
 	
 	int size	= 0;
