@@ -76,6 +76,8 @@ int hx_index_iter_next ( hx_index_iter* iter );
 
 int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index );
 
+char* hx_index_name ( hx_index* idx );
+
 #ifdef __cplusplus
 }
 #endif

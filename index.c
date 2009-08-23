@@ -544,3 +544,29 @@ int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
 		return -1;
 	}
 }
+
+char* hx_index_name ( hx_index* idx ) {
+	int size	= idx->size;
+	int* order	= idx->order;
+	char* name		= (char*) calloc( 5, sizeof( char ) );
+	char* p			= name;
+	int i;
+	for (i = 0; i < size; i++) {
+		int o	= order[i];
+		switch (o) {
+			case HX_SUBJECT:
+				*(p++)	= 'S';
+				break;
+			case HX_PREDICATE:
+				*(p++)	= 'P';
+				break;
+			case HX_OBJECT:
+				*(p++)	= 'O';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized index order (%d) in _hx_optimizer_index_name\n", o );
+		};
+	}
+	return name;
+}
+
