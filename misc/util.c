@@ -27,6 +27,19 @@ hx_container_t* hx_new_container ( char type, int size ) {
 	return container;
 }
 
+hx_container_t* hx_copy_container ( hx_container_t* c ) {
+	hx_container_t* container	= (hx_container_t*) calloc( 1, sizeof( hx_container_t ) );
+	container->type			= c->type;
+	container->allocated	= c->allocated;
+	container->count		= c->count;
+	container->items		= (void**) calloc( container->allocated, sizeof( void* ) );
+	int i;
+	for (i = 0; i < c->count; i++) {
+		container->items[i]	= c->items[i];
+	}
+	return container;
+}
+
 int hx_free_container ( hx_container_t* c ) {
 	free(c);
 	return 0;

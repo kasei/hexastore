@@ -42,6 +42,7 @@ uint64_t hx_util_hash_string ( const char* s );
 uint64_t hx_util_hash_buffer ( const char* s, size_t len );
 
 hx_container_t* hx_new_container ( char type, int size );
+hx_container_t* hx_copy_container ( hx_container_t* c );
 int hx_free_container ( hx_container_t* c );
 void hx_container_push_item( hx_container_t* set, void* t );
 void hx_container_unshift_item( hx_container_t* set, void* t );
