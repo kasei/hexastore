@@ -172,7 +172,7 @@ libhx.o: $(OBJECTS)
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -240,6 +240,9 @@ t/triple.t: test/tap.o t/triple.c $(OBJECTS) test/tap.o
 
 t/hash.t: test/tap.o t/hash.c $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/hash.t t/hash.c $(OBJECTS) test/tap.o
+
+t/optimizer.t: test/tap.o t/optimizer.c $(OBJECTS) test/tap.o
+	$(CC) $(INC) $(LIBS) -o t/optimizer.t t/optimizer.c $(OBJECTS) test/tap.o
 
 ########
 
