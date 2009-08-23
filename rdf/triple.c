@@ -27,6 +27,18 @@ hx_node* hx_triple_node ( hx_triple* t, int i ) {
 	};
 }
 
+int hx_triple_bound_count ( hx_triple* t ) {
+	int bound	= 0;
+	int i;
+	for (i = 0; i < 3; i++) {
+		hx_node* n	= hx_triple_node( t, i );
+		if (!hx_node_is_variable(n)) {
+			bound++;
+		}
+	}
+	return bound;
+}
+
 int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string ) {
 	hx_node* subj	= hx_nodemap_get_node( map, t->subject );
 	hx_node* pred	= hx_nodemap_get_node( map, t->predicate );

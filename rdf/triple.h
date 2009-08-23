@@ -38,6 +38,8 @@ int hx_free_triple ( hx_triple* t );
 
 hx_node* hx_triple_node ( hx_triple* t, int i );
 
+int hx_triple_bound_count ( hx_triple* t );
+
 int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string );
 int hx_triple_string ( hx_triple* t, char** string );
 
