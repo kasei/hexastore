@@ -109,7 +109,7 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 				order[ l++ ]	= sorting;
 			}
 			
-			hx_optimizer_access_plan* plan	= hx_new_optimizer_access_plan( HX_OPTIMIZER_ACCESS_PLAN_INDEX, idx, t, order_count, order );
+			hx_optimizer_plan* plan	= hx_new_optimizer_access_plan( HX_OPTIMIZER_PLAN_INDEX, idx, t, order_count, order );
 			hx_container_push_item( access_plans, plan );
 		}
 		free(name);

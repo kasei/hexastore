@@ -9,21 +9,21 @@
 
 void _add_data ( hx_hexastore* hx );
 
-void test1 ( void );
-void test2 ( void );
-void test3 ( void );
+void access_plans_test1 ( void );
+void access_plans_test2 ( void );
+void access_plans_test3 ( void );
 
 int main ( void ) {
 	plan_tests(20);
 	
-	test1();
-	test2();
-	test3();
+	access_plans_test1();
+	access_plans_test2();
+	access_plans_test3();
 	
 	return exit_status();
 }
 
-void test1 ( void ) {
+void access_plans_test1 ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -41,7 +41,7 @@ void test1 ( void ) {
 	int sorting_ok[2]	= {0,0};
 //	fprintf( stderr, "%d plans (container %p)\n", size, (void*) plans );
 	for (i = 0; i < size; i++) {
-		hx_optimizer_access_plan* plan	= hx_container_item( plans, i );
+		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 		hx_index* i	= plan->source;
 		char* name	= hx_index_name( i );
 		ok1( *name == 'P' );
@@ -75,7 +75,7 @@ void test1 ( void ) {
 	hx_free_node(type);
 }
 
-void test2 ( void ) {
+void access_plans_test2 ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -92,7 +92,7 @@ void test2 ( void ) {
 	
 //	fprintf( stderr, "%d plans (container %p)\n", size, (void*) plans );
 	for (i = 0; i < size; i++) {
-		hx_optimizer_access_plan* plan	= hx_container_item( plans, i );
+		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 		hx_index* i	= plan->source;
 		char* name	= hx_index_name( i );
 		ok1( name[2] == 'S' );
@@ -112,7 +112,7 @@ void test2 ( void ) {
 	hx_free_node(type);
 }
 
-void test3 ( void ) {
+void access_plans_test3 ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -126,7 +126,7 @@ void test3 ( void ) {
 	hx_container_t* plans	= hx_optimizer_access_plans( ctx, t );
 	int size				= hx_container_size(plans);
 	ok1( size == 6 );
-	hx_optimizer_access_plan* plan	= hx_container_item( plans, 0 );
+	hx_optimizer_plan* plan	= hx_container_item( plans, 0 );
 	ok1( plan->order_count == 3 );
 	
 	
