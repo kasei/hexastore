@@ -4,7 +4,7 @@
 #include "rdf/node.h"
 #include "parser/parser.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/plan_access.h"
+#include "optimizer/plan.h"
 #include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );

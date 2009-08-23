@@ -1,5 +1,5 @@
 #include "optimizer/optimizer.h"
-#include "optimizer/plan_access.h"
+#include "optimizer/plan.h"
 
 // - accessPlans (get vb iter from a triple pattern, which index to use?)
 hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple* t ) {
