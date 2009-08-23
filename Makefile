@@ -14,7 +14,7 @@ ENGINE_OBJECTS	= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/m
 ALGEBRA_OBJECTS	= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS	= parser/parser.o parser/SPARQLParser.o parser/SPARQLScanner.o
 MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
-OPT_OBJECTS		= optimizer/optimizer.o
+OPT_OBJECTS		= optimizer/optimizer.o optimizer/plan_access.o
 OBJECTS			= hexastore.o index.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 default: parse print optimize tests examples parse_query
@@ -110,6 +110,9 @@ misc/util.o: misc/util.c misc/util.h
 
 optimizer/optimizer.o: optimizer/optimizer.c optimizer/optimizer.h
 	$(CC) $(INC) -c -o optimizer/optimizer.o optimizer/optimizer.c
+
+optimizer/plan_access.o: optimizer/plan_access.c optimizer/plan_access.h
+	$(CC) $(INC) -c -o optimizer/plan_access.o optimizer/plan_access.c
 
 parallel/safealloc.o: parallel/safealloc.c parallel/safealloc.h
 	$(CC) $(INC) -c -o parallel/safealloc.o parallel/safealloc.c

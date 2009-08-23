@@ -20,6 +20,16 @@ int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* so
 	free( sorting );
 }
 
+int hx_variablebindings_iter_sorting_string ( hx_variablebindings_iter_sorting* sorting, char** string ) {
+	char* expr_string;
+	hx_expr_sse( sorting->expr, &expr_string, "", 0 );
+	int len	= 7 + strlen(string);
+	*string	= (char*) calloc( len, sizeof(char) );
+	snprintf( *string, len, "%s(%s)", (sorting->order == HX_VARIABLEBINDINGS_ITER_SORT_ASCENDING ? "ASC" : "DESC"), expr_string );
+	free(expr_string);
+	return 0;
+}
+
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
 	if (iter == NULL) {

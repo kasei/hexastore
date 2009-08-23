@@ -58,6 +58,7 @@ typedef struct {
 hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_node_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_node* node );
 hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_expr* expr );
 int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* sorting );
+int hx_variablebindings_iter_sorting_string ( hx_variablebindings_iter_sorting* sorting, char** string );
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void );
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter_with_names ( int size, char** names );
