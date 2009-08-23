@@ -20,6 +20,7 @@ extern "C" {
 #include "store/hexastore/head.h"
 
 typedef struct {
+	int size;
 	int order[3];
 	uintptr_t head;
 } hx_index;

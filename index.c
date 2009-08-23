@@ -25,6 +25,7 @@ hx_index* hx_new_index ( void* world, int* index_order ) {
 	int c	= index_order[2];
 //	fprintf( stderr, "hx_index is %d bytes in size\n", (int) sizeof( hx_index ) );
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+	i->size		= 3;
 	i->order[0]	= a;
 	i->order[1]	= b;
 	i->order[2]	= c;
@@ -495,6 +496,7 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 		return NULL;
 	}
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+	i->size		= 3;
 	read	= fread( i->order, sizeof( int ), 3, f );
 	
 	if (read == 0 || (i->head = (uintptr_t) hx_head_read( f, buffer )) == 0) {
