@@ -661,6 +661,7 @@ int hx_variablebindings_set_names ( hx_variablebindings* b, char** names ) {
 			free( b->names[i] );
 		}
 	}
+	free( b->names );
 	
 	b->names		= (char**) calloc( b->size, sizeof( char* ) );
 	
