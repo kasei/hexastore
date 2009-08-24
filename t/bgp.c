@@ -52,7 +52,7 @@ void bgp1_test ( void ) {
 	hx_triple* t1	= hx_new_triple( r1, p1, l1 );
 	hx_bgp* b	= hx_new_bgp1( t1 );
 	hx_bgp_string( b, &string );
-	ok1( strcmp(string, "{\n\t<r1> <p1> \"l1\" .\n}\n") == 0 );
+	ok1( strcmp(string, "{<r1> <p1> \"l1\"}") == 0 );
 	free( string );
 	hx_free_bgp( b );
 }

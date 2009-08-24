@@ -198,7 +198,10 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 	char* str	= (char*) calloc( 1, alloc );
 	
 	int size	= hx_bgp_size( b );
-	if (_hx_bgp_string_concat( &str, "{\n", &alloc )) return 1;
+	if (_hx_bgp_string_concat( &str, "{", &alloc )) return 1;
+	if (size > 1) {
+		if (_hx_bgp_string_concat( &str, "\n", &alloc )) return 1;
+	}
 	
 	hx_node *last_s	= NULL;
 	hx_node *last_p	= NULL;
@@ -230,7 +233,9 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 				if (_hx_bgp_string_concat( &str, o, &alloc )) return 1;
 			}
 		} else {
-			if (_hx_bgp_string_concat( &str, "\t", &alloc )) return 1;
+			if (size > 1) {
+				if (_hx_bgp_string_concat( &str, "\t", &alloc )) return 1;
+			}
 			if (_hx_bgp_string_concat( &str, s, &alloc )) return 1;
 			if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
 			if (_hx_bgp_string_concat( &str, p, &alloc )) return 1;
@@ -243,7 +248,20 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 		free( p );
 		free( o );
 	}
-	if (_hx_bgp_string_concat( &str, " .\n}\n", &alloc )) return 1;
+
+	if (size > 1) {
+		if (_hx_bgp_string_concat( &str, " .\n", &alloc )) return 1;
+	}
+	if (_hx_bgp_string_concat( &str, "}", &alloc )) return 1;
+	if (size > 1) {
+		if (_hx_bgp_string_concat( &str, "\n", &alloc )) return 1;
+	}
+
+
+
+
+
+
 	*string	= str;
 	return 0;
 }
@@ -435,6 +453,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			hx_node_variable_name( v, &string );
 			proj_nodes[ proj_count++ ]	= string;
 		}
+		hx_free_node(v);
 	}
 	free( variables );
 	
