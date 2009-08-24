@@ -36,6 +36,11 @@ hx_index* hx_new_index ( void* world, int* index_order ) {
 
 int hx_free_index ( hx_index* i ) {
 	hx_free_head( (hx_head*) i->head );
+	i->head	= 0;
+	int j;
+	for (j = 0; j < 3; j++) {
+		i->order[j]	= -1;
+	}
 	free( i );
 	return 0;
 }
