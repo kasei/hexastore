@@ -15,6 +15,14 @@ hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_sorting ( hx_vari
 	return s;
 }
 
+hx_variablebindings_iter_sorting* hx_copy_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* s ) {
+	hx_variablebindings_iter_sorting* c	= (hx_variablebindings_iter_sorting*) calloc( 1, sizeof(hx_variablebindings_iter_sorting) );
+	c->order		= s->order;
+	c->sparql_order	= s->sparql_order;
+	c->expr			= hx_copy_expr( s->expr );
+	return c;
+}
+
 int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* sorting ) {
 	hx_free_expr( sorting->expr );
 	free( sorting );
@@ -23,7 +31,7 @@ int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* so
 int hx_variablebindings_iter_sorting_string ( hx_variablebindings_iter_sorting* sorting, char** string ) {
 	char* expr_string;
 	hx_expr_sse( sorting->expr, &expr_string, "", 0 );
-	int len	= 7 + strlen(string);
+	int len	= 7 + strlen(expr_string);
 	*string	= (char*) calloc( len, sizeof(char) );
 	snprintf( *string, len, "%s(%s)", (sorting->order == HX_VARIABLEBINDINGS_ITER_SORT_ASCENDING ? "ASC" : "DESC"), expr_string );
 	free(expr_string);
