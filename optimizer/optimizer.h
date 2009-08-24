@@ -27,7 +27,7 @@ extern "C" {
 hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple* t );
 
 // - joinPlans (which join algorithm to use? is sorting required?)
-hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_container_t* lhs, hx_container_t* rhs );
+hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_container_t* lhs, hx_container_t* rhs, int leftjoin );
 
 // - finalizePlans (add projection, ordering, filters)
 hx_container_t* hx_optimizer_finalize_plans ( hx_execution_context* ctx, hx_container_t* plans );
