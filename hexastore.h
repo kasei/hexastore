@@ -77,6 +77,9 @@ typedef struct {
 typedef struct {
 	void* world;
 	hx_hexastore* hx;
+	int64_t nestedloopjoin_penalty;
+	int64_t hashjoin_penalty;
+	int64_t unsorted_mergejoin_penalty;
 } hx_execution_context;
 
 hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx );
