@@ -46,12 +46,12 @@ static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOU
 
 typedef struct {
 	hx_nodemap* map;
-	uintptr_t spo;
-	uintptr_t sop;
-	uintptr_t pso;
-	uintptr_t pos;
-	uintptr_t osp;
-	uintptr_t ops;
+	hx_index* spo;
+	hx_index* sop;
+	hx_index* pso;
+	hx_index* pos;
+	hx_index* osp;
+	hx_index* ops;
 	hx_container_t* indexes;
 	int next_var;
 } hx_hexastore;

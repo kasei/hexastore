@@ -51,19 +51,28 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( void* world, hx_nodemap* map ) {
 int hx_free_hexastore ( hx_hexastore* hx ) {
 	hx_free_nodemap( hx->map );
 	if (hx->spo)
-		hx_free_index( (hx_index*) hx->spo );
+		hx_free_index( hx->spo );
 	if (hx->sop)
-		hx_free_index( (hx_index*) hx->sop );
+		hx_free_index( hx->sop );
 	if (hx->pso)
-		hx_free_index( (hx_index*) hx->pso );
+		hx_free_index( hx->pso );
 	if (hx->pos)
-		hx_free_index( (hx_index*) hx->pos );
+		hx_free_index( hx->pos );
 	if (hx->osp)
-		hx_free_index( (hx_index*) hx->osp );
+		hx_free_index( hx->osp );
 	if (hx->ops)
-		hx_free_index( (hx_index*) hx->ops );
+		hx_free_index( hx->ops );
 	if (hx->indexes)
 		hx_free_container( hx->indexes );
+
+	hx->map			= NULL;
+	hx->spo			= NULL;
+	hx->sop			= NULL;
+	hx->pso			= NULL;
+	hx->pos			= NULL;
+	hx->osp			= NULL;
+	hx->ops			= NULL;
+	hx->indexes		= NULL;
 	free( hx );
 	return 0;
 }
@@ -76,17 +85,17 @@ hx_container_t* hx_get_indexes ( hx_hexastore* hx ) {
 	if (hx->indexes == NULL) {
 		hx->indexes	= hx_new_container( 'I', 6 );
 		if (hx->spo)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->spo );
+			hx_container_push_item( hx->indexes, hx->spo );
 		if (hx->sop)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->sop );
+			hx_container_push_item( hx->indexes, hx->sop );
 		if (hx->pso)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->pso );
+			hx_container_push_item( hx->indexes, hx->pso );
 		if (hx->pos)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->pos );
+			hx_container_push_item( hx->indexes, hx->pos );
 		if (hx->osp)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->osp );
+			hx_container_push_item( hx->indexes, hx->osp );
 		if (hx->ops)
-			hx_container_push_item( hx->indexes, (hx_index*)hx->ops );
+			hx_container_push_item( hx->indexes, hx->ops );
 	}
 	return hx->indexes;
 }
@@ -102,23 +111,23 @@ int hx_add_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
 int hx_add_triple_id( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_terminal* t;
 	{
-		int added	= hx_index_add_triple_terminal( (hx_index*) hx->spo, s, p, o, &t );
+		int added	= hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
 		if (hx->pso) {
-			hx_index_add_triple_with_terminal( (hx_index*) hx->pso, t, s, p, o, added );
+			hx_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
 		}
 	}
 
 	{
-		int added	= hx_index_add_triple_terminal( (hx_index*) hx->sop, s, p, o, &t );
+		int added	= hx_index_add_triple_terminal( hx->sop, s, p, o, &t );
 		if (hx->osp) {
-			hx_index_add_triple_with_terminal( (hx_index*) hx->osp, t, s, p, o, added );
+			hx_index_add_triple_with_terminal( hx->osp, t, s, p, o, added );
 		}
 	}
 	
 	{
-		int added	= hx_index_add_triple_terminal( (hx_index*) hx->pos, s, p, o, &t );
+		int added	= hx_index_add_triple_terminal( hx->pos, s, p, o, &t );
 		if (hx->ops) {
-			hx_index_add_triple_with_terminal( (hx_index*) hx->ops, t, s, p, o, added );
+			hx_index_add_triple_with_terminal( hx->ops, t, s, p, o, added );
 		}
 	}
 	
@@ -155,19 +164,19 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 		}
 		
 		{
-			tinfo[0].index		= (hx_index*) hx->spo;
+			tinfo[0].index		= hx->spo;
 			if (hx->pso) {
-				tinfo[0].secondary	= (hx_index*) hx->pso;
+				tinfo[0].secondary	= hx->pso;
 			}
 			
-			tinfo[1].index		= (hx_index*) hx->sop;
+			tinfo[1].index		= hx->sop;
 			if (hx->osp) {
-				tinfo[1].secondary	= (hx_index*) hx->osp;
+				tinfo[1].secondary	= hx->osp;
 			}
 			
-			tinfo[2].index		= (hx_index*) hx->pos;
+			tinfo[2].index		= hx->pos;
 			if (hx->ops) {
-				tinfo[2].secondary	= (hx_index*) hx->ops;
+				tinfo[2].secondary	= hx->ops;
 			}
 			
 			int i;
@@ -186,27 +195,27 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 		}
 		
 		{
-			tinfo[0].index		= (hx_index*) hx->spo;
+			tinfo[0].index		= hx->spo;
 			tinfo[0].secondary	= NULL;
 			
-			tinfo[1].index		= (hx_index*) hx->sop;
+			tinfo[1].index		= hx->sop;
 			tinfo[1].secondary	= NULL;
 			
-			tinfo[2].index		= (hx_index*) hx->pos;
+			tinfo[2].index		= hx->pos;
 			tinfo[2].secondary	= NULL;
 			
 			if (hx->pso) {
-				tinfo[3].index		= (hx_index*) hx->pso;
+				tinfo[3].index		= hx->pso;
 				tinfo[3].secondary	= NULL;
 			}
 			
 			if (hx->osp) {
-				tinfo[4].index		= (hx_index*) hx->osp;
+				tinfo[4].index		= hx->osp;
 				tinfo[4].secondary	= NULL;
 			}
 			
 			if (hx->ops) {
-				tinfo[5].index		= (hx_index*) hx->ops;
+				tinfo[5].index		= hx->ops;
 				tinfo[5].secondary	= NULL;
 			}
 			
@@ -248,17 +257,17 @@ int hx_remove_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) 
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
-	hx_index_remove_triple( (hx_index*) hx->spo, s, p, o );
-	hx_index_remove_triple( (hx_index*) hx->sop, s, p, o );
+	hx_index_remove_triple( hx->spo, s, p, o );
+	hx_index_remove_triple( hx->sop, s, p, o );
 	if (hx->pso) {
-		hx_index_remove_triple( (hx_index*) hx->pso, s, p, o );
+		hx_index_remove_triple( hx->pso, s, p, o );
 	}
-	hx_index_remove_triple( (hx_index*) hx->pos, s, p, o );
+	hx_index_remove_triple( hx->pos, s, p, o );
 	if (hx->osp) {
-		hx_index_remove_triple( (hx_index*) hx->osp, s, p, o );
+		hx_index_remove_triple( hx->osp, s, p, o );
 	}
 	if (hx->ops) {
-		hx_index_remove_triple( (hx_index*) hx->ops, s, p, o );
+		hx_index_remove_triple( hx->ops, s, p, o );
 	}
 	return 0;
 }
@@ -371,13 +380,13 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node
 #ifdef DEBUG_INDEX_SELECTION
 					fprintf( stderr, "using spo index\n" );
 #endif
-					*index	= (hx_index*) hx->spo;
+					*index	= hx->spo;
 					break;
 				case 2:
 #ifdef DEBUG_INDEX_SELECTION
 					fprintf( stderr, "using sop index\n" );
 #endif
-					*index	= (hx_index*) hx->sop;
+					*index	= hx->sop;
 					break;
 			}
 			break;
@@ -388,19 +397,19 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "using pso index\n" );
 #endif
-						*index	= (hx_index*) hx->pso;
+						*index	= hx->pso;
 					} else {
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "wanted pso index, but using spo...\n" );
 #endif
-						*index	= (hx_index*) hx->spo;
+						*index	= hx->spo;
 					}
 					break;
 				case 2:
 #ifdef DEBUG_INDEX_SELECTION
 					fprintf( stderr, "using pos index\n" );
 #endif
-					*index	= (hx_index*) hx->pos;
+					*index	= hx->pos;
 					break;
 			}
 			break;
@@ -411,12 +420,12 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "using osp index\n" );
 #endif
-						*index	= (hx_index*) hx->osp;
+						*index	= hx->osp;
 					} else {
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "wanted osp index, but using sop...\n" );
 #endif
-						*index	= (hx_index*) hx->sop;
+						*index	= hx->sop;
 					}
 					break;
 				case 1:
@@ -424,12 +433,12 @@ int _hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "using ops index\n" );
 #endif
-						*index	= (hx_index*) hx->ops;
+						*index	= hx->ops;
 					} else {
 #ifdef DEBUG_INDEX_SELECTION
 						fprintf( stderr, "wanted ops index, but using pos...\n" );
 #endif
-						*index	= (hx_index*) hx->pos;
+						*index	= hx->pos;
 					}
 					break;
 			}
@@ -558,7 +567,7 @@ uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node*
 }
 
 uint64_t hx_triples_count ( hx_hexastore* hx ) {
-	hx_index* i	= (hx_index*) hx->spo;
+	hx_index* i	= hx->spo;
 	return hx_index_triples_count( i );
 }
 
@@ -571,17 +580,17 @@ int hx_write( hx_hexastore* h, FILE* f ) {
 	
 	int cond	= 0;
 	if (h->spo)
-		cond		|= hx_index_write( (hx_index*) h->spo, f );
+		cond		|= hx_index_write( h->spo, f );
 	if (h->sop)
-		cond		|= hx_index_write( (hx_index*) h->sop, f );
+		cond		|= hx_index_write( h->sop, f );
 	if (h->pso)
-		cond		|= hx_index_write( (hx_index*) h->pso, f );
+		cond		|= hx_index_write( h->pso, f );
 	if (h->pos)
-		cond		|= hx_index_write( (hx_index*) h->pos, f );
+		cond		|= hx_index_write( h->pos, f );
 	if (h->osp)
-		cond		|= hx_index_write( (hx_index*) h->osp, f );
+		cond		|= hx_index_write( h->osp, f );
 	if (h->ops)
-		cond		|= hx_index_write( (hx_index*) h->ops, f );
+		cond		|= hx_index_write( h->ops, f );
 	
 	if (cond != 0) {
 		fprintf( stderr, "*** Error while writing hexastore indices to disk.\n" );
@@ -711,13 +720,16 @@ int _hx_iter_vb_current ( void* data, void* results ) {
 		}
 		info->current	= hx_new_variablebindings( info->size, info->names, values );
 	}
-	*bindings	= info->current;
+	*bindings	= hx_copy_variablebindings( info->current );
 	return 0;
 }
 
 int _hx_iter_vb_next ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	hx_index_iter* iter		= (hx_index_iter*) info->iter;
+	if (info->current) {
+		hx_free_variablebindings( info->current );
+	}
 	info->current			= NULL;
 	return hx_index_iter_next( iter );
 }
