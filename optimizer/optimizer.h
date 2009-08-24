@@ -22,6 +22,7 @@ extern "C" {
 #include "rdf/triple.h"
 #include "misc/util.h"
 #include "algebra/variablebindings.h"
+#include "optimizer/plan.h"
 
 // - accessPlans (get vb iter from a triple pattern, which index to use?)
 hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple* t );
@@ -30,7 +31,7 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_container_t* lhs, hx_container_t* rhs, int leftjoin );
 
 // - finalizePlans (add projection, ordering, filters)
-hx_container_t* hx_optimizer_finalize_plans ( hx_execution_context* ctx, hx_container_t* plans );
+hx_container_t* hx_optimizer_finalize_plans ( hx_execution_context* ctx, hx_container_t* plans, hx_container_t* requested_order, hx_container_t* project_variables, hx_container_t* filters );
 
 // - prunePlans
 hx_container_t* hx_optimizer_prune_plans ( hx_execution_context* ctx, hx_container_t* plans );
