@@ -2,13 +2,24 @@
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o ) {
 	hx_triple* t	= (hx_triple*) calloc( 1, sizeof( hx_triple ) );
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
+	t->subject		= hx_node_copy( s );
+	t->predicate	= hx_node_copy( p );
+	t->object		= hx_node_copy( o );
 	return t;
 }
 
+hx_triple* hx_copy_triple ( hx_triple* t ) {
+	hx_triple* c	= (hx_triple*) calloc( 1, sizeof( hx_triple ) );
+	c->subject		= hx_node_copy( t->subject );
+	c->predicate	= hx_node_copy( t->predicate );
+	c->object		= hx_node_copy( t->object );
+	return c;
+}
+
 int hx_free_triple ( hx_triple* t ) {
+	hx_free_node( t->subject );
+	hx_free_node( t->predicate );
+	hx_free_node( t->object );
 	free( t );
 	return 0;
 }
@@ -71,6 +82,7 @@ int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string ) {
 int hx_triple_string ( hx_triple* t, char** string ) {
 	int len	= 12; // "(triple * * *)"
 	char *s, *p, *o;
+	
 	hx_node_string( t->subject, &s );
 	hx_node_string( t->predicate, &p );
 	hx_node_string( t->object, &o );
@@ -89,6 +101,14 @@ int hx_triple_string ( hx_triple* t, char** string ) {
 	free( s );
 	free( p );
 	free( o );
+	return 0;
+}
+
+int hx_triple_debug ( hx_triple* t ) {
+	char* string;
+	hx_triple_string( t, &string );
+	fprintf( stderr, "triple %p: %s\n", (void*) t, string );
+	free(string);
 	return 0;
 }
 

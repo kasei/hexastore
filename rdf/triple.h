@@ -34,6 +34,7 @@ typedef struct {
 } hx_triple_id;
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );
+hx_triple* hx_copy_triple ( hx_triple* t );
 int hx_free_triple ( hx_triple* t );
 
 hx_node* hx_triple_node ( hx_triple* t, int i );
@@ -42,6 +43,7 @@ int hx_triple_bound_count ( hx_triple* t );
 
 int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string );
 int hx_triple_string ( hx_triple* t, char** string );
+int hx_triple_debug ( hx_triple* t );
 
 uint64_t hx_triple_hash_on_node ( hx_triple* t, hx_node_position_t pos, hx_hash_function* func );
 uint64_t hx_triple_hash ( hx_triple* t, hx_hash_function* func );
