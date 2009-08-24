@@ -1,6 +1,8 @@
 #include "optimizer/plan.h"
 #include "algebra/bgp.h"
 
+int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
+
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_index* source, hx_triple* t, int order_count, hx_variablebindings_iter_sorting** order ) {
 	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
 	plan->type			= HX_OPTIMIZER_PLAN_INDEX;
@@ -37,7 +39,7 @@ hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
 		return hx_new_optimizer_join_plan( p->join_type, p->lhs_plan, p->rhs_plan, p->order_count, p->order, p->leftjoin );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
-		return 1;
+		return NULL;
 	}
 }
 
@@ -112,4 +114,81 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		return 1;
 	}
 	return 0;
+}
+
+int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting ) {
+	int count	= plan->order_count;
+	*sorting	= (hx_variablebindings_iter_sorting**) calloc( count, sizeof(hx_variablebindings_iter_sorting*) );
+	int i;
+	for (i = 0; i < count; i++) {
+		(*sorting)[i]	= hx_copy_variablebindings_iter_sorting( plan->order[i] );
+	}
+	return count;
+}
+
+int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+	hx_hexastore* hx	= ctx->hx;
+	
+	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
+		hx_triple* t	= p->triple;
+		uint64_t count	= hx_count_statements( hx, t->subject, t->predicate, t->object );
+		return (int64_t) count;
+	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
+		int64_t lhsc	= hx_optimizer_plan_cost( ctx, p->lhs_plan );
+		int64_t rhsc	= hx_optimizer_plan_cost( ctx, p->rhs_plan );
+		int64_t cost	= (lhsc * rhsc);
+		if (p->join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
+			cost	+= ctx->nestedloopjoin_penalty;
+		} else if (p->join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
+			cost	+= ctx->hashjoin_penalty;
+		} else if (p->join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
+			if (_hx_optimizer_plan_mergeable_sorting( ctx, p )) {
+				// if the iterators are sorted appropriately for a merge-join
+			} else {
+				cost	+= ctx->unsorted_mergejoin_penalty;
+			}
+		} else {
+			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_cost\n" );
+		}
+		return cost;
+	} else {
+		fprintf( stderr, "*** unrecognized plan type in hx_free_optimizer_plan\n" );
+		return -1;
+	}
+}
+
+int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+	hx_variablebindings_iter_sorting **lhs_sorting, **rhs_sorting;
+	int lhs_count	= hx_optimizer_plan_sorting( p->lhs_plan, &lhs_sorting );
+	int rhs_count	= hx_optimizer_plan_sorting( p->rhs_plan, &rhs_sorting );
+	int i;
+	
+	if (lhs_count == 0 || rhs_count == 0) {
+		return 0;
+	}
+	
+	char *lhs_sort_string, *rhs_sort_string;
+	hx_variablebindings_iter_sorting_string( lhs_sorting[0], &lhs_sort_string );
+	hx_variablebindings_iter_sorting_string( rhs_sorting[0], &rhs_sort_string );
+	
+// 	fprintf( stderr, "Are these two sorting orders mergeable?\n%s\n%s\n???\n\n", lhs_sort_string, rhs_sort_string );
+	
+	int mergeable	= 0;
+	if (strcmp(lhs_sort_string, rhs_sort_string) == 0) {
+		mergeable	= 1;
+	}
+	
+// 	for (i = 0; i < lhs_count; i++) {
+// 		char* sort_string;
+// 		hx_variablebindings_iter_sorting_string( lhs_sorting[i], &sort_string );
+// 		fprintf( stderr, "LHS sorting: %s\n", sort_string );
+// 		free(sort_string);
+// 	}
+	
+	for (i = 0; i < lhs_count; i++) hx_free_variablebindings_iter_sorting( lhs_sorting[i] );
+	for (i = 0; i < rhs_count; i++) hx_free_variablebindings_iter_sorting( rhs_sorting[i] );
+	free(lhs_sorting);
+	free(rhs_sorting);
+	
+	return mergeable;
 }

@@ -13,13 +13,16 @@ void access_plans_test1 ( hx_hexastore* hx );
 void access_plans_test2 ( hx_hexastore* hx );
 void access_plans_test3 ( hx_hexastore* hx );
 void join_plans_test1 ( hx_hexastore* hx );
+void sorting_test1 ( hx_hexastore* hx );
+void access_cost_test1 ( hx_hexastore* hx );
+void join_cost_test1 ( hx_hexastore* hx );
 
 int _strcmp (const void *a, const void *b) {
 	return strcmp( *((const char**) a), *((const char**) b) );
 }
 
 int main ( void ) {
-	plan_tests(25);
+	plan_tests(65);
 
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
@@ -29,6 +32,12 @@ int main ( void ) {
 	access_plans_test3( hx );
 	
 	join_plans_test1( hx );
+	
+	sorting_test1( hx );
+	sorting_test1( hx );
+	
+	access_cost_test1( hx );
+	join_cost_test1( hx );
 	
 	hx_free_hexastore(hx);
 	return exit_status();
@@ -226,6 +235,194 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
+void sorting_test1 ( hx_hexastore* hx ) {
+	fprintf( stdout, "# sorting_test1\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_node* v1	= hx_new_node_named_variable( -1, "a" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "b" );
+	hx_node* type	= (hx_node*) hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	hx_triple* t	= hx_new_triple( v1, type, v2 );
+	
+	int i;
+	hx_container_t* plans	= hx_optimizer_access_plans( ctx, t );
+	int size				= hx_container_size(plans);
+	
+//	fprintf( stderr, "%d plans (container %p)\n", size, (void*) plans );
+	for (i = 0; i < size; i++) {
+		hx_optimizer_plan* plan	= hx_container_item( plans, i );
+		{
+			char* string;
+			hx_optimizer_plan_string( plan, &string );
+			
+			hx_variablebindings_iter_sorting** sorting;
+			int count	= hx_optimizer_plan_sorting( plan, &sorting );
+			hx_variablebindings_iter_sorting* s	= sorting[0];
+			ok1( count == 2 );
+			
+			char* sort_string;
+			hx_variablebindings_iter_sorting_string( s, &sort_string );
+			if (string[1] == 'S') {
+				ok1( strcmp(sort_string, "ASC(?a)") == 0 );
+			} else {
+				ok1( strcmp(sort_string, "ASC(?b)") == 0 );
+			}
+			
+			int j;
+			for (j = 0; j < count; j++) {
+				hx_free_variablebindings_iter_sorting( sorting[j] );
+			}
+			free(sorting);
+			free(sort_string);
+			free(string);
+		}
+		
+		hx_free_optimizer_plan( plan );
+	}
+	
+	hx_free_container( plans );
+	
+	hx_free_triple( t );
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(type);
+	
+	hx_free_execution_context(ctx);
+}
+
+void access_cost_test1 ( hx_hexastore* hx ) {
+	fprintf( stdout, "# access_cost_test1\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_node* v1	= hx_new_node_named_variable( -1, "x" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "y" );
+	hx_node* type	= (hx_node*) hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	hx_node* resultset	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet");
+	hx_node* resultvar	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable");
+	hx_triple* t1	= hx_new_triple( v1, type, resultset );
+	hx_triple* t2	= hx_new_triple( v1, resultvar, v2 );
+	
+	int i;
+	hx_container_t* plans1	= hx_optimizer_access_plans( ctx, t1 );
+	hx_container_t* plans2	= hx_optimizer_access_plans( ctx, t2 );
+	int size1				= hx_container_size(plans1);
+	int size2				= hx_container_size(plans2);
+	ok1( size1 == 2 );
+	ok1( size2 == 2 );
+	
+	
+	
+	for (i = 0; i < size1; i++) {
+		hx_optimizer_plan* plan	= hx_container_item( plans1, i );
+		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+// 		fprintf( stderr, "plan1 %d: %p\n", i, (void*) plan );
+// 		char* string;
+// 		hx_optimizer_plan_string( plan, &string );
+// 		fprintf( stderr, "- %s\n", string );
+// 		fprintf( stderr, "- cost: %lld\n", cost );
+// 		free(string);
+		hx_free_optimizer_plan( plan );
+		
+		ok1( cost == 2 );
+	}
+	
+	for (i = 0; i < size1; i++) {
+		hx_optimizer_plan* plan	= hx_container_item( plans2, i );
+		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+// 		fprintf( stderr, "plan2 %d: %p\n", i, (void*) plan );
+// 		char* string;
+// 		hx_optimizer_plan_string( plan, &string );
+// 		fprintf( stderr, "- %s\n", string );
+// 		fprintf( stderr, "- cost: %lld\n", cost );
+// 		free(string);
+		hx_free_optimizer_plan( plan );
+		
+		ok1( cost == 4 );
+	}
+	
+	hx_free_container( plans1 );
+	hx_free_container( plans2 );
+	
+	hx_free_triple( t1 );
+	hx_free_triple( t2 );
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(resultvar);
+	hx_free_node(resultset);
+	hx_free_node(type);
+	
+	hx_free_execution_context(ctx);
+}
+
+void join_cost_test1 ( hx_hexastore* hx ) {
+	fprintf( stdout, "# join_cost_test1\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	ctx->unsorted_mergejoin_penalty	= 2;
+	ctx->hashjoin_penalty			= 1;
+	ctx->nestedloopjoin_penalty		= 3;
+	
+	hx_node* v1	= hx_new_node_named_variable( -1, "x" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "y" );
+	hx_node* type	= (hx_node*) hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	hx_node* resultset	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet");
+	hx_node* resultvar	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable");
+	hx_triple* t1	= hx_new_triple( v1, type, resultset );
+	hx_triple* t2	= hx_new_triple( v1, resultvar, v2 );
+	
+	int i;
+	hx_container_t* plans1	= hx_optimizer_access_plans( ctx, t1 );
+	hx_container_t* plans2	= hx_optimizer_access_plans( ctx, t2 );
+	int size1				= hx_container_size(plans1);
+	int size2				= hx_container_size(plans2);
+	ok1( size1 == 2 );
+	ok1( size2 == 2 );
+	
+	hx_container_t* jplans	= hx_optimizer_join_plans( ctx, plans1, plans2, 0 );
+	
+	for (i = 0; i < size1; i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
+	for (i = 0; i < size2; i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
+	
+	int size				= hx_container_size(jplans);
+	for (i = 0; i < size; i++) {
+		hx_optimizer_plan* plan	= hx_container_item( jplans, i );
+		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		char* string;
+		hx_optimizer_plan_string( plan, &string );
+// 		fprintf( stderr, "join plan %d cost %lld: %s\n", i, cost, string );
+		
+		if (strncmp( string, "merge-join", 10 ) == 0) {
+			if (NULL != strstr(string, "POS({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}")) {
+				// the POS index on (?x * ?y) won't give mergeable data, since it'll be ordered by ?y, but the other iterator is ordered by ?x
+				ok( cost == 10, "unsorted merge-join cost" );
+			} else {
+				ok( cost == 8, "merge-join cost" );
+			}
+		} else if (strncmp( string, "hash-join", 9 ) == 0) {
+			ok( cost == 9, "hash-join cost" );
+		} else if (strncmp( string, "nestedloop-join", 10 ) == 0) {
+			ok( cost == 11, "nestedloop-join cost" );
+		}
+
+		free(string);
+		hx_free_optimizer_plan( plan );
+	}
+	
+	hx_free_container( jplans );
+	hx_free_container( plans1 );
+	hx_free_container( plans2 );
+	
+	hx_free_triple( t1 );
+	hx_free_triple( t2 );
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(resultvar);
+	hx_free_node(resultset);
+	hx_free_node(type);
+	
+	hx_free_execution_context(ctx);
+}
+
 void _add_data ( hx_hexastore* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
@@ -263,6 +460,7 @@ void _add_data ( hx_hexastore* hx ) {
                                       rs:variable   \"g\" \
                                     ] \
                     ] . \
+<http://resultset2/>    rdf:type      rs:ResultSet . \
 ";
 	hx_parser* parser	= hx_new_parser();
 	hx_parser_parse_string_into_hexastore( parser, hx, rdf, "http://example.org/", "turtle" );

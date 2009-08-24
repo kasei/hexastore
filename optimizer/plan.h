@@ -62,7 +62,10 @@ typedef struct {
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* plan );
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_index* source, hx_triple* t, int order_count, hx_variablebindings_iter_sorting** order );
 hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, int order_count, hx_variablebindings_iter_sorting** order, int leftjoin );
+int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting );
 int hx_free_optimizer_plan ( hx_optimizer_plan* plan );
+
+int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* plan );
 
 int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string );
 
