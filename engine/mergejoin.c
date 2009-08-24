@@ -324,8 +324,9 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 	hx_variablebindings_iter_next( iter );
 	
 	while (!hx_variablebindings_iter_finished( iter )) {
-		hx_variablebindings_iter_current( iter, &b );
-		hx_node_id id	= hx_variablebindings_node_id_for_binding( b, join_column );
+		hx_variablebindings* binding;
+		hx_variablebindings_iter_current( iter, &binding );
+		hx_node_id id	= hx_variablebindings_node_id_for_binding( binding, join_column );
 // 		fprintf( stderr, "*** get_batch: next id %d\n", (int) id );
 		if (id == cur) {
 			if (*batch_size >= *batch_alloc_size) {
@@ -342,9 +343,10 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 				*batch	= _new;
 				*batch_alloc_size	= size;
 			}
-			(*batch)[ (*batch_size)++ ]	= b;
+			(*batch)[ (*batch_size)++ ]	= binding;
 			hx_variablebindings_iter_next( iter );
 		} else {
+			hx_free_variablebindings(binding);
 			break;
 		}
 	}
