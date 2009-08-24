@@ -10,7 +10,7 @@ uint64_t hx_util_hash_buffer ( const char* s, size_t len ) {
 	int i;
 	for (i = 0; i < len; i++) {
 		unsigned char ki	= (unsigned char) s[i];
-		uint64_t highorder	= h & 0xfffffffff8000000;	// extract high-order 37 bits from h
+		uint64_t highorder	= h & 0xfffffffff8000000LL;	// extract high-order 37 bits from h
 		h	= h << 37;									// shift h left by 37 bits
 		h	= h ^ (highorder >> 37);					// move the highorder 37 bits to the low-order end and XOR into h
 		h = h ^ ki;										// XOR h and ki
@@ -41,26 +41,31 @@ hx_container_t* hx_copy_container ( hx_container_t* c ) {
 }
 
 int hx_free_container ( hx_container_t* c ) {
+	free(c->items);
+	c->type			= (char) 0;
+	c->allocated	= -1;
+	c->count		= -1;
+	c->items		= NULL;
 	free(c);
 	return 0;
 }
 
-void hx_container_push_item( hx_container_t* set, void* t ) {
-	if (set->allocated <= (set->count + 1)) {
+void hx_container_push_item( hx_container_t* c, void* t ) {
+	if (c->allocated <= (c->count + 1)) {
 		int i;
 		void** old;
 		void** newlist;
-		set->allocated	*= 2;
-		newlist	= (void**) calloc( set->allocated, sizeof( void* ) );
-		for (i = 0; i < set->count; i++) {
-			newlist[i]	= set->items[i];
+		c->allocated	*= 2;
+		newlist	= (void**) calloc( c->allocated, sizeof( void* ) );
+		for (i = 0; i < c->count; i++) {
+			newlist[i]	= c->items[i];
 		}
-		old	= set->items;
-		set->items	= newlist;
+		old	= c->items;
+		c->items	= newlist;
 		free( old );
 	}
 	
-	set->items[ set->count++ ]	= t;
+	c->items[ c->count++ ]	= t;
 }
 
 void hx_container_unshift_item( hx_container_t* set, void* t ) {
@@ -95,6 +100,12 @@ void* hx_container_item ( hx_container_t* c, int i ) {
 	return c->items[i];
 }
 
+char hx_container_type ( hx_container_t* c ) {
+	return c->type;
+}
+
+
+
 hx_hash_t* hx_new_hash ( int buckets ) {
 	int i;
 	hx_hash_t* h	= (hx_hash_t*) calloc( 1, sizeof( hx_hash_t ) );
@@ -105,7 +116,6 @@ hx_hash_t* hx_new_hash ( int buckets ) {
 	}
 	return h;
 }
-
 
 int hx_hash_add ( hx_hash_t* hash, void* key, size_t klen, void* value ) {
 	if (klen == 0) {

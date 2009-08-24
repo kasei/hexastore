@@ -48,6 +48,7 @@ void hx_container_push_item( hx_container_t* set, void* t );
 void hx_container_unshift_item( hx_container_t* set, void* t );
 int hx_container_size( hx_container_t* c );
 void* hx_container_item ( hx_container_t* c, int i );
+char hx_container_type ( hx_container_t* c );
 
 hx_hash_t* hx_new_hash ( int buckets );
 int hx_hash_add ( hx_hash_t* hash, void* key, size_t klen, void* value );
