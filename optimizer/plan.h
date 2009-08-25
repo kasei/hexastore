@@ -45,6 +45,7 @@ static char* HX_OPTIMIZER_PLAN_JOIN_NAMES[HX_OPTIMIZER_PLAN_JOIN_LAST+1]	= {
 
 typedef struct {
 	hx_optimizer_plan_type type;
+	char* string;
 	hx_optimizer_plan_join_type join_type;
 	union {
 		hx_index* source;	// access

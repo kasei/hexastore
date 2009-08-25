@@ -8,7 +8,7 @@ int _hx_hashjoin_debug ( void* info, char* header, int indent );
 
 // implementations
 
-void ___hash_debug_1 ( void* key, void* value ) {
+void ___hash_debug_1 ( int klen, void* key, void* value ) {
 	hx_node_id id	= *( (hx_node_id*) key );
 	hx_variablebindings* b	= (hx_variablebindings*) value;
 	
@@ -18,12 +18,12 @@ void ___hash_debug_1 ( void* key, void* value ) {
 	free(string);
 }
 
-void _hx_hashjoin_free_hash_cb ( void* key, void* value ) {
+void _hx_hashjoin_free_hash_cb ( void* key, size_t klen, void* value ) {
 	hx_variablebindings* b	= (hx_variablebindings*) value;
 	hx_free_variablebindings(b);
 }
 
-int _hx_hashjoin_get_matching_hash_items ( void* key, void* value, void* thunk ) {
+int _hx_hashjoin_get_matching_hash_items ( void* key, int klen, void* value, void* thunk ) {
 	hx_container_t* c	= (hx_container_t*) thunk;
 	hx_container_push_item( c, value );
 	return 0;

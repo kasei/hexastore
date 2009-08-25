@@ -10,6 +10,7 @@ hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_index* source, hx_triple* t
 	plan->source		= source;
 	plan->order_count	= order_count;
 	plan->order			= (hx_variablebindings_iter_sorting**) calloc( order_count, sizeof(hx_variablebindings_iter_sorting*) );
+	plan->string		= NULL;
 	int i;
 	for (i = 0; i < order_count; i++) {
 		plan->order[i]	= hx_copy_variablebindings_iter_sorting( order[i] );
@@ -25,6 +26,7 @@ hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type
 	plan->rhs_plan		= hx_copy_optimizer_plan(rhs);
 	plan->order_count	= order_count;
 	plan->order			= (hx_variablebindings_iter_sorting**) calloc( order_count, sizeof(hx_variablebindings_iter_sorting*) );
+	plan->string		= NULL;
 	int i;
 	for (i = 0; i < order_count; i++) {
 		plan->order[i]	= hx_copy_variablebindings_iter_sorting( order[i] );
@@ -52,6 +54,10 @@ int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
 	}
 	free( p->order );
 	
+	if (p->string) {
+		free(p->string);
+	}
+	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_free_triple( p->triple );
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
@@ -67,6 +73,12 @@ int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
 }
 
 int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
+	if (p->string) {
+		*string	= calloc( strlen(p->string) + 1, sizeof(char) );
+		strcpy( *string, p->string );
+		return 0;
+	}
+	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		char *tstring;
 		hx_triple* t	= p->triple;
@@ -113,6 +125,10 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_string\n" );
 		return 1;
 	}
+	
+	p->string	= calloc( strlen(*string) + 1, sizeof(char) );
+	strcpy( p->string, *string );
+	
 	return 0;
 }
 
@@ -126,16 +142,21 @@ int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_ite
 	return count;
 }
 
-int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p, int* accumulator, int level ) {
 	hx_hexastore* hx	= ctx->hx;
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t	= p->triple;
-		uint64_t count	= hx_count_statements( hx, t->subject, t->predicate, t->object );
+		uint64_t count;
+		if (hx) {
+			count	= hx_count_statements( hx, t->subject, t->predicate, t->object );
+		} else {
+			count	= 1;
+		}
 		return (int64_t) count;
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
-		int64_t lhsc	= hx_optimizer_plan_cost( ctx, p->lhs_plan );
-		int64_t rhsc	= hx_optimizer_plan_cost( ctx, p->rhs_plan );
+		int64_t lhsc	= _hx_optimizer_plan_cost( ctx, p->lhs_plan, accumulator, level+1 );
+		int64_t rhsc	= _hx_optimizer_plan_cost( ctx, p->rhs_plan, accumulator, level+1 );
 		int64_t cost	= (lhsc * rhsc);
 		if (p->join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
 			cost	+= ctx->nestedloopjoin_penalty;
@@ -150,11 +171,22 @@ int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p
 		} else {
 			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_cost\n" );
 		}
+		
+		// The accumulator value is added to the total plan cost.
+		// By adding to it here, we increase the total cost of plans that have
+		// large expected intermediate results.
+		*accumulator	+= (cost*level);
 		return cost;
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_free_optimizer_plan\n" );
 		return -1;
 	}
+}
+
+int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+	int64_t accumulator	= 0;
+	int64_t cost	= _hx_optimizer_plan_cost( ctx, p, &accumulator, 1 );
+	return (cost + accumulator);
 }
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
@@ -189,6 +221,8 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 	for (i = 0; i < rhs_count; i++) hx_free_variablebindings_iter_sorting( rhs_sorting[i] );
 	free(lhs_sorting);
 	free(rhs_sorting);
+	free(lhs_sort_string);
+	free(rhs_sort_string);
 	
 	return mergeable;
 }

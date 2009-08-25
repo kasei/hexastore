@@ -19,6 +19,9 @@ hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx )
 	hx_execution_context* c	= (hx_execution_context*) calloc( 1, sizeof( hx_execution_context ) );
 	c->world	= world;
 	c->hx		= hx;
+	c->unsorted_mergejoin_penalty	= 2;
+	c->hashjoin_penalty				= 1;
+	c->nestedloopjoin_penalty		= 3;
 	return c;
 }
 
@@ -37,12 +40,12 @@ hx_hexastore* hx_new_hexastore ( void* world ) {
 hx_hexastore* hx_new_hexastore_with_nodemap ( void* world, hx_nodemap* map ) {
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore )  );
 	hx->map			= map;
-	hx->spo			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_SPO ) );
-	hx->sop			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_SOP ) );
-	hx->pso			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_PSO ) );
-	hx->pos			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_POS ) );
-	hx->osp			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OSP ) );
-	hx->ops			= ((uintptr_t) hx_new_index( world, HX_INDEX_ORDER_OPS ) );
+	hx->spo			= hx_new_index( world, HX_INDEX_ORDER_SPO );
+	hx->sop			= hx_new_index( world, HX_INDEX_ORDER_SOP );
+	hx->pso			= hx_new_index( world, HX_INDEX_ORDER_PSO );
+	hx->pos			= hx_new_index( world, HX_INDEX_ORDER_POS );
+	hx->osp			= hx_new_index( world, HX_INDEX_ORDER_OSP );
+	hx->ops			= hx_new_index( world, HX_INDEX_ORDER_OPS );
 	hx->indexes		= NULL;
 	hx->next_var	= -1;
 	return hx;
@@ -615,12 +618,12 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 	}
 	
 	hx->next_var	= -1;
-	hx->spo		= ((uintptr_t) hx_index_read( f, buffer ));
-	hx->sop		= ((uintptr_t) hx_index_read( f, buffer ));
-	hx->pso		= ((uintptr_t) hx_index_read( f, buffer ));
-	hx->pos		= ((uintptr_t) hx_index_read( f, buffer ));
-	hx->osp		= ((uintptr_t) hx_index_read( f, buffer ));
-	hx->ops		= ((uintptr_t) hx_index_read( f, buffer ));
+	hx->spo		= hx_index_read( f, buffer );
+	hx->sop		= hx_index_read( f, buffer );
+	hx->pso		= hx_index_read( f, buffer );
+	hx->pos		= hx_index_read( f, buffer );
+	hx->osp		= hx_index_read( f, buffer );
+	hx->ops		= hx_index_read( f, buffer );
 	hx->indexes		= NULL;
 	
 	if ((hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0)) {

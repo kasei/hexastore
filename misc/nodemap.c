@@ -1,4 +1,5 @@
 #include "misc/nodemap.h"
+typedef struct avl_table avl;
 
 int _hx_nodemap_cmp_nodes ( const void* _a, const void* _b );
 

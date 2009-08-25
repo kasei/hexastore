@@ -22,7 +22,10 @@ extern "C" {
 #include "rdf/triple.h"
 #include "misc/util.h"
 #include "algebra/variablebindings.h"
+#include "algebra/bgp.h"
 #include "optimizer/plan.h"
+
+hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp* b );
 
 // - accessPlans (get vb iter from a triple pattern, which index to use?)
 hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple* t );
