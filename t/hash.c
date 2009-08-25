@@ -4,7 +4,7 @@
 void test1 ( void );
 void test2 ( void );
 
-void hash_debug_1 ( int klen, void* key, void* value );
+void hash_debug_1 ( void* key, int klen, void* value );
 int apply_test_1( void* key, int klen, void* value, void* thunk );
 
 int main ( void ) {
@@ -73,6 +73,6 @@ int apply_test_1( void* key, int klen, void* value, void* thunk ) {
 	return 0;
 }
 
-void hash_debug_1 ( int klen, void* key, void* value ) {
+void hash_debug_1 ( void* key, int klen, void* value ) {
 	fprintf( stderr, "\t(%s => %d)\n", (char*) key, (int) value );
 }

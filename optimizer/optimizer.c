@@ -65,7 +65,7 @@ char* _hx_optimizer_opt_plan_access_key_inverse ( int size, char* key ) {
 	return ikey;
 }
 
-void _hx_optimizer_optplans_debug_cb ( int klen, void* key, void* value ) {
+void _hx_optimizer_optplans_debug_cb ( void* key, int klen, void* value ) {
 	int i;
 	int j	= 0;
 	char* k	= (char*) key;

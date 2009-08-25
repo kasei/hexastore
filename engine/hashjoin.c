@@ -8,7 +8,7 @@ int _hx_hashjoin_debug ( void* info, char* header, int indent );
 
 // implementations
 
-void ___hash_debug_1 ( int klen, void* key, void* value ) {
+void ___hash_debug_1 ( void* key, int klen, void* value ) {
 	hx_node_id id	= *( (hx_node_id*) key );
 	hx_variablebindings* b	= (hx_variablebindings*) value;
 	

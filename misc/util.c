@@ -216,7 +216,7 @@ void* hx_hash_get ( hx_hash_t* hash, void* key, size_t klen ) {
 	return NULL;
 }
 
-int hx_hash_debug ( hx_hash_t* h, void debug_cb( int klen, void* key, void* value ) ) {
+int hx_hash_debug ( hx_hash_t* h, void debug_cb( void* key, int klen, void* value ) ) {
 	int i, j;
 	int size	= h->size;
 	fprintf( stderr, "hash with %d buckets:\n", size );
@@ -226,7 +226,7 @@ int hx_hash_debug ( hx_hash_t* h, void debug_cb( int klen, void* key, void* valu
 //		fprintf( stderr, "- bucket %d has %d elements:\n", i, csize );
 		for (j = 0; j < csize; j++) {
 			hx_hash_bucket_item_t* i	= hx_container_item( c, j );
-			debug_cb( i->klen, i->key, i->value );
+			debug_cb( i->key, i->klen, i->value );
 		}
 	}
 	return 0;
