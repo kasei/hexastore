@@ -8,7 +8,7 @@ CC			= gcc $(CFLAGS)
 LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 
 STORE_OBJECTS	= store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
-MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o
+MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS		= rdf/node.o rdf/triple.o
 ENGINE_OBJECTS	= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
 ALGEBRA_OBJECTS	= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
@@ -62,6 +62,9 @@ rdf/node.o: rdf/node.c rdf/node.h hexastore_types.h
 	
 misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
 	$(CC) $(INC) -c -o misc/nodemap.o misc/nodemap.c
+
+misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h hexastore_types.h
+	$(CC) $(INC) -c -o misc/idmap.o misc/idmap.c
 
 engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c
