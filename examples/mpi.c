@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <dirent.h>
 #include "hexastore.h"
 #include "rdf/node.h"
 #include "engine/mergejoin.h"
@@ -15,6 +16,16 @@ int DEBUG_NODE	= -1;
 
 extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, const char* filename );
+
+int directory_exists ( const char* dir ) {
+	int exists	= 0;
+	DIR* d	= opendir( dir );
+	if (d) {
+		exists	= 1;
+		closedir(d);
+	}
+	return exists;
+}
 
 char* read_file ( const char* qf ) {
 	MPI_File file;
@@ -67,8 +78,12 @@ int main ( int argc, char** argv ) {
 	const char* query_filename	= argv[2];
 	
 	char* job				= (argc > 3) ? argv[3] : "";
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( "/tmp", job );
-//  	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( st, "/gpfs/large/DSSW/rendezvous", job );
+	const char* dir			= (directory_exists("/gpfs"))
+							? "/gpfs/large/DSSW/rendezvous"
+							: "/tmp";
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( dir, job );
+	if (myrank == 0)
+		fprintf( stderr, "using %s for output files\n", dir );
 	
 	TIME_T(load_start, load_end);
 	TIME_T(exec_start, exec_end);
@@ -109,7 +124,7 @@ int main ( int argc, char** argv ) {
 	if (myrank == 0) {
 		fprintf( stderr, "BGP DEBUG (on rank 0):\n" );
 		hx_bgp_debug( b );
-		fprintf( stderr, "-----------------\n" );
+		fprintf( stderr, "\n" );
 	}
 	
 	exec_start	= TIME();
@@ -156,7 +171,7 @@ int main ( int argc, char** argv ) {
 		fprintf( stdout, "RESULTS: load=%lf exec=%lf total=%d np=%d data=%s query=%s\n", DIFFTIME(load_end, load_start), DIFFTIME(exec_end, exec_start), total, mysize, data_filename, query_filename);
 	}
 	
-	if (0) {
+	if (1) {
 		free(query);
 		hx_free_variablebindings_iter(iter);
 		hx_free_nodemap( results_map );
