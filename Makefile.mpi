@@ -1,23 +1,23 @@
-CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall
+# CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-variable -std=c99
 # CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-# CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CC			= gcc $(CFLAGS)
+CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -g # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
+CC			= mpicc $(CFLAGS)
 
-LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
+LIBS	=	-L/cs/willig4/local/lib -I/cs/willig4/local/include
 
 STORE_OBJECTS	= store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
 MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS		= rdf/node.o rdf/triple.o
 ENGINE_OBJECTS	= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
 ALGEBRA_OBJECTS	= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
-PARSER_OBJECTS	= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
-# MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
+PARSER_OBJECTS	= parser/SPARQLParser.o parser/SPARQLScanner.o # parser/parser.o
+MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
 OPT_OBJECTS		= optimizer/optimizer.o optimizer/plan.o
 OBJECTS			= hexastore.o index.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
-default: parse print optimize tests examples parse_query
+default: mpi
 
 all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
 
@@ -117,38 +117,38 @@ optimizer/optimizer.o: optimizer/optimizer.c optimizer/optimizer.h
 optimizer/plan.o: optimizer/plan.c optimizer/plan.h
 	$(CC) $(INC) -c -o optimizer/plan.o optimizer/plan.c
 
-# parallel/safealloc.o: parallel/safealloc.c parallel/safealloc.h
-# 	$(CC) $(INC) -c -o parallel/safealloc.o parallel/safealloc.c
-# 
-# parallel/async_mpi.o: parallel/async_mpi.c parallel/async_mpi.h parallel/safealloc.h parallel/async.h
-# 	$(CC) $(INC) -c -o parallel/async_mpi.o parallel/async_mpi.c
-# 
-# parallel/async_des.o: parallel/async_des.c parallel/async_des.h parallel/async_mpi.h parallel/safealloc.h
-# 	$(CC) $(INC) -c -o parallel/async_des.o parallel/async_des.c
-# 
-# parallel/parallel.o: parallel/parallel.c parallel/parallel.h parallel/async_des.o parallel/async_mpi.o parallel/safealloc.o
-# 	$(CC) $(INC) -c -o parallel/parallel.o parallel/parallel.c
-# 
-# parallel/mpi_file_iterator.o: parallel/mpi_file_iterator.c parallel/mpi_file_iterator.h parallel/genmap/iterator.h parallel/genmap/buffer.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_iterator.o parallel/mpi_file_iterator.c
-# 
-# parallel/mpi_file_ntriples_iterator.o: parallel/mpi_file_ntriples_iterator.c parallel/mpi_file_ntriples_iterator.h parallel/mpi_file_iterator.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_iterator.c
-# 
-# parallel/mpi_file_ntriples_node_iterator.o: parallel/mpi_file_ntriples_node_iterator.c parallel/mpi_file_ntriples_node_iterator.h parallel/mpi_file_ntriples_iterator.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_file_ntriples_node_iterator.c
-# 	
-# parallel/mpi_rdfio.o: parallel/mpi_rdfio.c parallel/mpi_rdfio.h hexastore.h parallel/mpi_file_ntriples_node_iterator.h parallel/async_des.h parallel/genmap/avl_tree_map.h
-# 	$(CC) $(INC) -c -o parallel/mpi_rdfio.o parallel/mpi_rdfio.c
-# 
-# parallel/genmap/avl_tree_map.o: parallel/genmap/avl_tree_map.c parallel/genmap/avl_tree_map.h parallel/genmap/map.h parallel/genmap/iterator.h misc/avl.h
-# 	$(CC) $(INC) -c parallel/genmap/avl_tree_map.c -o parallel/genmap/avl_tree_map.o
-# 
-# parallel/genmap/iterator.o: parallel/genmap/iterator.c parallel/genmap/iterator.h
-# 	$(CC) $(INC) -c parallel/genmap/iterator.c -o parallel/genmap/iterator.o
-# 
-# parallel/genmap/map.o: parallel/genmap/map.c parallel/genmap/map.h parallel/genmap/iterator.h
-# 	$(CC) $(INC) -c parallel/genmap/map.c -o parallel/genmap/map.o
+parallel/safealloc.o: parallel/safealloc.c parallel/safealloc.h
+	$(CC) $(INC) -c -o parallel/safealloc.o parallel/safealloc.c
+
+parallel/async_mpi.o: parallel/async_mpi.c parallel/async_mpi.h parallel/safealloc.h parallel/async.h
+	$(CC) $(INC) -c -o parallel/async_mpi.o parallel/async_mpi.c
+
+parallel/async_des.o: parallel/async_des.c parallel/async_des.h parallel/async_mpi.h parallel/safealloc.h
+	$(CC) $(INC) -c -o parallel/async_des.o parallel/async_des.c
+
+parallel/parallel.o: parallel/parallel.c parallel/parallel.h parallel/async_des.o parallel/async_mpi.o parallel/safealloc.o
+	$(CC) $(INC) -c -o parallel/parallel.o parallel/parallel.c
+
+parallel/mpi_file_iterator.o: parallel/mpi_file_iterator.c parallel/mpi_file_iterator.h parallel/genmap/iterator.h parallel/genmap/buffer.h
+	$(CC) $(INC) -c -o parallel/mpi_file_iterator.o parallel/mpi_file_iterator.c
+
+parallel/mpi_file_ntriples_iterator.o: parallel/mpi_file_ntriples_iterator.c parallel/mpi_file_ntriples_iterator.h parallel/mpi_file_iterator.h
+	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_iterator.c
+
+parallel/mpi_file_ntriples_node_iterator.o: parallel/mpi_file_ntriples_node_iterator.c parallel/mpi_file_ntriples_node_iterator.h parallel/mpi_file_ntriples_iterator.h
+	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_file_ntriples_node_iterator.c
+	
+parallel/mpi_rdfio.o: parallel/mpi_rdfio.c parallel/mpi_rdfio.h hexastore.h parallel/mpi_file_ntriples_node_iterator.h parallel/async_des.h parallel/genmap/avl_tree_map.h
+	$(CC) $(INC) -c -o parallel/mpi_rdfio.o parallel/mpi_rdfio.c
+
+parallel/genmap/avl_tree_map.o: parallel/genmap/avl_tree_map.c parallel/genmap/avl_tree_map.h parallel/genmap/map.h parallel/genmap/iterator.h misc/avl.h
+	$(CC) $(INC) -c parallel/genmap/avl_tree_map.c -o parallel/genmap/avl_tree_map.o
+
+parallel/genmap/iterator.o: parallel/genmap/iterator.c parallel/genmap/iterator.h
+	$(CC) $(INC) -c parallel/genmap/iterator.c -o parallel/genmap/iterator.o
+
+parallel/genmap/map.o: parallel/genmap/map.c parallel/genmap/map.h parallel/genmap/iterator.h
+	$(CC) $(INC) -c parallel/genmap/map.c -o parallel/genmap/map.o
 
 ########
 
@@ -179,8 +179,8 @@ tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t 
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
-# mpi: examples/mpi
-# 
+mpi: examples/mpi
+
 # bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 
 ########
@@ -293,6 +293,7 @@ distclean:
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
 	rm -f *.o */*.o */*/*.o
+	rm -f *.o */*.o */*/*.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f stack.h position.h location.h
@@ -304,6 +305,7 @@ clean:
 	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
+	rm -f *.o */*.o */*/*.o
 	rm -f *.o */*.o */*/*.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
