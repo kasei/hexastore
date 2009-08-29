@@ -361,7 +361,7 @@ hx_node* hx_node_parse ( char* ntnode ) {
 					ntnode[max_idx] = '\0';
 					char* last_quote_p = strrchr(ntnode, '"');
 					if(last_quote_p == NULL) {
-						fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; expected typed literal, but found %s\n", __FILE__, __LINE__, ntnode);
+						fprintf(stderr, "%s:%u: Error in hx_node_parse; expected typed literal, but found %s\n", __FILE__, __LINE__, ntnode);
 						return NULL;
 					}
 					last_quote_p[0] = '\0';
@@ -370,7 +370,7 @@ hx_node* hx_node_parse ( char* ntnode ) {
 				default: {
 					char* last_quote_p = strrchr(ntnode, '"');
 					if(last_quote_p == NULL) {
-						fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; expected literal with language tag, but found %s\n", __FILE__, __LINE__, ntnode);
+						fprintf(stderr, "%s:%u: Error in hx_node_parse; expected literal with language tag, but found %s\n", __FILE__, __LINE__, ntnode);
 						return NULL;
 					}
 					last_quote_p[0] = '\0';
@@ -379,7 +379,7 @@ hx_node* hx_node_parse ( char* ntnode ) {
 			}
 		}
 		default: {
-			fprintf(stderr, "%s:%u: Error in _mpi_rdfio_to_hx_node_p; invalid N-triples node %s\n", __FILE__, __LINE__, ntnode);
+			fprintf(stderr, "%s:%u: Error in hx_node_parse; invalid N-triples node %s\n", __FILE__, __LINE__, ntnode);
 			return NULL;
 		}
 	}
