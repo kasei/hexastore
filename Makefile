@@ -5,7 +5,7 @@ CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic 
 CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CC			= mpicc $(CFLAGS)
 
-LIBS	=	-lz -lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
+LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 
 STORE_OBJECTS	= store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
 MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o
@@ -261,7 +261,7 @@ examples/lubm16_6m: examples/lubm16_6m.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c $(OBJECTS)
 
 examples/mpi: examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
-	$(CC) -lmpi $(INC) $(LIBS) -o examples/mpi examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/mpi examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
 
 ########
 
