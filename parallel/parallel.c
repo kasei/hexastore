@@ -145,7 +145,7 @@ int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ct
 
 	const char* mapfile		= ctx->local_nodemap_file;
 //	if (!mpi_rdfio_readids(file, 4800, &destination, MPI_COMM_WORLD)) {
-	if(!mpi_rdfio_readnt(file, mapfile, 1048576, &destination, MPI_COMM_WORLD)) {
+	if(!mpi_rdfio_readnt((char*) file, (char*) mapfile, 1048576, &destination, MPI_COMM_WORLD)) {
 		fprintf(stderr, "%s:%u:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
 		MPI_Abort(MPI_COMM_WORLD, 127);
 	}
@@ -365,7 +365,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		
 // 		if (ctx->join_iteration > 1) {
 // 			char* string;
-// 			hx_variablebindings_string( b, NULL, &string );
+// 			hx_variablebindings_string( b, send_args->map, &string );
 // 			fprintf( stderr, "\t{J%d} node %d sending variable bindings %s with length %d to node %d\n", ctx->join_iteration, myrank, string, len, node );
 // 			free(string);
 // 		}
@@ -1262,6 +1262,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		hx_node* v	= variables[i];
 		int id		= hx_node_iv(v);
 		hx_node_variable_name(v, &(variable_names[-1 * id]));
+		hx_free_node( v );
 	}
 	free( variables );
 	
