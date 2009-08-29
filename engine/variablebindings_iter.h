@@ -15,7 +15,6 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#include "zlib.h"
 
 #include "algebra/variablebindings.h"
 #include "hexastore_types.h"
