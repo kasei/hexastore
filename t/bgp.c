@@ -1,8 +1,6 @@
 #include "hexastore.h"
-#include "bgp.h"
-#include "tap.h"
-
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
+#include "algebra/bgp.h"
+#include "test/tap.h"
 
 void bgp1_test ( void );
 void bgp2_test ( void );
@@ -51,9 +49,8 @@ int main ( void ) {
 
 void bgp1_test ( void ) {
 	char* string;
-	hx_triple t1;
-	_fill_triple( &t1, r1, p1, l1 );
-	hx_bgp* b	= hx_new_bgp1( &t1 );
+	hx_triple* t1	= hx_new_triple( r1, p1, l1 );
+	hx_bgp* b	= hx_new_bgp1( t1 );
 	hx_bgp_string( b, &string );
 	ok1( strcmp(string, "{\n\t<r1> <p1> \"l1\" .\n}\n") == 0 );
 	free( string );
@@ -62,12 +59,10 @@ void bgp1_test ( void ) {
 
 void bgp2_test ( void ) {
 	char* string;
-	hx_triple t1, t2;
-	
 	{
-		_fill_triple( &t1, r1, p1, l1 );
-		_fill_triple( &t2, r2, p1, l2 );
-		hx_bgp* b	= hx_new_bgp2( &t1, &t2 );
+		hx_triple* t1	= hx_new_triple( r1, p1, l1 );
+		hx_triple* t2	= hx_new_triple( r2, p1, l2 );
+		hx_bgp* b	= hx_new_bgp2( t1, t2 );
 		hx_bgp_string( b, &string );
 		ok1( strcmp(string, "{\n\t<r1> <p1> \"l1\" .\n\t<r2> <p1> \"l2\" .\n}\n") == 0 );
 		free( string );
@@ -77,13 +72,11 @@ void bgp2_test ( void ) {
 
 void bgp3_test ( void ) {
 	char* string;
-	hx_triple t1, t2, t3, t4;
 	{
-		_fill_triple( &t1, r1, p1, l1 );
-		_fill_triple( &t2, r2, p1, l2 );
-		_fill_triple( &t3, r2, p1, l3 );
-		_fill_triple( &t3, r2, p2, l1 );
-		hx_triple* triples[3]	= { &t1, &t2, &t3 };
+		hx_triple* t1	= hx_new_triple( r1, p1, l1 );
+		hx_triple* t2	= hx_new_triple( r2, p1, l2 );
+		hx_triple* t3	= hx_new_triple( r2, p2, l1 );
+		hx_triple* triples[3]	= { t1, t2, t3 };
 		hx_bgp* b		= hx_new_bgp( 3, triples );
 		hx_bgp_string( b, &string );
 		ok1( strcmp(string, "{\n\t<r1> <p1> \"l1\" .\n\t<r2> <p1> \"l2\" ;\n\t\t<p2> \"l1\" .\n}\n") == 0 );
@@ -95,10 +88,9 @@ void bgp3_test ( void ) {
 void serialization_test ( void ) {
 	{
 		char* string;
-		hx_triple t1, t2;
-		_fill_triple( &t1, r1, p1, l1 );
-		_fill_triple( &t2, r2, p1, l2 );
-		hx_bgp* b	= hx_new_bgp2( &t1, &t2 );
+		hx_triple* t1	= hx_new_triple( r1, p1, l1 );
+		hx_triple* t2	= hx_new_triple( r2, p1, l2 );
+		hx_bgp* b		= hx_new_bgp2( t1, t2 );
 		
 		{
 			hx_bgp_sse( b, &string, "\t", 0 );
@@ -117,35 +109,33 @@ void serialization_test ( void ) {
 }
 
 void bgp_vars_test1 ( void ) {
-	hx_triple t1;
-	
 	{
-		_fill_triple( &t1, r1, p1, l1 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( r1, p1, l1 );
+		hx_bgp* b	= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, NULL );
 		ok1( var_count == 0 );
 		hx_free_bgp( b );
 	}
 	
 	{
-		_fill_triple( &t1, v1, p1, l1 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( v1, p1, l1 );
+		hx_bgp* b		= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, NULL );
 		ok1( var_count == 1 );
 		hx_free_bgp( b );
 	}
 	
 	{
-		_fill_triple( &t1, v1, v2, l1 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( v1, v2, l1 );
+		hx_bgp* b		= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, NULL );
 		ok1( var_count == 2 );
 		hx_free_bgp( b );
 	}
 	
 	{
-		_fill_triple( &t1, v1, v2, v1 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( v1, v2, v1 );
+		hx_bgp* b		= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, NULL );
 		ok1( var_count == 2 );
 		hx_free_bgp( b );
@@ -153,12 +143,10 @@ void bgp_vars_test1 ( void ) {
 }
 
 void bgp_vars_test2 ( void ) {
-	hx_triple t1;
-	
 	{
 		hx_node** v;
-		_fill_triple( &t1, r1, v1, l1 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( r1, v1, l1 );
+		hx_bgp* b	= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, &v );
 		ok1( var_count == 1 );
 		hx_node* n	= v[0];
@@ -170,8 +158,8 @@ void bgp_vars_test2 ( void ) {
 
 	{
 		hx_node** v;
-		_fill_triple( &t1, v2, v1, v2 );
-		hx_bgp* b	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( v2, v1, v2 );
+		hx_bgp* b	= hx_new_bgp1( t1 );
 		int var_count	= hx_bgp_variables( b, &v );
 		ok1( var_count == 2 );
 		
@@ -194,9 +182,8 @@ void bgp_varsub_test1 ( void ) {
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
 		
-		hx_triple t1;
-		_fill_triple( &t1, r1, v1, l1 );	// <r1> ?x "l1"
-		hx_bgp* bgp	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( r1, v1, l1 );
+		hx_bgp* bgp	= hx_new_bgp1( t1 );
 		
 		{
 			char* names[1]			= { "x" };
@@ -239,9 +226,8 @@ void bgp_varsub_test2 ( void ) {
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
 		
-		hx_triple t1;
-		_fill_triple( &t1, v1, v1, v2 );	// ?x ?x ?y
-		hx_bgp* bgp	= hx_new_bgp1( &t1 );
+		hx_triple* t1	= hx_new_triple( v1, v1, v2 );
+		hx_bgp* bgp	= hx_new_bgp1( t1 );
 		
 		{
 			char* names[2]			= { "y", "x" };
@@ -264,8 +250,3 @@ void bgp_varsub_test2 ( void ) {
 	}
 }
 
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
-}

@@ -11,10 +11,10 @@
 #include <time.h>
 #include <stdio.h>
 #include "hexastore.h"
-#include "variablebindings.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "engine/variablebindings.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_hexastore* hx, hx_bgp* b );
@@ -44,8 +44,7 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_read( s, f, 0 );
+	hx_hexastore* hx		= hx_read( f, 0 );
 	hx_nodemap* map			= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -78,7 +77,7 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 5, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 	uint64_t counter	= 0;
 	if (iter != NULL) {
 	//	hx_variablebindings_iter_debug( iter, "lubm9> ", 0 );
@@ -122,7 +121,7 @@ int main ( int argc, char** argv ) {
 			hx_variablebindings_iter_next( iter );
 		}
 		
-		hx_free_variablebindings_iter( iter, 1 );
+		hx_free_variablebindings_iter( iter );
 	}
 	
 	if (counter == 0) {
@@ -140,8 +139,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( student );
 	hx_free_node( takesCourse );
 	
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	
 	return 0;
 }

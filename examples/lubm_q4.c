@@ -8,9 +8,9 @@
 
 #include <stdio.h>
 #include "hexastore.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 int main ( int argc, char** argv ) {
@@ -20,8 +20,7 @@ int main ( int argc, char** argv ) {
 		perror( "Failed to open hexastore file for reading: " );
 		return 1;
 	}
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_read( s, f, 0 );
+	hx_hexastore* hx	= hx_read( f, 0 );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -40,21 +39,15 @@ int main ( int argc, char** argv ) {
 	
 	hx_triple* triples[5];
 	{
-		hx_triple t0, t1, t2, t3, t4;
-		_fill_triple( &t0, x, type, prof );
-		_fill_triple( &t1, x, worksFor, univ0 );
-		_fill_triple( &t2, x, name, y1 );
-		_fill_triple( &t3, x, email, y2 );
-		_fill_triple( &t4, x, tel, y3 );
-		triples[0]	= &t0;
-		triples[1]	= &t1;
-		triples[2]	= &t2;
-		triples[3]	= &t3;
-		triples[4]	= &t4;
+		triples[0]	= hx_new_triple( x, type, prof );
+		triples[1]	= hx_new_triple( x, worksFor, univ0 );
+		triples[2]	= hx_new_triple( x, name, y1 );
+		triples[3]	= hx_new_triple( x, email, y2 );
+		triples[4]	= hx_new_triple( x, tel, y3 );
 	}
 	
-	hx_bgp* b	= hx_new_bgp( 4, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_bgp* b	= hx_new_bgp( 5, triples );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -98,7 +91,7 @@ int main ( int argc, char** argv ) {
 		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	
 	hx_free_bgp( b );
 	hx_free_node( x );
@@ -112,6 +105,8 @@ int main ( int argc, char** argv ) {
 	hx_free_node( name );
 	hx_free_node( email );
 	hx_free_node( tel );
+	
+	hx_free_hexastore( hx );
 	
 	return 0;
 }

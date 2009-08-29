@@ -1,13 +1,12 @@
 #include <unistd.h>
 #include "hexastore.h"
-#include "nodemap.h"
-#include "node.h"
-#include "storage.h"
-#include "tap.h"
+#include "misc/nodemap.h"
+#include "rdf/node.h"
+#include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
+void _add_data ( hx_hexastore* hx );
 hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort );
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
 void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* map );
 
 hx_node* p1;
@@ -47,17 +46,16 @@ int main ( void ) {
 
 void materialize_iter_test ( void ) {
 	fprintf( stdout, "# materialize_iter_test\n" );
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_new_hexastore( s );
+	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx, s );
+	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
 // <r2> :p2 "l2"
 // <r1> :p2 "l1"
 		
 	// get ?subj ?pred ?obj ordered by object
-	hx_variablebindings_iter* _iter	= _get_triples( hx, s, HX_OBJECT );
+	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_materialize_iter( _iter );
 	
 // 	while (!hx_variablebindings_iter_finished( iter )) {
@@ -77,18 +75,16 @@ void materialize_iter_test ( void ) {
 	
 	_test_iter_expected_values( iter, map );
 	
-	hx_free_variablebindings_iter( iter, 1 );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_variablebindings_iter( iter );
+	hx_free_hexastore( hx );
 }
 
 void materialize_reset_test ( void ) {
 	fprintf( stdout, "# materialize_reset_test\n" );
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_new_hexastore( s );
+	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx, s );
-	hx_variablebindings_iter* _iter	= _get_triples( hx, s, HX_OBJECT );
+	_add_data( hx );
+	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_materialize_iter( _iter );
 	
 	int counter	 = 0;
@@ -105,9 +101,8 @@ void materialize_reset_test ( void ) {
  	}
 	ok1( counter == 8 );
 	
-	hx_free_variablebindings_iter( iter, 1 );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_variablebindings_iter( iter );
+	hx_free_hexastore( hx );
 }
 
 void materialize_data_test ( void ) {
@@ -139,7 +134,7 @@ void materialize_data_test ( void ) {
 	
 	_test_iter_expected_values( iter, map );
 	
-	hx_free_variablebindings_iter( iter, 0 );
+	hx_free_variablebindings_iter( iter );
 	hx_free_nodemap( map );
 }
 
@@ -251,13 +246,13 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 	ok1( hx_variablebindings_iter_finished( iter ) );
 }
 
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort ) {
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
 	hx_node* v1	= hx_new_node_variable( -1 );
 	hx_node* v2	= hx_new_node_variable( -2 );
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
-	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, "subj", "pred", "obj" );
+	hx_index_iter* titer	= hx_get_statements( hx, v1, v2, v3, HX_OBJECT );
+	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, "subj", "pred", "obj" );
 	return iter;
 }
 
@@ -270,9 +265,9 @@ hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes ) {
 	return hx_new_variablebindings ( size, names, nodes );
 }
 
-void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
-	hx_add_triple( hx, s, r1, p1, r2 );
-	hx_add_triple( hx, s, r2, p1, r1 );
-	hx_add_triple( hx, s, r2, p2, l2 );
-	hx_add_triple( hx, s, r1, p2, l1 );
+void _add_data ( hx_hexastore* hx ) {
+	hx_add_triple( hx, r1, p1, r2 );
+	hx_add_triple( hx, r2, p1, r1 );
+	hx_add_triple( hx, r2, p2, l2 );
+	hx_add_triple( hx, r1, p2, l1 );
 }

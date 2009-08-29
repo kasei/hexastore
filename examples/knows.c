@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "hexastore.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "rdf/triple.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];
 	FILE* f	= fopen( filename, "r" );
@@ -12,8 +12,7 @@ int main ( int argc, char** argv ) {
 		perror( "Failed to open hexastore file for reading: " );
 		return 1;
 	}
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_read( s, f, 0 );
+	hx_hexastore* hx	= hx_read( f, 0 );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -28,17 +27,13 @@ int main ( int argc, char** argv ) {
 	
 	hx_triple* triples[3];
 	{
-		hx_triple t0, t1, t2;
-		_fill_triple( &t0, x, type, person );
-		_fill_triple( &t1, x, knows, y );
-		_fill_triple( &t2, y, name, z );
-		triples[0]	= &t0;
-		triples[1]	= &t1;
-		triples[2]	= &t2;
+		triples[0]	= hx_new_triple( x, type, person );
+		triples[1]	= hx_new_triple( x, knows, y );
+		triples[2]	= hx_new_triple( y, name, z );
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 3, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -76,7 +71,7 @@ int main ( int argc, char** argv ) {
 		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 	}
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	
 	hx_free_bgp( b );
 	hx_free_node( x );
@@ -86,14 +81,8 @@ int main ( int argc, char** argv ) {
 	hx_free_node( person );
 	hx_free_node( knows );
 	hx_free_node( name );
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	
 	return 0;
 }
 
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
-}

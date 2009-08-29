@@ -1,6 +1,6 @@
 #include <unistd.h>
-#include "triple.h"
-#include "tap.h"
+#include "rdf/triple.h"
+#include "test/tap.h"
 
 void test_hash ( void );
 

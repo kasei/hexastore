@@ -13,13 +13,13 @@
 #include <time.h>
 #include <stdio.h>
 #include "hexastore.h"
-#include "variablebindings.h"
-#include "mergejoin.h"
-#include "node.h"
-#include "bgp.h"
+#include "engine/variablebindings.h"
+#include "engine/mergejoin.h"
+#include "rdf/node.h"
+#include "algebra/bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s );
+double bench ( hx_hexastore* hx, hx_bgp* b );
 
 static hx_node* x;
 static hx_node* y;
@@ -34,20 +34,20 @@ static hx_node* member;
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 
-double average ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s, int count ) {
+double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
 	double total	= 0.0;
 	int i;
 	for (i = 0; i < count; i++) {
-		total	+= bench( hx, b, s );
+		total	+= bench( hx, b );
 	}
 	return (total / (double) count);
 }
 
-double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
+double bench ( hx_hexastore* hx, hx_bgp* b ) {
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	clock_t st_time	= clock();
 	
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
 //	hx_variablebindings_iter_debug( iter, "lubm8> ", 0 );
 	
 	int size		= hx_variablebindings_iter_size( iter );
@@ -92,7 +92,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 	printf( "%llu results\n", (unsigned long long) count );
 	clock_t end_time	= clock();
 	
-	hx_free_variablebindings_iter( iter, 1 );
+	hx_free_variablebindings_iter( iter );
 	return DIFFTIME(st_time, end_time);
 }
 
@@ -110,8 +110,7 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx		= hx_read( s, f, 0 );
+	hx_hexastore* hx		= hx_read( f, 0 );
 	hx_nodemap* map			= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -144,7 +143,7 @@ int main ( int argc, char** argv ) {
 	{
 		hx_bgp* b	= hx_new_bgp( 5, triples );
 		hx_bgp_debug( b );
-		fprintf( stderr, "running time: %lf\n", average( hx, b, s, 5 ) );
+		fprintf( stderr, "running time: %lf\n", average( hx, b, 5 ) );
 		hx_free_bgp( b );
 	}
 	
@@ -159,8 +158,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( student );
 	hx_free_node( member );
 	
-	hx_free_hexastore( hx, s );
-	hx_free_storage_manager( s );
+	hx_free_hexastore( hx );
 	
 	return 0;
 }

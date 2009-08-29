@@ -1,5 +1,5 @@
-#include "nodemap.h"
-#include "tap.h"
+#include "misc/nodemap.h"
+#include "test/tap.h"
 
 int main ( void ) {
 	plan_tests(7);
