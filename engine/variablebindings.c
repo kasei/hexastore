@@ -466,23 +466,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	return b;
 }
 
-hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_nodemap* map ) {
-	char* ptr;
-	void* needs_free	= NULL;
-	if (*compressed == 1) { //compressed
-		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
-		char* compressed_data	= &( compressed[5] );
-		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
-		unsigned long destlen	= buffer_length;
-		uncompress(uncompressed, &destlen, compressed_data, len-5);
-		ptr	= uncompressed;
-		needs_free	= ptr;
-		len			= buffer_length;
-	} else {
-		ptr	= &( compressed[1] );
-		len--;
-	}
-	
+hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len, hx_nodemap* map ) {
 	int i;
 	int size;
 	char* p	= ptr;
@@ -502,6 +486,9 @@ hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_no
 	for (i = 0; i < size; i++) {
 		int node_len	= strlen(p);
 		hx_node* n		= hx_node_parse( p );
+		if (n == NULL) {
+			fprintf( stderr, "hx_variablebindings_thaw call to hx_node_parse failed\n" );
+		}
 		nodes[i]		= hx_nodemap_add_node( map, n );
 		hx_free_node(n);
 		p				+= node_len + 1;
@@ -513,30 +500,10 @@ hx_variablebindings* hx_variablebindings_thaw ( char* compressed, int len, hx_no
 	}
 	free(names);
 	
-	if (needs_free) {
-		free(needs_free);
-	}
-	
 	return b;
 }
 
-hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len, hx_nodemap* map, int join_vars_count, char** join_vars ) {
-	char* ptr;
-	void* needs_free	= NULL;
-	if (*compressed == 1) { //compressed
-		int buffer_length		= *( (uint32_t*) &( compressed[1] ) );
-		char* compressed_data	= &( compressed[5] );
-		char* uncompressed		= calloc( buffer_length, sizeof( char ) );
-		unsigned long destlen	= buffer_length;
-		uncompress(uncompressed, &destlen, compressed_data, len-5);
-		ptr	= uncompressed;
-		needs_free	= ptr;
-		len			= buffer_length;
-	} else {
-		ptr	= &( compressed[1] );
-		len--;
-	}
-	
+hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nodemap* map, int join_vars_count, char** join_vars ) {
 	int i, j;
 	int size;
 	char* p	= ptr;
@@ -562,6 +529,14 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len,
 	for (i = 0; i < size; i++) {
 		int node_len	= strlen(p);
 		hx_node* n		= hx_node_parse( p );
+		if (n == NULL) {
+			fprintf( stderr, "*** hx_variablebindings_thaw_noadd call to hx_node_parse failed\n" );
+			int j;
+			fprintf( stderr, "frozen node buffer of length %d:\n", node_len );
+			for (j = 0; j < node_len; j++) {
+				fprintf( stderr, "[%d] %x", j, p[j] );
+			}
+		}
 		hx_node_id id	= hx_nodemap_get_node_id( map, n );
 		if (id == 0) {
 			if (noadd_columns[i] == 1) {
@@ -570,9 +545,6 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len,
 				}
 				free( noadd_columns );
 				free(names);
-				if (needs_free) {
-					free(needs_free);
-				}
 				hx_free_node(n);
 				return NULL;
 			} else {
@@ -594,10 +566,6 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* compressed, int len,
 	}
 	free(names);
 
-	if (needs_free) {
-		free(needs_free);
-	}
-	
 	return b;
 }
 
@@ -618,8 +586,8 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* 
 	}
 	
 	int buffer_length	= sizeof(int) + (names_length * sizeof(char)) + (node_length * sizeof(char));
-	char* ptr	= (char*) calloc( 1, buffer_length + 1 );
-	char* p		= &( ptr[1] );
+	char* ptr	= (char*) calloc( 1, buffer_length );
+	char* p		= ptr;
 	memcpy( p, &( b->size ), sizeof( int ) );
 	p			+= sizeof( int );
 	for (i = 0; i < b->size; i++) {
@@ -634,24 +602,13 @@ char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* 
 	free( node_lengths );
 	free( node_strings );
 	free( name_lengths );
+	*len	= buffer_length;
 	
-//	if (buffer_length < 60) {
-	if (1) {
-		*ptr		= 0;	// uncompressed
-		*len	= buffer_length + 1;
-		return ptr;
-	} else {
-		unsigned long compressed_length	= 13 + buffer_length;
-		char* compressed				= calloc( 5 + compressed_length, sizeof(char) );
-		*compressed	= 1;	// compressed
-		char* compressed_data			= &( compressed[5] );
-		compress( compressed_data, &compressed_length, &(ptr[1]), buffer_length );
-		*( (uint32_t*) &( compressed[1] ) )		= (uint32_t) buffer_length;
-		free( ptr );
-		
-		*len	= compressed_length;
-		return compressed;
+	if (buffer_length == 0) {
+		fprintf( stderr, "*** BUFFER LENGTH IS ZERO in hx_variablebindings_freeze\n" );
 	}
+	
+	return ptr;
 }
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
