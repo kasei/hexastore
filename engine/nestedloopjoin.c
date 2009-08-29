@@ -242,7 +242,7 @@ hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter
 	vtable->free		= _hx_nestedloopjoin_iter_vb_free;
 	vtable->names		= _hx_nestedloopjoin_iter_vb_names;
 	vtable->size		= _hx_nestedloopjoin_iter_vb_size;
-	vtable->sorted_by	= _hx_nestedloopjoin_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_nestedloopjoin_iter_sorted_by;
 	vtable->debug		= _hx_nestedloopjoin_debug;
 	
 	int size;

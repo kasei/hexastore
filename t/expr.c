@@ -7,14 +7,16 @@ void test_serialization ( void );
 void test_constructors ( void );
 void test_eval ( void );
 void expr_varsub_test1 ( void );
+void test_expr_copy ( void );
 
 int main ( void ) {
-	plan_tests(20);
+	plan_tests(21);
 	
 	test_constructors();
 	test_serialization();
 	test_eval();
 	expr_varsub_test1();
+	test_expr_copy();
 	
 	return exit_status();
 }
@@ -165,4 +167,22 @@ void expr_varsub_test1 ( void ) {
 		hx_free_variablebindings(b);
 		hx_free_nodemap( map );
 	}
+}
+
+void test_expr_copy ( void ) {
+	hx_expr* copy;
+	{
+		hx_node* p1	= hx_new_node_resource( "http://xmlns.com/foaf/0.1/name" );
+		hx_expr* v1	= hx_new_node_expr( hx_new_node_named_variable( -1, "v" ) );
+		hx_expr* e	= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, v1 );
+		copy	= hx_copy_expr( e );
+		hx_free_expr(e);
+	}
+	
+	char* string;
+	hx_expr_sse( copy, &string, "  ", 0 );
+	ok1( strcmp( string, "(sparql:str ?v)" ) == 0 );
+	free( string );
+	
+	hx_free_expr(copy);
 }

@@ -25,6 +25,7 @@ hx_index* hx_new_index ( void* world, int* index_order ) {
 	int c	= index_order[2];
 //	fprintf( stderr, "hx_index is %d bytes in size\n", (int) sizeof( hx_index ) );
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+	i->size		= 3;
 	i->order[0]	= a;
 	i->order[1]	= b;
 	i->order[2]	= c;
@@ -35,6 +36,11 @@ hx_index* hx_new_index ( void* world, int* index_order ) {
 
 int hx_free_index ( hx_index* i ) {
 	hx_free_head( (hx_head*) i->head );
+	i->head	= 0;
+	int j;
+	for (j = 0; j < 3; j++) {
+		i->order[j]	= -1;
+	}
 	free( i );
 	return 0;
 }
@@ -495,6 +501,7 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 		return NULL;
 	}
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+	i->size		= 3;
 	read	= fread( i->order, sizeof( int ), 3, f );
 	
 	if (read == 0 || (i->head = (uintptr_t) hx_head_read( f, buffer )) == 0) {
@@ -542,3 +549,29 @@ int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
 		return -1;
 	}
 }
+
+char* hx_index_name ( hx_index* idx ) {
+	int size	= idx->size;
+	int* order	= idx->order;
+	char* name		= (char*) calloc( 5, sizeof( char ) );
+	char* p			= name;
+	int i;
+	for (i = 0; i < size; i++) {
+		int o	= order[i];
+		switch (o) {
+			case HX_SUBJECT:
+				*(p++)	= 'S';
+				break;
+			case HX_PREDICATE:
+				*(p++)	= 'P';
+				break;
+			case HX_OBJECT:
+				*(p++)	= 'O';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized index order (%d) in _hx_optimizer_index_name\n", o );
+		};
+	}
+	return name;
+}
+

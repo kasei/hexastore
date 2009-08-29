@@ -15,15 +15,12 @@ extern "C" {
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include "zlib.h"
 
 #include "hexastore_types.h"
 #include "misc/nodemap.h"
+#include "misc/util.h"
 #include "rdf/node.h"
-
-enum {
-	HX_VARIABLEBINDINGS_FREE_NAMES		= 1,
-	HX_VARIABLEBINDINGS_NO_FREE_NAMES	= 0
-};
 
 typedef struct {
 	int size;
@@ -36,26 +33,6 @@ typedef struct {
 	char** names;
 	hx_node** nodes;
 } hx_variablebindings_nodes;
-
-typedef struct {
-	int (*finished) ( void* iter );
-	int (*current) ( void* iter, void* results );
-	int (*next) ( void* iter );	
-	int (*free) ( void* iter );
-	int (*size) ( void* iter );
-	char** (*names) ( void* iter );
-	int (*sorted_by) ( void* iter, int index );
-	int (*debug) ( void* iter, char* header, int indent );
-} hx_variablebindings_iter_vtable;
-
-typedef struct {
-	int size;
-	char** names;
-	hx_variablebindings_iter_vtable* vtable;
-	void* ptr;
-} hx_variablebindings_iter;
-
-#include "engine/materialize.h"
 
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
 hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes );
@@ -84,23 +61,6 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nod
 char* hx_variablebindings_freeze( hx_variablebindings* b, hx_nodemap* map, int* len );
 
 hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right );
-
-hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void );
-hx_variablebindings_iter* hx_variablebindings_new_empty_iter_with_names ( int size, char** names );
-
-hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr );
-int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter );
-int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter );
-int hx_variablebindings_iter_current ( hx_variablebindings_iter* iter, hx_variablebindings** b );
-int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter );
-int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter );
-char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter );
-int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column );
-int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index );
-int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent );
-
-hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
-
 
 int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** string );
 

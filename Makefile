@@ -3,18 +3,19 @@ CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic 
 # CFLAGS	= -O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib
 # CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -DDEBUG # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
 CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -DDEBUG -ggdb # -Werror -DTHREADING -DDEBUG_INDEX_SELECTION
-CC			= mpicc $(CFLAGS)
+CC			= gcc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 
 STORE_OBJECTS	= store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
-MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o
+MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS		= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS	= engine/variablebindings.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
-ALGEBRA_OBJECTS	= algebra/bgp.o algebra/expr.o algebra/graphpattern.o
+ENGINE_OBJECTS	= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
+ALGEBRA_OBJECTS	= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS	= parser/parser.o parser/SPARQLParser.o parser/SPARQLScanner.o
 MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
-OBJECTS			= hexastore.o index.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS)
+OPT_OBJECTS		= optimizer/optimizer.o optimizer/plan.o
+OBJECTS			= hexastore.o index.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 default: parse print optimize tests examples parse_query
 
@@ -41,7 +42,7 @@ parse_query: cli/parse_query.c $(OBJECTS)
 dumpmap: cli/dumpmap.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o dumpmap cli/dumpmap.c $(OBJECTS)
 
-hexastore.o: hexastore.c hexastore.h index.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h hexastore_types.h engine/variablebindings.h misc/nodemap.h
+hexastore.o: hexastore.c hexastore.h index.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h hexastore_types.h algebra/variablebindings.h misc/nodemap.h
 	$(CC) $(INC) -c hexastore.c
 
 index.o: index.c index.h store/hexastore/terminal.h store/hexastore/vector.h store/hexastore/head.h hexastore_types.h
@@ -62,17 +63,23 @@ rdf/node.o: rdf/node.c rdf/node.h hexastore_types.h
 misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
 	$(CC) $(INC) -c -o misc/nodemap.o misc/nodemap.c
 
-engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h engine/variablebindings.h
+misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h hexastore_types.h
+	$(CC) $(INC) -c -o misc/idmap.o misc/idmap.c
+
+engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c
 
-engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h hexastore_types.h engine/variablebindings.h
+engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h hexastore_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/nestedloopjoin.o engine/nestedloopjoin.c
 
-engine/hashjoin.o: engine/hashjoin.c engine/hashjoin.h hexastore_types.h engine/variablebindings.h
+engine/hashjoin.o: engine/hashjoin.c engine/hashjoin.h hexastore_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/hashjoin.o engine/hashjoin.c
 
-engine/variablebindings.o: engine/variablebindings.c engine/variablebindings.h hexastore_types.h rdf/node.h index.h misc/nodemap.h
-	$(CC) $(INC) -c -o engine/variablebindings.o engine/variablebindings.c
+algebra/variablebindings.o: algebra/variablebindings.c algebra/variablebindings.h hexastore_types.h rdf/node.h index.h misc/nodemap.h
+	$(CC) $(INC) -c -o algebra/variablebindings.o algebra/variablebindings.c
+
+engine/variablebindings_iter.o: engine/variablebindings_iter.c engine/variablebindings_iter.h hexastore_types.h rdf/node.h index.h misc/nodemap.h
+	$(CC) $(INC) -c -o engine/variablebindings_iter.o engine/variablebindings_iter.c
 
 engine/materialize.o: engine/materialize.c engine/materialize.h hexastore_types.h rdf/node.h index.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/materialize.o engine/materialize.c
@@ -103,6 +110,12 @@ engine/project.o: engine/project.c engine/project.h hexastore_types.h
 
 misc/util.o: misc/util.c misc/util.h
 	$(CC) $(INC) -c -o misc/util.o misc/util.c
+
+optimizer/optimizer.o: optimizer/optimizer.c optimizer/optimizer.h
+	$(CC) $(INC) -c -o optimizer/optimizer.o optimizer/optimizer.c
+
+optimizer/plan.o: optimizer/plan.c optimizer/plan.h
+	$(CC) $(INC) -c -o optimizer/plan.o optimizer/plan.c
 
 parallel/safealloc.o: parallel/safealloc.c parallel/safealloc.h
 	$(CC) $(INC) -c -o parallel/safealloc.o parallel/safealloc.c
@@ -165,7 +178,7 @@ libhx.o: $(OBJECTS)
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -233,6 +246,9 @@ t/triple.t: test/tap.o t/triple.c $(OBJECTS) test/tap.o
 
 t/hash.t: test/tap.o t/hash.c $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/hash.t t/hash.c $(OBJECTS) test/tap.o
+
+t/optimizer.t: test/tap.o t/optimizer.c $(OBJECTS) test/tap.o
+	$(CC) $(INC) $(LIBS) -o t/optimizer.t t/optimizer.c $(OBJECTS) test/tap.o
 
 ########
 

@@ -17,7 +17,7 @@ hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, h
 	vtable->free		= _hx_filter_iter_vb_free;
 	vtable->names		= _hx_filter_iter_vb_names;
 	vtable->size		= _hx_filter_iter_vb_size;
-	vtable->sorted_by	= _hx_filter_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_filter_iter_sorted_by;
 	vtable->debug		= _hx_filter_debug;
 	
 	_hx_filter_iter_vb_info* info	= (_hx_filter_iter_vb_info*) calloc( 1, sizeof( _hx_filter_iter_vb_info ) );

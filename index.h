@@ -20,6 +20,7 @@ extern "C" {
 #include "store/hexastore/head.h"
 
 typedef struct {
+	int size;
 	int order[3];
 	uintptr_t head;
 } hx_index;
@@ -74,6 +75,8 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 int hx_index_iter_next ( hx_index_iter* iter );
 
 int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index );
+
+char* hx_index_name ( hx_index* idx );
 
 #ifdef __cplusplus
 }

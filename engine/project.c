@@ -11,7 +11,7 @@ hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter,
 	vtable->free		= _hx_project_iter_vb_free;
 	vtable->names		= _hx_project_iter_vb_names;
 	vtable->size		= _hx_project_iter_vb_size;
-	vtable->sorted_by	= _hx_project_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_project_iter_sorted_by;
 	vtable->debug		= _hx_project_debug;
 	
 	_hx_project_iter_vb_info* info	= (_hx_project_iter_vb_info*) calloc( 1, sizeof( _hx_project_iter_vb_info ) );

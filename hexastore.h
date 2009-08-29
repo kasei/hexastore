@@ -21,9 +21,11 @@ extern "C" {
 #endif
 
 #include "hexastore_types.h"
-#include "engine/variablebindings.h"
-#include "misc/nodemap.h"
 #include "index.h"
+#include "algebra/variablebindings.h"
+#include "engine/variablebindings_iter.h"
+#include "misc/nodemap.h"
+#include "misc/util.h"
 #include "store/hexastore/terminal.h"
 #include "store/hexastore/vector.h"
 #include "store/hexastore/head.h"
@@ -44,12 +46,13 @@ static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOU
 
 typedef struct {
 	hx_nodemap* map;
-	uintptr_t spo;
-	uintptr_t sop;
-	uintptr_t pso;
-	uintptr_t pos;
-	uintptr_t osp;
-	uintptr_t ops;
+	hx_index* spo;
+	hx_index* sop;
+	hx_index* pso;
+	hx_index* pos;
+	hx_index* osp;
+	hx_index* ops;
+	hx_container_t* indexes;
 	int next_var;
 } hx_hexastore;
 
@@ -73,9 +76,13 @@ typedef struct {
 
 typedef struct {
 	void* world;
+	hx_hexastore* hx;
+	int64_t nestedloopjoin_penalty;
+	int64_t hashjoin_penalty;
+	int64_t unsorted_mergejoin_penalty;
 } hx_execution_context;
 
-hx_execution_context* hx_new_execution_context ( void );
+hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx );
 int hx_free_execution_context ( hx_execution_context* c );
 
 hx_hexastore* hx_new_hexastore ( void* world );
@@ -99,6 +106,7 @@ hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node );
 hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
+hx_container_t* hx_get_indexes ( hx_hexastore* hx );
 
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 

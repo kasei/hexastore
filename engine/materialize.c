@@ -115,7 +115,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	vtable->free		= _hx_materialize_iter_vb_free;
 	vtable->names		= _hx_materialize_iter_vb_names;
 	vtable->size		= _hx_materialize_iter_vb_size;
-	vtable->sorted_by	= _hx_materialize_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_materialize_iter_sorted_by;
 	vtable->debug		= _hx_materialize_debug;
 	
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) calloc( 1, sizeof( _hx_materialize_iter_vb_info ) );
@@ -153,7 +153,7 @@ hx_variablebindings_iter* hx_new_materialize_iter_with_data ( int size, char** _
 	vtable->free		= _hx_materialize_iter_vb_free;
 	vtable->names		= _hx_materialize_iter_vb_names;
 	vtable->size		= _hx_materialize_iter_vb_size;
-	vtable->sorted_by	= _hx_materialize_iter_sorted_by;
+	vtable->sorted_by_index	= _hx_materialize_iter_sorted_by;
 	vtable->debug		= _hx_materialize_debug;
 	
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) calloc( 1, sizeof( _hx_materialize_iter_vb_info ) );

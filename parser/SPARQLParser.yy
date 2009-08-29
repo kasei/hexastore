@@ -1863,6 +1863,9 @@ hx_bgp* generate_bgp ( container_t* bgp, prologue_t* prologue, hx_sparqlparser_v
 			return NULL;
 		}
 		triple	= hx_new_triple( s, p, o );
+		hx_free_node(s);
+		hx_free_node(p);
+		hx_free_node(o);
 		triples[i]	= triple;
 		free(t);
 	}

@@ -11,11 +11,10 @@ extern "C" {
 #include "misc/avl.h"
 #include "rdf/node.h"
 
-typedef struct avl_table avl;
 typedef struct {
 	hx_node_id next_id;
-	avl* id2node;
-	avl* node2id;
+	struct avl_table* id2node;
+	struct avl_table* node2id;
 } hx_nodemap;
 
 typedef struct {

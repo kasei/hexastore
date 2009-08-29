@@ -71,6 +71,7 @@ int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx,
 	}
 	
 	raptor_free_parser(rdf_parser);
+	raptor_free_uri( base_uri );
 	free( parser->triples );
 	return 0;
 }

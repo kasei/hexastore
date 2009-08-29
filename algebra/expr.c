@@ -92,6 +92,25 @@ int hx_free_expr ( hx_expr* e ) {
 	}
 }
 
+hx_expr* hx_copy_expr ( hx_expr* e ) {
+	hx_expr* c		= (hx_expr*) calloc( 1, sizeof( hx_expr ) );
+	c->type			= e->type;
+	c->subtype		= e->subtype;
+	c->arity		= e->arity;
+	if (c->subtype == HX_EXPR_OP_NODE) {
+		c->operands	= hx_node_copy( (hx_node*) e->operands );
+	} else {
+		int i;
+		hx_expr** args	= (hx_expr**) calloc( c->arity, sizeof( hx_expr* ) );
+		for (i = 0; i < c->arity; i++) {
+			hx_expr** ops	= (hx_expr**) e->operands;
+			args[i]	= hx_copy_expr( ops[i] );
+		}
+		c->operands	= args;
+	}
+	return c;
+}
+
 hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_nodemap* map ) {
 	if (orig->subtype == HX_EXPR_OP_NODE) {
 		hx_node* n	= (hx_node*) orig->operands;

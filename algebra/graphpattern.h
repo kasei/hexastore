@@ -22,7 +22,7 @@ extern "C" {
 #include "engine/mergejoin.h"
 #include "algebra/expr.h"
 #include "algebra/bgp.h"
-#include "engine/variablebindings.h"
+#include "algebra/variablebindings.h"
 
 typedef enum {
 	HX_GRAPHPATTERN_BGP			= 'B',

@@ -4,8 +4,8 @@
 void test1 ( void );
 void test2 ( void );
 
-void hash_debug_1 ( void* key, void* value );
-int apply_test_1( void* key, void* value, void* thunk );
+void hash_debug_1 ( void* key, int klen, void* value );
+int apply_test_1( void* key, int klen, void* value, void* thunk );
 
 int main ( void ) {
 	plan_tests(37);
@@ -66,13 +66,13 @@ void test2 ( void ) {
 	hx_free_hash( h, NULL );
 }
 
-int apply_test_1( void* key, void* value, void* thunk ) {
+int apply_test_1( void* key, int klen, void* value, void* thunk ) {
 	char c	= *( (char*) key );
 	int v	= (int) value;
 	ok1( v == (c - 'a' + 1) );
 	return 0;
 }
 
-void hash_debug_1 ( void* key, void* value ) {
+void hash_debug_1 ( void* key, int klen, void* value ) {
 	fprintf( stderr, "\t(%s => %d)\n", (char*) key, (int) value );
 }
