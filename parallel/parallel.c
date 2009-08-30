@@ -56,6 +56,19 @@ int _hx_parallel_send_vb_handler (async_mpi_session* ses, void* args);
 int _hx_parallel_recv_vb_handler (async_mpi_session* ses, void* args);
 
 
+void _hx_parallel_trans_message_counts ( int* num_sends, int* num_recvs ) {
+	int mysize, myrank;
+	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#ifdef BLUEGENEL
+	*num_sends	= 1;
+	*num_recvs	= mysize;
+#else
+	*num_sends	= 4;
+	*num_recvs	= 20;
+#endif
+}
+
 
 hx_parallel_execution_context* hx_parallel_new_execution_context ( const char* path, char* job_id ) {
 	int myrank;
@@ -121,8 +134,9 @@ int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, 
 	recv_args.hx			= destination;
 	
 	int msg_size			= 3 * sizeof(hx_node_id);
-	int num_sends			= (myrank == rank) ? 4 : 0;
-	async_des_session* ses	= async_des_session_create(num_sends, &_hx_parallel_send_triples_handler, &send_args, 20, &_hx_parallel_recv_triples_handler, &recv_args, msg_size);
+	int num_sends, num_recvs;
+	_hx_parallel_trans_message_counts( &num_sends, &num_recvs );
+	async_des_session* ses	= async_des_session_create(num_sends, &_hx_parallel_send_triples_handler, &send_args, num_recvs, &_hx_parallel_recv_triples_handler, &recv_args, msg_size);
 	
 	while (async_des(ses) == ASYNC_PENDING) {
 		// continue until finished
@@ -265,7 +279,10 @@ hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_
 	recv_args.side					= side;
 	recv_args.join_variables		= shared_names;
 	recv_args.join_variables_count	= shared_columns;
-	async_des_session* ses		= async_des_session_create(4, &_hx_parallel_send_vb_handler, &send_args, 20, &_hx_parallel_recv_vb_handler, &recv_args, -1);
+
+	int num_sends, num_recvs;
+	_hx_parallel_trans_message_counts( &num_sends, &num_recvs );
+	async_des_session* ses		= async_des_session_create(num_sends, &_hx_parallel_send_vb_handler, &send_args, num_recvs, &_hx_parallel_recv_vb_handler, &recv_args, -1);
 	
 //	int i	= 0;
 	// while (async_des(ses) == ASYNC_PENDING) {
@@ -843,7 +860,9 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 	pack2[2] = &lookups;
 	pack2[3] = nodemap;
 
-	async_des_session *des = async_des_session_create(2, &_hx_parallel_send_gid2node_lookup, &pack, 4, &_hx_parallel_recv_gid2node_lookup, &pack2, sizeof(hx_node_id));
+	int num_sends, num_recvs;
+	_hx_parallel_trans_message_counts( &num_sends, &num_recvs );
+	async_des_session *des = async_des_session_create(num_sends, &_hx_parallel_send_gid2node_lookup, &pack, num_recvs, &_hx_parallel_recv_gid2node_lookup, &pack2, sizeof(hx_node_id));
 	if(des == NULL) {
 		fprintf(stderr, "%s:%u: Error; cannot allocate des session.\n", __FILE__, __LINE__);
 		return -1;
@@ -873,7 +892,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 
 	pack[0] = gid2node;
 
-	des = async_des_session_create(2, &_hx_parallel_send_gid2node_answer, &pack2, 4, &_hx_parallel_recv_gid2node_answer, &pack, 0);
+	des = async_des_session_create(num_sends, &_hx_parallel_send_gid2node_answer, &pack2, num_recvs, &_hx_parallel_recv_gid2node_answer, &pack, 0);
 	if(des == NULL) {
                 fprintf(stderr, "%s:%u: Error; cannot allocate second des session.\n", __FILE__, __LINE__);
                 return -1;
