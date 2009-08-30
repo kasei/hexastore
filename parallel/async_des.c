@@ -8,6 +8,10 @@
 #include "parallel/safealloc.h"
 #include <stdio.h>
 
+#ifndef ASYNC_DES_CHECK_FREQ
+#define ASYNC_DES_CHECK_FREQ 1
+#endif
+
 async_des_session* async_des_session_create(size_t num_sends, async_des_handler send_handler, void* sendh_args, size_t num_recvs, async_des_handler recv_handler, void* recvh_args, int fixed_size) {
 	async_des_session* ses = NULL;
 	if(safe_malloc((void**)&ses, sizeof(async_des_session)) > 0) {
@@ -107,7 +111,7 @@ enum async_status async_des(void* session) {
 	int r;
 	size_t max = ses->num_sends < ses->num_recvs ? ses->num_recvs : ses->num_sends;
 	size_t j;
-	for(j = 0; j < 1024; j++) {
+	for(j = 0; j < ASYNC_DES_CHECK_FREQ; j++) {
 		for(i = 0; i < max; i++) {
 			if(!ses->no_sends && i < ses->num_sends) {
 				if(!ses->first) {
