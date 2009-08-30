@@ -536,6 +536,9 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nod
 	for (i = 0; i < size; i++) {
 		int name_len	= strlen(p);
 		char* name		= (char*) calloc( name_len + 1, sizeof( char ) );
+		if (name == NULL) {
+			fprintf( stderr, "*** Failed to allocated name buffer in hx_variablebindings_thaw_noadd\n" );
+		}
 		strcpy( name, p );
 		for (j = 0; j < join_vars_count; j++) {
 			if (strcmp(name, join_vars[j]) == 0) {
@@ -593,9 +596,15 @@ char* hx_variablebindings_freeze ( hx_variablebindings* b, hx_nodemap* map, int*
 	int i;
 	int names_length	= 0;
 	int* name_lengths	= calloc( b->size, sizeof( int ) );
+	if (name_lengths == NULL) {
+		fprintf( stderr, "*** Failed to allocate name_lengths buffer in hx_variablebindings_freeze\n" );
+	}
 	int node_length		= 0;
 	int* node_lengths	= calloc( b->size, sizeof( int ) );
 	char** node_strings	= (char**) calloc( b->size, sizeof( char* ) );
+	if (node_strings == NULL) {
+		fprintf( stderr, "*** Failed to allocate node_strings buffer in hx_variablebindings_freeze\n" );
+	}
 	for (i = 0; i < b->size; i++) {
 		name_lengths[i]	= strlen( b->names[i] );
 		names_length	+= name_lengths[i] + 1;
@@ -606,7 +615,12 @@ char* hx_variablebindings_freeze ( hx_variablebindings* b, hx_nodemap* map, int*
 	}
 	
 	int buffer_length	= sizeof(int) + (names_length * sizeof(char)) + (node_length * sizeof(char));
-	char* ptr	= (char*) calloc( 1, buffer_length );
+	char* ptr;
+#ifdef BLUEGENEL
+	posix_memalign(&ptr, 32, buffer_length);
+#else
+	ptr	= (char*) calloc( 1, buffer_length );
+#endif
 	if (ptr == NULL) {
 		fprintf( stderr, "*** Failed to allocate buffer in hx_variablebindings_freeze\n" );
 	}
@@ -629,10 +643,6 @@ char* hx_variablebindings_freeze ( hx_variablebindings* b, hx_nodemap* map, int*
 	free( node_strings );
 	free( name_lengths );
 	*len	= buffer_length;
-	
-// 	if (buffer_length < 4) {	// XXX
-// 		fprintf( stderr, "*** BUFFER LENGTH IS %d in hx_variablebindings_freeze\n", buffer_length );
-// 	}
 	
 	return ptr;
 }
