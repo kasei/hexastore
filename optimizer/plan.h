@@ -70,6 +70,9 @@ int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p
 
 int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string );
 
+hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* p );
+
+
 #ifdef __cplusplus
 }
 #endif

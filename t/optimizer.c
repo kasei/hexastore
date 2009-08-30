@@ -21,13 +21,14 @@ void prune_plans_test1 ( hx_hexastore* hx );
 void prune_plans_test2 ( hx_hexastore* hx );
 void optimize_bgp_test1 ( hx_hexastore* hx );
 void optimize_bgp_test2 ( hx_hexastore* hx );
+void execute_bgp_test1 ( hx_hexastore* hx );
 
 int _strcmp (const void *a, const void *b) {
 	return strcmp( *((const char**) a), *((const char**) b) );
 }
 
 int main ( void ) {
-	plan_tests(63);
+	plan_tests(64);
 
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
@@ -49,6 +50,8 @@ int main ( void ) {
 	
 	optimize_bgp_test1( hx );
 	optimize_bgp_test2( hx );
+	
+	execute_bgp_test1( hx );
 	
 	hx_free_hexastore(hx);
 	return exit_status();
@@ -555,6 +558,30 @@ void optimize_bgp_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
+void execute_bgp_test1 ( hx_hexastore* hx ) {
+	fprintf( stdout, "# execute_bgp_test1\n" );
+	hx_nodemap* map	= hx_get_nodemap(hx);
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_bgp* b	= hx_bgp_parse_string("{ ?x a <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet> ; <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y }");
+	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
+	hx_variablebindings_iter* iter	= hx_optimizer_plan_execute( ctx, plan );
+	int counter	= 0;
+	while (!hx_variablebindings_iter_finished(iter)) {
+		hx_variablebindings* b;
+		hx_variablebindings_iter_current(iter, &b);
+		
+// 		char* string;
+// 		hx_variablebindings_string(b, map, &string);
+// 		fprintf( stderr, "%s\n", string );
+// 		free(string);
+		
+		hx_variablebindings_iter_next(iter);
+		counter++;
+	}
+	
+	ok1( counter == 4 );
+}
 
 void _add_data ( hx_hexastore* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \

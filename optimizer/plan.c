@@ -1,5 +1,8 @@
 #include "optimizer/plan.h"
 #include "algebra/bgp.h"
+#include "engine/nestedloopjoin.h"
+#include "engine/hashjoin.h"
+#include "engine/mergejoin.h"
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
@@ -225,4 +228,52 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 	free(rhs_sort_string);
 	
 	return mergeable;
+}
+
+hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
+	hx_hexastore* hx	= ctx->hx;
+	hx_nodemap* map		= hx_get_nodemap(hx);
+	
+	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
+		hx_triple* t		= plan->triple;
+		hx_node_id s		= hx_nodemap_get_node_id( map, t->subject );
+		hx_node_id p		= hx_nodemap_get_node_id( map, t->predicate );
+		hx_node_id o		= hx_nodemap_get_node_id( map, t->object );
+		if (!hx_node_is_variable( t->subject ) && s == 0) {
+			return NULL;
+		}
+		if (!hx_node_is_variable( t->predicate ) && p == 0) {
+			return NULL;
+		}
+		if (!hx_node_is_variable( t->object ) && o == 0) {
+			return NULL;
+		}
+		hx_index_iter* titer	= hx_index_new_iter1( plan->source, s, p, o );
+		
+		char *sname, *pname, *oname;
+		hx_node_variable_name( t->subject, &sname );
+		hx_node_variable_name( t->predicate, &pname );
+		hx_node_variable_name( t->object, &oname );
+		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, sname, pname, oname );
+		free(sname);
+		free(pname);
+		free(oname);
+		return iter;
+	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
+		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->lhs_plan );
+		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->rhs_plan );
+		hx_variablebindings_iter* iter;
+		if (plan->join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
+			return hx_new_nestedloopjoin_iter2( lhs, rhs, plan->leftjoin );
+		} else if (plan->join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
+			return hx_new_hashjoin_iter2( lhs, rhs, plan->leftjoin );
+		} else if (plan->join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
+			return hx_new_mergejoin_iter( lhs, rhs );
+		} else {
+			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_execute\n" );
+		}
+	} else {
+		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_execute\n" );
+		return -1;
+	}
 }
