@@ -1,4 +1,5 @@
-CFLAGS		= -g -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -DDEBUG
+CDEFINES	= -DDEBUG -DBLUEGENEL -DASYNC_DES_CHECK_FREQ=1
+CFLAGS		= -g -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib $(CDEFINES)
 CC			= mpixlc $(CFLAGS)
 
 LIBS	=	
