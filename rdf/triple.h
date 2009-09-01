@@ -25,15 +25,18 @@ typedef struct {
 	hx_node* subject;
 	hx_node* predicate;
 	hx_node* object;
+	hx_node* graph;
 } hx_triple;
 
 typedef struct {
 	hx_node_id subject;
 	hx_node_id predicate;
 	hx_node_id object;
+	hx_node_id graph
 } hx_triple_id;
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );
+hx_triple* hx_new_triple2( hx_node* s, hx_node* p, hx_node* o, hx_node* g );
 hx_triple* hx_copy_triple ( hx_triple* t );
 int hx_free_triple ( hx_triple* t );
 
