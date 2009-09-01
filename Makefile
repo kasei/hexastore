@@ -1,3 +1,4 @@
+CDEFINES	= -DDEBUG -DBLUEGENEL -DTIMING_CPU_FREQUENCY=2400000000.0
 CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -ggdb
 CC			= gcc $(CFLAGS)
 

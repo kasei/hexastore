@@ -1,4 +1,4 @@
-CDEFINES	= -DDEBUG -DASYNC_DES_CHECK_FREQ=1024
+CDEFINES	= -DDEBUG -DASYNC_DES_CHECK_FREQ=1024 -DTIMING_CPU_FREQUENCY=2600000000.0
 CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -g $(CDEFINES)
 CC			= mpicc $(CFLAGS)
 

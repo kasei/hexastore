@@ -8,7 +8,9 @@
 #include "parallel/parallel.h"
 
 #include "misc/timing_choices.h"
+#ifndef TIMING_CPU_FREQUENCY
 #define TIMING_CPU_FREQUENCY 2600000000.0
+#endif
 #define TIMING_USE TIMING_RDTSC
 #include "misc/timing.h"
 
