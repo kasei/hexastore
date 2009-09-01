@@ -19,7 +19,7 @@ hx_store* _hx_new_store_hexastore_with_hx ( void* world, void* hx ) {
 // 	vtable->init				= hx_store_hexastore_init;
 	vtable->close				= hx_store_hexastore_close;
 	vtable->size				= hx_store_hexastore_size;
-	vtable->triple_count		= hx_store_hexastore_triple_count;
+	vtable->count				= hx_store_hexastore_count;
 	vtable->add_triple			= hx_store_hexastore_add_triple;
 	vtable->remove_triple		= hx_store_hexastore_remove_triple;
 	vtable->contains_triple		= hx_store_hexastore_contains_triple;
@@ -95,7 +95,7 @@ uint64_t hx_store_hexastore_size (hx_store* store) {
 }
 
 /* Return the number of triples matching a triple pattern */
-uint64_t hx_store_hexastore_triple_count (hx_store* store, hx_triple* triple) {
+uint64_t hx_store_hexastore_count (hx_store* store, hx_triple* triple) {
 	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
 	hx_node* s	= triple->subject;
 	hx_node* p	= triple->predicate;

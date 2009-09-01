@@ -20,8 +20,8 @@ uint64_t hx_store_size ( hx_store* store ) {
 	return store->vtable->size( store );
 }
 
-uint64_t hx_store_triple_count ( hx_store* store, hx_triple* triple ) {
-	return store->vtable->triple_count( store, triple );
+uint64_t hx_store_count ( hx_store* store, hx_triple* triple ) {
+	return store->vtable->count( store, triple );
 }
 
 int hx_store_add_triple ( hx_store* store, hx_triple* triple ) {

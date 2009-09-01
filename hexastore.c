@@ -92,7 +92,7 @@ int hx_remove_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) 
 
 uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
 	hx_triple* t	= hx_new_triple( s, p, o );
-	uint64_t count	= hx_store_triple_count( hx->store, t );
+	uint64_t count	= hx_store_count( hx->store, t );
 	hx_free_triple( t );
 	return count;
 }

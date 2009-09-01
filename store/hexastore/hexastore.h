@@ -66,7 +66,7 @@ int hx_store_hexastore_close (hx_store* store);
 uint64_t hx_store_hexastore_size (hx_store* store);	
 
 /* Return the number of triples matching a triple pattern */
-uint64_t hx_store_hexastore_triple_count (hx_store* store, hx_triple* triple);	
+uint64_t hx_store_hexastore_count (hx_store* store, hx_triple* triple);	
 
 /* Add a triple to the storage from the given model */
 int hx_store_hexastore_add_triple (hx_store* store, hx_triple* triple);

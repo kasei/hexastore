@@ -33,7 +33,7 @@ typedef struct {
 	uint64_t (*size)(void* storage);	
 	
 	/* Return the number of triples matching a triple pattern */
-	uint64_t (*triple_count)(void* storage, hx_triple* triple);	
+	uint64_t (*count)(void* storage, hx_triple* triple);	
 	
 	/* Add a triple to the storage from the given model */
 	int (*add_triple)(void* storage, hx_triple* triple);
@@ -68,7 +68,7 @@ hx_store* hx_new_store ( void* world, hx_store_vtable* vtable, void* ptr );
 int hx_free_store ( hx_store* store );
 
 uint64_t hx_store_size ( hx_store* store );
-uint64_t hx_store_triple_count ( hx_store* store, hx_triple* triple );
+uint64_t hx_store_count ( hx_store* store, hx_triple* triple );
 
 int hx_store_add_triple ( hx_store* store, hx_triple* triple );
 int hx_store_remove_triple ( hx_store* store, hx_triple* triple );
