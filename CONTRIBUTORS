@@ -1,0 +1,8 @@
+The following people have contributed code to this project:
+
+Gregory Todd Williams <greg@evilfunhouse.com> is the primary developer.
+
+Jesse Weaver, Tetherless World Constellation, Rensselaer Polytechnic Institute,
+contributed the MPI code in the parallel/ directory, and the hx_node_parse
+function.
+
