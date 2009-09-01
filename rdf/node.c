@@ -96,6 +96,10 @@ hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 }
 
 hx_node* hx_node_copy( hx_node* n ) {
+	if (n == NULL) {
+		return NULL;
+	}
+	
 	if (hx_node_is_literal( n )) {
 		if (hx_node_is_lang_literal( n )) {
 			hx_node_lang_literal* d	= (hx_node_lang_literal*) n;
@@ -278,6 +282,11 @@ char* hx_node_dt ( hx_node_dt_literal* n ) {
 }
 
 int hx_node_string ( hx_node* n, char** str ) {
+	if (n == NULL) {
+		*str	= NULL;
+		return 1;
+	}
+	
 	int alloc	= 0;
 	if (hx_node_is_literal( n )) {
 		alloc	= strlen(n->value) + 3;
