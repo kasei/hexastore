@@ -120,6 +120,10 @@ hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* node ) {
 }
 
 hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id ) {
+	if (id == 0) {
+		return NULL;
+	}
+	
 	hx_nodemap_item i;
 	i.id	= id;
 	i.node	= NULL;
