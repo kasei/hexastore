@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "misc/nodemap.h"
+#include "store/hexastore/hexastore.h"
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id );
 void help (int argc, char** argv) {
@@ -32,39 +33,53 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
+	
+	
 	fprintf( stderr, "reading hexastore from file...\n" );
-	hx_hexastore* hx	= hx_read( inf, 0 );
+	hx_store* store			= hx_store_hexastore_read( NULL, inf, 0 );
+	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
 	fprintf( stderr, "reading nodemap from file...\n" );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
 	fprintf( stderr, "re-sorting nodemap...\n" );
 	hx_nodemap* smap	= hx_nodemap_sparql_order_nodes( map );
 	
+	hx_nodemap_debug( map );
+	hx_nodemap_debug( smap );
+	
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
-	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( NULL, smap );
-	hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx->spo );
-	while (!hx_index_iter_finished( iter )) {
-		hx_node_id s, p, o;
-		hx_index_iter_current( iter, &s, &p, &o );
-		hx_node* sn	= hx_nodemap_get_node( hx->map, s );
-		hx_node* pn	= hx_nodemap_get_node( hx->map, p );
-		hx_node* on	= hx_nodemap_get_node( hx->map, o );
+	
+	hx_store* sstore	= hx_new_store_hexastore_with_nodemap( NULL, smap );
+	hx_hexastore* shx	= hx_new_hexastore_with_store( NULL, sstore );
+	
+	hx_node* sn		= hx_new_named_variable(hx, "s");
+	hx_node* pn		= hx_new_named_variable(hx, "p");
+	hx_node* on		= hx_new_named_variable(hx, "o");
+	hx_triple* t	= hx_new_triple( sn, pn, on );
+	hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+	while (!hx_variablebindings_iter_finished(iter)) {
+		hx_variablebindings* b;
+		hx_variablebindings_iter_current( iter, &b );
+		hx_node* s	= hx_variablebindings_node_for_binding_name( b, map, "s" );
+		hx_node* p	= hx_variablebindings_node_for_binding_name( b, map, "p" );
+		hx_node* o	= hx_variablebindings_node_for_binding_name( b, map, "o" );
 		
-		hx_add_triple( shx, sn, pn, on );
-		hx_index_iter_next( iter );
-		if ((++count % 25000) == 0)
-			fprintf( stderr, "\rfinished %d triples", count );
+		fprintf( stderr, "----------\n" );
+		hx_node_debug(s);
+		hx_node_debug(p);
+		hx_node_debug(o);
+		hx_add_triple( shx, s, p, o );
+		
+		hx_free_variablebindings( b );
+		hx_variablebindings_iter_next(iter);
 	}
-	hx_free_index_iter( iter );
+	hx_free_variablebindings_iter( iter );
 	
-	if (hx_write( shx, outf ) != 0) {
+	hx_store_hexastore_debug( sstore );
+	
+	if (hx_store_hexastore_write( shx->store, outf ) != 0) {
 		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
-		return 1;
-	}
-	
-	if (hx_nodemap_write( smap, outf ) != 0) {
-		fprintf( stderr, "*** Couldn't write nodemap to disk.\n" );
 		return 1;
 	}
 	

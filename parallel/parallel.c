@@ -9,17 +9,6 @@
 #define HPGN_DEBUG(s, ...)
 
 typedef struct {
-	int rank;
-	hx_hexastore* hx;
-	hx_index_iter* iter;
-	hx_nodemap* map;
-} hx_parallel_send_triples_args_t;
-
-typedef struct {
-	hx_hexastore* hx;
-} hx_parallel_recv_triples_args_t;
-
-typedef struct {
 	int count;
 	hx_parallel_execution_context* ctx;
 	hx_variablebindings_iter* iter;
@@ -50,8 +39,6 @@ int _hx_parallel_recv_gid2node_lookup(async_mpi_session* ses, void* p);
 int _hx_parallel_send_gid2node_answer(async_mpi_session* ses, void* p);
 int _hx_parallel_recv_gid2node_answer(async_mpi_session* ses, void* p);
 
-int _hx_parallel_send_triples_handler (async_mpi_session* ses, void* args);
-int _hx_parallel_recv_triples_handler (async_mpi_session* ses, void* args);
 int _hx_parallel_send_vb_handler (async_mpi_session* ses, void* args);
 int _hx_parallel_recv_vb_handler (async_mpi_session* ses, void* args);
 
@@ -101,64 +88,11 @@ int hx_parallel_free_parallel_execution_context ( hx_parallel_execution_context*
 	return 0;
 }
 
-int hx_parallel_distribute_triples_from_hexastore( int rank, hx_hexastore* source, hx_hexastore* destination ) {
-	int mysize, myrank;
-	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-	hx_index_iter* iter	= NULL;
-	hx_nodemap* map		= NULL;
-	if (myrank == rank) {
-		map			= hx_get_nodemap( source );
-		hx_node* s	= hx_new_variable( source );
-		hx_node* p	= hx_new_variable( source );
-		hx_node* o	= hx_new_variable( source );
-		iter		= hx_get_statements( source, s, p, o, HX_SUBJECT );
-	}
-	
-	return hx_parallel_distribute_triples_from_iter( rank, iter, destination, map );
-}
-
-int hx_parallel_distribute_triples_from_iter ( int rank, hx_index_iter* source, hx_hexastore* destination, hx_nodemap* map ) {
-	int mysize, myrank;
-	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-	hx_parallel_send_triples_args_t send_args;
-	send_args.rank			= rank;
-	send_args.hx			= destination;
-	send_args.iter			= source;
-	send_args.map			= map;
-	
-	hx_parallel_recv_triples_args_t recv_args;
-	recv_args.hx			= destination;
-	
-	int msg_size			= 3 * sizeof(hx_node_id);
-	int num_sends, num_recvs;
-	_hx_parallel_trans_message_counts( &num_sends, &num_recvs );
-	async_des_session* ses	= async_des_session_create(num_sends, &_hx_parallel_send_triples_handler, &send_args, num_recvs, &_hx_parallel_recv_triples_handler, &recv_args, msg_size);
-	
-	while (async_des(ses) == ASYNC_PENDING) {
-		// continue until finished
-	}
-	
-	if (myrank == rank) {
-		hx_free_index_iter(source);
-	}
-	
-// 	int size	= (int) hx_triples_count( destination );
-// 	fprintf( stderr, "node %d has %d triples\n", myrank, size );
-	async_des_session_destroy(ses);
-	
-	return 1;
-}
-
 int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_hexastore* destination ) {
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	const char* mapfile		= ctx->local_nodemap_file;
-//	if (!mpi_rdfio_readids(file, 4800, &destination, MPI_COMM_WORLD)) {
 	if(!mpi_rdfio_readnt((char*) file, (char*) mapfile, 1048576, &destination, MPI_COMM_WORLD)) {
 		fprintf(stderr, "%s:%u:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
 		MPI_Abort(MPI_COMM_WORLD, 127);
@@ -192,70 +126,6 @@ hx_node_id* hx_parallel_lookup_node_ids (hx_parallel_execution_context* ctx, int
 	free(ids);
 	hx_free_nodemap( nodemap );
 	return allids;
-}
-
-int _hx_parallel_send_triples_handler(async_mpi_session* ses, void* args) {
-	hx_parallel_send_triples_args_t* send_args	= (hx_parallel_send_triples_args_t*) args;
-	hx_hexastore* hx		= send_args->hx;
-	hx_index_iter* iter		= send_args->iter;
-	
-	int mysize, myrank;
-	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-	if (myrank != send_args->rank) {
-		// only a head node can send triples to other nodes (one to many)
-		return 0;
-	}
-	
-	hx_node_id nodes[3];
-	while (!hx_index_iter_finished(iter)) {
-		hx_index_iter_current( iter, &(nodes[0]), &(nodes[1]), &(nodes[2]) );
-		int hash	= (nodes[0] ^ nodes[1] ^ nodes[2]) % mysize;
-		
-		char *string;
-		hx_triple_id t;
-		t.subject	= nodes[0];
-		t.predicate	= nodes[1];
-		t.object	= nodes[2];
-		hx_triple_id_string( &t, send_args->map, &string );
-//		fprintf( stderr, "%s hashed to node %d\n", string, hash );
-		free(string);
-		
-		if (hash > 0) {
-//			fprintf( stderr, "- sending triple to node %d\n", hash );
-			int size			= 3 * sizeof( hx_node_id );
-			hx_node_id* buffer	= malloc( size );
-			if (buffer == NULL) {
-				fprintf( stderr, "*** malloc failed in mpi.c:_hx_parallel_send_triples_handler\n" );
-			}
-			memcpy( buffer, nodes, size );
-			async_mpi_session_reset3(ses, buffer, size, hash, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
-			hx_index_iter_next(iter);
-			return 1;
-		} else {
-//			fprintf( stderr, "- adding triple to local triplestore\n" );
-			// do something with the triple to keep it on this node
-			hx_add_triple_id( hx, nodes[0], nodes[1], nodes[2] );
-			hx_index_iter_next(iter);
-		}
-	}
-	
-	return 0;
-}
-
-int _hx_parallel_recv_triples_handler(async_mpi_session* ses, void* args) {
-	hx_parallel_recv_triples_args_t* recv_args	= (hx_parallel_recv_triples_args_t*) args;
-	hx_hexastore* hx		= recv_args->hx;
-	
-	int mysize, myrank;
-	MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-	hx_node_id* nodes	= (hx_node_id*) ses->buf;
-	hx_add_triple_id( hx, nodes[0], nodes[1], nodes[2] );
-//	fprintf( stderr, "node %d got triple: { %d, %d, %d }\n", myrank, (int) nodes[0], (int) nodes[1], (int) nodes[2] );
-	return 1;
 }
 
 hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination, hx_join_side side ) {
@@ -1132,65 +1002,6 @@ int _hx_parallel_recv_gid2node_answer(async_mpi_session* ses, void* p) {
 	return 1;
 }
 
-hx_variablebindings_iter* _hx_parallel_variablebindings_iter_for_triple ( hx_parallel_execution_context* ctx, hx_hexastore* hx, hx_triple* t ) {
-	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	
-	hx_index_iter* titer	= hx_get_statements( hx, t->subject, t->predicate, t->object, HX_OBJECT );
-	if (titer == NULL) {
-		char* names[3];
-		int i;
-		int j	= 0;
-		for (i = 0; i < 3; i++) {
-			hx_node* n	= hx_triple_node(t,i);
-			if (hx_node_is_variable(n)) {
-				hx_node_variable_name(n, &(names[j++]));
-			}
-		}
-		hx_variablebindings_iter* iter	= hx_variablebindings_new_empty_iter_with_names(j, names);
-		for (i = 0; i < j; i++) {
-			free(names[i]);
-		}
-		return iter;
-	} else {
-		char *sname, *pname, *oname;
-		hx_node_variable_name( t->subject, &sname );
-		hx_node_variable_name( t->predicate, &pname );
-		hx_node_variable_name( t->object, &oname );
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, sname, pname, oname );
-		free(sname);
-		free(pname);
-		free(oname);
-		return iter;
-	}
-	
-// 	hx_index* index;
-// 	hx_node* index_ordered[3];
-// 	int order_position	= HX_OBJECT;
-// 	hx_get_ordered_index( hx, t->subject, t->predicate, t->object, order_position, &index, index_ordered, NULL );
-// 	hx_index_iter* titer	= hx_index_new_iter1( index, t->subject, t->predicate, t->object );
-// 	
-// 	char* names[3];
-// 	int i;
-// 	for (i = 0; i < 3; i++) {
-// 		char* n	= node_names[ (3*triple) + i ];
-// 		if (n != NULL) {
-// 			int len	= strlen(n);
-// 			names[i]	= (char*) calloc( len + 1, sizeof( char ) );
-// 			strcpy( names[i], n );
-// 		} else {
-// 			names[i]	= NULL;
-// 		}
-// 	}
-// 	
-// 	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, names[0], names[1], names[2] );
-// 	free( names[0] );
-// 	free( names[1] );
-// 	free( names[2] );
-// 	
-// 	return iter;
-
-}
-
 int _hx_parallel_variablebindings_iter_shared_columns( hx_triple* t, char** node_names, char** variable_names, int maxiv, hx_variablebindings_iter* lhs, char*** columns ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
@@ -1288,7 +1099,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	hx_nodemap* triples_map				= hx_get_nodemap( hx );
 	hx_nodemap* lhs_map					= triples_map;
 	hx_triple* t0						= hx_bgp_triple( b, 0 );
-	hx_variablebindings_iter* lhs		= _hx_parallel_variablebindings_iter_for_triple( ctx, hx, t0 );
+	hx_variablebindings_iter* lhs		= hx_new_variablebindings_iter_for_triple( hx, t0, HX_OBJECT );
 	
 	for (j = 1; j < triple_count; j++) {
 		hx_triple* t	= hx_bgp_triple( b, j );
@@ -1305,7 +1116,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		
 		char** columns						= NULL;
 // 		fprintf(stderr, "%i: _hx_parallel_variablebinding_iter_for_triple\n", myrank);
-		hx_variablebindings_iter* rhs		= _hx_parallel_variablebindings_iter_for_triple( ctx, hx, t );
+		hx_variablebindings_iter* rhs		= hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
 // 		fprintf(stderr, "%i: _hx_parallel_variablebinding_iter_shared_columns2\n", myrank);
 		int shared_count					= _hx_parallel_variablebindings_iter_shared_columns( t, node_names, variable_names, maxiv, lhs, &columns );
 // 		fprintf( stderr, "%d: columns = %p\n", myrank, (void*) columns );

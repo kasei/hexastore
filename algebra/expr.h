@@ -71,7 +71,7 @@ typedef struct {
 	void* operands;
 } hx_expr;
 
-#include "hexastore.h"
+/* #include "hexastore.h" */
 #include "misc/nodemap.h"
 
 hx_expr* hx_new_node_expr ( hx_node* n );

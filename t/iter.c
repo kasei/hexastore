@@ -136,12 +136,15 @@ void test_small_iter ( void ) {
 }
 
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
-	hx_node* v1	= hx_new_node_variable( -1 );
-	hx_node* v2	= hx_new_node_variable( -2 );
-	hx_node* v3	= hx_new_node_variable( -3 );
-	
-	hx_index_iter* titer	= hx_get_statements( hx, v1, v2, v3, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, "subj", "pred", "obj" );
+	hx_node* v1	= hx_new_node_named_variable( -1, "subj" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "pred" );
+	hx_node* v3	= hx_new_node_named_variable( -3, "obj" );
+	hx_triple* t	= hx_new_triple( v1, v2, v3 );
+	hx_variablebindings_iter* iter	=  hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
+	hx_free_triple(t);
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(v3);
 	return iter;
 }
 

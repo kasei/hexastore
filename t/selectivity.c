@@ -27,52 +27,52 @@ int main ( void ) {
 	hx_node* sl			= hx_new_node_literal( "s" );
 
 	{	// ALL TRIPLES
-		uintptr_t total	= hx_triples_count( hx );
+		uint64_t total	= hx_triples_count( hx );
 		ok1( total == 31 );
 	}
 	
 	{	// fff
-		uintptr_t total	= hx_count_statements( hx, x, y, z );
+		uint64_t total	= hx_count_statements( hx, x, y, z );
 		ok1( total == 31 );
 	}
 	
 	{	// fbf
-		uintptr_t total	= hx_count_statements( hx, x, binding, z );
+		uint64_t total	= hx_count_statements( hx, x, binding, z );
 		ok1( total == 8 );
 	}
 	
 	{	// bff
-		uintptr_t total	= hx_count_statements( hx, rs, x, y );
+		uint64_t total	= hx_count_statements( hx, rs, x, y );
 		ok1( total == 7 );
 	}
 	
 	{	// ffb
-		uintptr_t total	= hx_count_statements( hx, x, y, sl );
+		uint64_t total	= hx_count_statements( hx, x, y, sl );
 		ok1( total == 3 );
 	}
 	
 	{	// fbb
-		uintptr_t total	= hx_count_statements( hx, x, variable, sl );
+		uint64_t total	= hx_count_statements( hx, x, variable, sl );
 		ok1( total == 2 );
 	}
 	
 	{	// bfb
-		uintptr_t total	= hx_count_statements( hx, rs, x, rstype );
+		uint64_t total	= hx_count_statements( hx, rs, x, rstype );
 		ok1( total == 1 );
 	}
 
 	{	// bbf
-		uintptr_t total	= hx_count_statements( hx, rs, resvar, y );
+		uint64_t total	= hx_count_statements( hx, rs, resvar, y );
 		ok1( total == 4 );
 	}
 	
 	{	// bbb
-		uintptr_t total	= hx_count_statements( hx, rs, resvar, sl );
+		uint64_t total	= hx_count_statements( hx, rs, resvar, sl );
 		ok1( total == 1 );
 	}
 	
 	{	// bbb
-		uintptr_t total	= hx_count_statements( hx, rs, resvar, rstype );
+		uint64_t total	= hx_count_statements( hx, rs, resvar, rstype );
 		ok1( total == 0 );
 	}
 	

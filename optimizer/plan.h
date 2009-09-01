@@ -9,6 +9,7 @@ extern "C" {
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -18,9 +19,11 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
+#include "hexastore.h"
 #include "engine/variablebindings_iter.h"
 #include "rdf/triple.h"
 #include "rdf/node.h"
+#include "store/store.h"
 #include "index.h"
 
 typedef enum {

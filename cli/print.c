@@ -5,6 +5,7 @@
 #include "rdf/node.h"
 #include "engine/mergejoin.h"
 #include "misc/avl.h"
+#include "store/hexastore/hexastore.h"
 
 typedef struct {
 	int next;
@@ -31,6 +32,7 @@ hx_node* node_for_string ( char* string, hx_hexastore* hx );
 hx_node_id node_id_for_string ( char* string, hx_hexastore* hx );
 hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t* varmap );
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
+void print_variablebindings ( hx_nodemap* map, hx_variablebindings* b, int count );
 char* variable_name ( varmap_t* varmap, int id );
 
 void help (int argc, char** argv) {
@@ -62,26 +64,32 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_hexastore* hx	= hx_read( f, 0 );
-	hx_nodemap* map		= hx_get_nodemap( hx );;
+	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
+	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
 	fprintf( stderr, "finished loading hexastore from file...\n" );
 	
 	if (arg == NULL) {
 		int count	= 1;
-		hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx->spo );
-		while (!hx_index_iter_finished( iter )) {
-			hx_node_id s, p, o;
-			hx_index_iter_current( iter, &s, &p, &o );
-			print_triple( map, s, p, o, count++ );
-			hx_index_iter_next( iter );
+		hx_node* sn		= hx_new_named_variable(hx, "s");
+		hx_node* pn		= hx_new_named_variable(hx, "p");
+		hx_node* on		= hx_new_named_variable(hx, "o");
+		hx_triple* t	= hx_new_triple( sn, pn, on );
+		hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+		while (!hx_variablebindings_iter_finished(iter)) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			print_variablebindings( map, b, count++ );
+			hx_free_variablebindings( b );
+			hx_variablebindings_iter_next(iter);
 		}
-		hx_free_index_iter( iter );
+		hx_free_variablebindings_iter( iter );
 	} else if (strcmp( arg, "-c" ) == 0) {
 		fprintf( stdout, "Triples: %lu\n", (unsigned long) hx_triples_count( hx ) );
 	} else if (strcmp( arg, "-n" ) == 0) {
 		// print out the nodemap
-		hx_nodemap* map		= hx_get_nodemap( hx );
+		hx_nodemap* map		= hx_store_hexastore_get_nodemap( store );
 		struct avl_traverser iter;
 		avl_t_init( &iter, map->id2node );
 		hx_nodemap_item* item;
@@ -108,17 +116,19 @@ int main (int argc, char** argv) {
 		hx_node* node	= node_for_string( pred, hx );
 		if (node != NULL) {
 //			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
-			hx_node* subj	= hx_new_variable( hx );
-			hx_node* obj	= hx_new_variable( hx );
-			hx_index_iter* iter	= hx_get_statements( hx, subj, node, obj, HX_SUBJECT );
-			int count	= 1;
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				print_triple( map, s, p, o, count++ );
-				hx_index_iter_next( iter );
+			int count		= 1;
+			hx_node* sn		= hx_new_named_variable(hx, "s");
+			hx_node* on		= hx_new_named_variable(hx, "o");
+			hx_triple* t	= hx_new_triple( sn, node, on );
+			hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+			while (!hx_variablebindings_iter_finished(iter)) {
+				hx_variablebindings* b;
+				hx_variablebindings_iter_current( iter, &b );
+				print_variablebindings( map, b, count++ );
+				hx_free_variablebindings( b );
+				hx_variablebindings_iter_next(iter);
 			}
-			hx_free_index_iter( iter );
+			hx_free_variablebindings_iter( iter );
 		}
 	} else if (strcmp( arg, "-b" ) == 0) {
 		if (argc != 6) {
@@ -133,12 +143,15 @@ int main (int argc, char** argv) {
 		hx_node* pn	= node_for_string( pred, hx );
 		hx_node* on	= node_for_string( obj, hx );
 		
-		hx_index_iter* titer	= hx_get_statements( hx, sn, pn, on, HX_SUBJECT );
-		char* s	= (char*) ((sn == NULL) ? NULL : "subj");
-		char* p	= (char*) ((pn == NULL) ? NULL : "pred");
-		char* o	= (char*) ((on == NULL) ? NULL : "obj");
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o );
+		if (sn == NULL)
+			sn	= hx_new_named_variable( hx, "subj" );
+		if (pn == NULL)
+			pn	= hx_new_named_variable( hx, "pred" );
+		if (on == NULL)
+			on	= hx_new_named_variable( hx, "obj" );
 		
+		hx_triple* t	= hx_new_triple( sn, pn, on );
+		hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
@@ -159,14 +172,19 @@ int main (int argc, char** argv) {
 		hx_node* knode	= node_for_string( "http://xmlns.com/foaf/0.1/knows", hx );
 		hx_node* tnode	= node_for_string( to, hx );
 
-		hx_node* v1		= hx_new_variable( hx );
-		hx_node* v2		= hx_new_variable( hx );
+		hx_node* v1		= hx_new_named_variable( hx, "friend" );
+		hx_node* v2		= hx_new_named_variable( hx, "to" );
 		
-		hx_index_iter* titer_a	= hx_get_statements( hx, fnode, knode, v1, HX_OBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "from", NULL, "friend" );
+		if (fnode == NULL)
+			fnode	= hx_new_named_variable(hx, "from" );
+		if (tnode == NULL)
+			tnode	= hx_new_named_variable(hx, "to" );
 		
-		hx_index_iter* titer_b	= hx_get_statements( hx, v2, knode, tnode, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "friend", NULL, "to" );
+		hx_triple* ta	= hx_new_triple( fnode, knode, v1 );
+		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+		
+		hx_triple* tb	= hx_new_triple( v2, knode, tnode );
+		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
  		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
@@ -187,13 +205,17 @@ int main (int argc, char** argv) {
 		char* uri	= argv[3];
 		hx_node* node	= node_for_string( uri, hx );
 		
-		hx_node* v1		= hx_new_variable( hx );
-		hx_node* v2		= hx_new_variable( hx );
-		hx_index_iter* titer_a	= hx_get_statements( hx, node, v1, v2, HX_SUBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "subj", "p1", "o1" );
+		hx_node* v1		= hx_new_named_variable( hx, "subj" );
+		hx_node* p1		= hx_new_named_variable( hx, "p1" );
+		hx_node* p2		= hx_new_named_variable( hx, "p2" );
+		hx_node* o1		= hx_new_named_variable( hx, "o1" );
+		hx_node* o2		= hx_new_named_variable( hx, "o2" );
 		
-		hx_index_iter* titer_b	= hx_get_statements( hx, node, v1, v2, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "subj", "p2", "o2" );
+		hx_triple* ta	= hx_new_triple( node, p1, o1 );
+		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_SUBJECT );
+		
+		hx_triple* tb	= hx_new_triple( node, p2, o2 );
+		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
@@ -227,12 +249,10 @@ int main (int argc, char** argv) {
 		hx_node* sn	= node_for_string_with_varmap( subj, hx, &varmap );
 		hx_node* pn	= node_for_string_with_varmap( pred, hx, &varmap );
 		hx_node* on	= node_for_string_with_varmap( obj, hx, &varmap );
-		
-		hx_index_iter* titer	= hx_get_statements( hx, sn, pn, on, HX_SUBJECT );
-		char* s	= (hx_node_is_variable( sn )) ? variable_name( &varmap, hx_node_iv( sn ) ) : NULL;
-		char* p	= (hx_node_is_variable( pn )) ? variable_name( &varmap, hx_node_iv( pn ) ) : NULL;
-		char* o	= (hx_node_is_variable( on )) ? variable_name( &varmap, hx_node_iv( on ) ) : NULL;
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o );
+
+
+		hx_triple* t	= hx_new_triple( sn, pn, on );
+		hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
 		
 		fprintf( stderr, "constructed first variable bindings iterator...\n" );
 		
@@ -245,11 +265,10 @@ int main (int argc, char** argv) {
 			hx_node* sn	= node_for_string_with_varmap( subj, hx, &varmap );
 			hx_node* pn	= node_for_string_with_varmap( pred, hx, &varmap );
 			hx_node* on	= node_for_string_with_varmap( obj, hx, &varmap );
-			hx_index_iter* titer	= hx_get_statements( hx, sn, pn, on, HX_SUBJECT );
-			char* s	= (hx_node_is_variable( sn )) ? variable_name( &varmap, hx_node_iv( sn ) ) : NULL;
-			char* p	= (hx_node_is_variable( pn )) ? variable_name( &varmap, hx_node_iv( pn ) ) : NULL;
-			char* o	= (hx_node_is_variable( on )) ? variable_name( &varmap, hx_node_iv( on ) ) : NULL;
-			hx_variablebindings_iter* _iter	= hx_new_iter_variablebindings( titer, s, p, o );
+
+			hx_triple* tj	= hx_new_triple( sn, pn, on );
+			hx_variablebindings_iter* _iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+			
 			fprintf( stderr, "constructed variable bindings iterator #%d... constructing mergejoin...\n", _count++ );
 			hx_variablebindings_iter* join	= hx_new_mergejoin_iter( iter, _iter );
 			iter	= join;
@@ -280,15 +299,17 @@ int main (int argc, char** argv) {
 		hx_node* pn	= node_for_string( pred, hx );
 		hx_node* on	= node_for_string( obj, hx );
 //		fprintf( stderr, "iter (%d,%d,%d) ordered by subject...\n", (int) sid, (int) pid, (int) oid );
-		hx_index_iter* iter	= hx_get_statements( hx, sn, pn, on, HX_SUBJECT );
-		int count	= 1;
-		while (!hx_index_iter_finished( iter )) {
-			hx_node_id s, p, o;
-			hx_index_iter_current( iter, &s, &p, &o );
-			print_triple( map, s, p, o, count++ );
-			hx_index_iter_next( iter );
+		int count		= 1;
+		hx_triple* t	= hx_new_triple( sn, pn, on );
+		hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+		while (!hx_variablebindings_iter_finished(iter)) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			print_variablebindings( map, b, count++ );
+			hx_free_variablebindings( b );
+			hx_variablebindings_iter_next(iter);
 		}
-		hx_free_index_iter( iter );
+		hx_free_variablebindings_iter( iter );
 	}
 	
 	hx_free_hexastore( hx );
@@ -311,6 +332,16 @@ void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, i
 	free( ss );
 	free( sp );
 	free( so );
+}
+
+void print_variablebindings ( hx_nodemap* map, hx_variablebindings* b, int count ) {
+	char* string;
+	hx_variablebindings_string( b, map, &string );
+	if (count > 0) {
+		fprintf( stdout, "[%d] ", count );
+	}
+	fprintf( stdout, "%s\n", string );
+	free( string );
 }
 
 hx_node_id node_id_for_string ( char* string, hx_hexastore* hx ) {
@@ -359,7 +390,7 @@ hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t*
 			avl_insert( varmap->name2id, item );
 			avl_insert( varmap->id2name, item );
 		}
-		return hx_new_node_variable( item->id );
+		return hx_new_node_named_variable( item->id, item->name );
 	} else if (strcmp( string, "0" ) == 0) {
 		return NULL;
 	} else if (*string == '-') {

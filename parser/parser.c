@@ -93,16 +93,16 @@ void _hx_parser_handle_triple (void* user_data, const raptor_statement* triple)	
 
 int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 	if (parser->count > 0) {
-		hx_add_triples( parser->hx, parser->triples, parser->count );
-		parser->total	+= parser->count;
-		if (parser->logger != NULL) {
-			parser->logger( parser->total );
-		}
 		int i;
 		for (i = 0; i < parser->count; i++) {
+			hx_add_triple( parser->hx, parser->triples[i].subject, parser->triples[i].predicate, parser->triples[i].object );
 			hx_free_node( parser->triples[i].subject );
 			hx_free_node( parser->triples[i].predicate );
 			hx_free_node( parser->triples[i].object );
+		}
+		parser->total	+= parser->count;
+		if (parser->logger != NULL) {
+			parser->logger( parser->total );
 		}
 		parser->count	= 0;
 	}

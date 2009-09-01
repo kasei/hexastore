@@ -404,16 +404,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 		sort	= HX_SUBJECT;
 	}
 	
-	hx_index_iter* titer0	= hx_get_statements( hx, t0->subject, t0->predicate, t0->object, sort );
-	
-	char *sname, *pname, *oname;
-	hx_node_variable_name( t0->subject, &sname );
-	hx_node_variable_name( t0->predicate, &pname );
-	hx_node_variable_name( t0->object, &oname );
-	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, sname, pname, oname );
-	free(sname);
-	free(pname);
-	free(oname);
+	hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t0, sort );
 	
 	if (size > 1) {
 		int i;
@@ -421,17 +412,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			char *sname, *pname, *oname;
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
-			hx_index_iter* titer	= hx_get_statements( hx, t->subject, t->predicate, t->object, jsort );
-			if (titer == NULL) {
-				return NULL;
-			}
-			hx_node_variable_name( t->subject, &sname );
-			hx_node_variable_name( t->predicate, &pname );
-			hx_node_variable_name( t->object, &oname );
-			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, sname, pname, oname );
-			free(sname);
-			free(pname);
-			free(oname);
+			hx_variablebindings_iter* interm	= hx_new_variablebindings_iter_for_triple( hx, t, jsort );
 			
 //			iter	= hx_new_nestedloopjoin_iter( interm, iter );			
 //			iter	= hx_new_hashjoin_iter( interm, iter );

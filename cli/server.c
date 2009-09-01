@@ -130,11 +130,13 @@ int main(int argc, char *argv[])
     perror( "Failed to open hexastore file for reading: " );
     return 1;
   }
-  server.db			= hx_read( f, 0 );
+
+  hx_store* store	= hx_store_hexastore_read( NULL, f, 0 );
+  server.db		= hx_new_hexastore_with_store( NULL, store );
   
   if (server.db == NULL)
   {
-    printf("hx_read: could not open hexastore db\n");
+    printf("hx_store_hexastore_read: could not open hexastore db\n");
     return 1;
   }
 

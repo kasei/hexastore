@@ -111,8 +111,9 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	
-	hx_hexastore* hx		= hx_read( f, 0 );
-	hx_nodemap* map			= hx_get_nodemap( hx );
+	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
+	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
 	x			= hx_new_named_variable( hx, "x" );

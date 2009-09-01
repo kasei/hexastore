@@ -56,7 +56,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "\rParsed %lu triples in %.1lf seconds (%.1lf triples/second)\n", (unsigned long) total, elapsed, tps );
 	
 	if (f != NULL) {
-		if (hx_write( hx, f ) != 0) {
+		if (hx_store_hexastore_write( hx->store, f ) != 0) {
 			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 			return 1;
 		}

@@ -1,11 +1,11 @@
 #include "index.h"
 
-int _hx_index_iter_prime_first_result( hx_index_iter* iter );
-int _hx_index_iter_next_head ( hx_index_iter* iter );
-int _hx_index_iter_next_vector ( hx_index_iter* iter );
+int _hx_store_hexastore_index_iter_prime_first_result( hx_store_hexastore_index_iter* iter );
+int _hx_store_hexastore_index_iter_next_head ( hx_store_hexastore_index_iter* iter );
+int _hx_store_hexastore_index_iter_next_vector ( hx_store_hexastore_index_iter* iter );
 
-int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n );
-int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n );
+int _hx_store_hexastore_index_got_head_trigger ( hx_store_hexastore_index_iter* iter, hx_node_id n );
+int _hx_store_hexastore_index_got_vector_trigger ( hx_store_hexastore_index_iter* iter, hx_node_id n );
 
 
 /**
@@ -19,12 +19,12 @@ int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n );
 
 **/
 
-hx_index* hx_new_index ( void* world, int* index_order ) {
+hx_store_hexastore_index* hx_new_index ( void* world, int* index_order ) {
 	int a	= index_order[0];
 	int b	= index_order[1];
 	int c	= index_order[2];
-//	fprintf( stderr, "hx_index is %d bytes in size\n", (int) sizeof( hx_index ) );
-	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+//	fprintf( stderr, "hx_store_hexastore_index is %d bytes in size\n", (int) sizeof( hx_store_hexastore_index ) );
+	hx_store_hexastore_index* i	= (hx_store_hexastore_index*) calloc( 1, sizeof( hx_store_hexastore_index )  );
 	i->size		= 3;
 	i->order[0]	= a;
 	i->order[1]	= b;
@@ -34,7 +34,7 @@ hx_index* hx_new_index ( void* world, int* index_order ) {
 	return i;
 }
 
-int hx_free_index ( hx_index* i ) {
+int hx_free_index ( hx_store_hexastore_index* i ) {
 	hx_free_head( (hx_head*) i->head );
 	i->head	= 0;
 	int j;
@@ -45,7 +45,7 @@ int hx_free_index ( hx_index* i ) {
 	return 0;
 }
 
-int hx_index_debug ( hx_index* index ) {
+int hx_store_hexastore_index_debug ( hx_store_hexastore_index* index ) {
 	hx_head* h	= (hx_head*) index->head;
 	fprintf(
 		stderr,
@@ -64,24 +64,26 @@ int hx_index_debug ( hx_index* index ) {
 		hx_vector* v;
 		hx_head_iter_current( hiter, &(triple_ordered[ index->order[ 0 ] ]), &v );
 		
-		hx_vector_iter* viter	= hx_vector_new_iter( v );
-		int j = 0;
-		while (!hx_vector_iter_finished( viter )) {
-			hx_terminal* t;
-			hx_vector_iter_current( viter, &(triple_ordered[ index->order[ 1 ] ]), &t );
-			hx_terminal_iter* titer	= hx_terminal_new_iter( t );
-			while (!hx_terminal_iter_finished( titer )) {
-				hx_node_id n;
-				hx_terminal_iter_current( titer, &n );
-				
-				triple_ordered[ index->order[ 2 ] ]	= n;
-				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
-				
-				hx_terminal_iter_next( titer );
+		if (v) {
+			hx_vector_iter* viter	= hx_vector_new_iter( v );
+			int j = 0;
+			while (!hx_vector_iter_finished( viter )) {
+				hx_terminal* t;
+				hx_vector_iter_current( viter, &(triple_ordered[ index->order[ 1 ] ]), &t );
+				hx_terminal_iter* titer	= hx_terminal_new_iter( t );
+				while (!hx_terminal_iter_finished( titer )) {
+					hx_node_id n;
+					hx_terminal_iter_current( titer, &n );
+					
+					triple_ordered[ index->order[ 2 ] ]	= n;
+					fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
+					
+					hx_terminal_iter_next( titer );
+				}
+				hx_free_terminal_iter( titer );
+				hx_vector_iter_next( viter );
+				j++;
 			}
-			hx_free_terminal_iter( titer );
-			hx_vector_iter_next( viter );
-			j++;
 		}
 		
 		hx_head_iter_next( hiter );
@@ -92,11 +94,11 @@ int hx_index_debug ( hx_index* index ) {
 	return 0;
 }
 
-int hx_index_add_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
-	return hx_index_add_triple_terminal( index, s, p, o, NULL );
+int hx_store_hexastore_index_add_triple ( hx_store_hexastore_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	return hx_store_hexastore_index_add_triple_terminal( index, s, p, o, NULL );
 }
 
-int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** r_terminal ) {
+int hx_store_hexastore_index_add_triple_terminal ( hx_store_hexastore_index* index, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** r_terminal ) {
 	hx_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
@@ -135,7 +137,7 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, 
 	return added;
 }
 
-int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int added ) {
+int hx_store_hexastore_index_add_triple_with_terminal ( hx_store_hexastore_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int added ) {
 	hx_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
@@ -165,7 +167,7 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node
 	return added;
 }
 
-int hx_index_remove_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
+int hx_store_hexastore_index_remove_triple ( hx_store_hexastore_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
@@ -209,16 +211,16 @@ int hx_index_remove_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_nod
 	return 0;
 }
 
-uintptr_t hx_index_triples_count ( hx_index* index ) {
+uintptr_t hx_store_hexastore_index_triples_count ( hx_store_hexastore_index* index ) {
 	return hx_head_triples_count( (hx_head*) index->head );
 }
 
-hx_head* hx_index_head ( hx_index* index ) {
+hx_head* hx_store_hexastore_index_head ( hx_store_hexastore_index* index ) {
 	return (hx_head*) index->head;
 }
 
-hx_index_iter* hx_index_new_iter ( hx_index* index ) {
-	hx_index_iter* iter	= (hx_index_iter*) calloc( 1, sizeof( hx_index_iter ) );
+hx_store_hexastore_index_iter* hx_store_hexastore_index_new_iter ( hx_store_hexastore_index* index ) {
+	hx_store_hexastore_index_iter* iter	= (hx_store_hexastore_index_iter*) calloc( 1, sizeof( hx_store_hexastore_index_iter ) );
 	iter->flags			= 0;
 	iter->started		= 0;
 	iter->finished		= 0;
@@ -229,8 +231,8 @@ hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 	return iter;
 }
 
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
-	hx_index_iter* iter	= hx_index_new_iter( index );
+hx_store_hexastore_index_iter* hx_store_hexastore_index_new_iter1 ( hx_store_hexastore_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	hx_store_hexastore_index_iter* iter	= hx_store_hexastore_index_new_iter( index );
 	hx_node_id masks[3]	= { s, p, o };
 	iter->node_mask_a	= masks[ index->order[0] ];
 	iter->node_mask_b	= masks[ index->order[1] ];;
@@ -255,7 +257,7 @@ hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p,
 	return iter;
 }
 
-int hx_free_index_iter ( hx_index_iter* iter ) {
+int hx_free_index_iter ( hx_store_hexastore_index_iter* iter ) {
 	if (iter->head_iter != NULL) {
 		hx_free_head_iter( iter->head_iter );
 		iter->head_iter	= NULL;
@@ -272,16 +274,16 @@ int hx_free_index_iter ( hx_index_iter* iter ) {
 	return 0;
 }
 
-int hx_index_iter_finished ( hx_index_iter* iter ) {
+int hx_store_hexastore_index_iter_finished ( hx_store_hexastore_index_iter* iter ) {
 	if (iter->started == 0) {
-		_hx_index_iter_prime_first_result( iter );
+		_hx_store_hexastore_index_iter_prime_first_result( iter );
 	}
 	return iter->finished;
 }
 
-int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, hx_node_id* o ) {
+int hx_store_hexastore_index_iter_current ( hx_store_hexastore_index_iter* iter, hx_node_id* s, hx_node_id* p, hx_node_id* o ) {
 	if (iter->started == 0) {
-		_hx_index_iter_prime_first_result( iter );
+		_hx_store_hexastore_index_iter_prime_first_result( iter );
 	}
 	if (iter->finished == 1) {
 		return 1;
@@ -289,7 +291,7 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 	
 	hx_node_id triple_ordered[3];
 //	fprintf( stderr, "iter: %p\n", iter );
-	hx_index* index	= iter->index;
+	hx_store_hexastore_index* index	= iter->index;
 //	fprintf( stderr, "index: %p\n", iter->index );
 	hx_vector* v;
 // 	fprintf( stderr, "triple position %d comes from the head\n", index->order[0] );
@@ -308,10 +310,10 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 	return 0;
 }
 
-int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
+int _hx_store_hexastore_index_iter_prime_first_result( hx_store_hexastore_index_iter* iter ) {
 	iter->started	= 1;
-	hx_index* index	= iter->index;
-// 	fprintf( stderr, "_hx_index_iter_prime_first_result( %p )\n", (void*) iter );
+	hx_store_hexastore_index* index	= iter->index;
+// 	fprintf( stderr, "_hx_store_hexastore_index_iter_prime_first_result( %p )\n", (void*) iter );
 	iter->head_iter	= hx_head_new_iter( (hx_head*) index->head );
 	if (iter->node_mask_a > (hx_node_id) 0) {
 //		fprintf( stderr, "- head seeking to %d\n", (int) iter->node_mask_a );
@@ -325,7 +327,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		hx_node_id n;
 		hx_vector* v;
 		hx_head_iter_current( iter->head_iter, &n, &v );
-		_hx_index_got_head_trigger( iter, n );
+		_hx_store_hexastore_index_got_head_trigger( iter, n );
 		
 		if (iter->node_mask_a > (hx_node_id) 0 && n != iter->node_mask_a) {
 			break;
@@ -345,7 +347,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		while (!hx_vector_iter_finished( iter->vector_iter )) {
 			hx_terminal* t;
 			hx_vector_iter_current( iter->vector_iter, &n, &t );
-			_hx_index_got_vector_trigger( iter, n );
+			_hx_store_hexastore_index_got_vector_trigger( iter, n );
 			if (iter->node_mask_b > (hx_node_id) 0 && n != iter->node_mask_b) {
 				break;
 			}
@@ -383,7 +385,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 	return 1;
 }
 
-int _hx_index_iter_next_head ( hx_index_iter* iter ) {
+int _hx_store_hexastore_index_iter_next_head ( hx_store_hexastore_index_iter* iter ) {
 	int hr;
 NEXTHEAD:
 	hr	= hx_head_iter_next( iter->head_iter );
@@ -399,7 +401,7 @@ NEXTHEAD:
 		hx_vector* v;
 		hx_terminal* t;
 		hx_head_iter_current( iter->head_iter, &n, &v );
-		_hx_index_got_head_trigger( iter, n );
+		_hx_store_hexastore_index_got_head_trigger( iter, n );
 		iter->vector_iter	= hx_vector_new_iter( v );
 		if (iter->node_mask_b > (hx_node_id) 0) {
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
@@ -408,11 +410,11 @@ NEXTHEAD:
 		}
 		
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
-		_hx_index_got_vector_trigger( iter, n );
+		_hx_store_hexastore_index_got_vector_trigger( iter, n );
 		iter->terminal_iter	= hx_terminal_new_iter( t );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
-				_hx_index_iter_next_vector( iter );
+				_hx_store_hexastore_index_iter_next_vector( iter );
 			}
 		}
 		return 0;
@@ -429,7 +431,7 @@ NEXTHEAD:
 	}
 }
 
-int _hx_index_iter_next_vector ( hx_index_iter* iter ) {
+int _hx_store_hexastore_index_iter_next_vector ( hx_store_hexastore_index_iter* iter ) {
 	int vr;
 NEXTVECTOR:
 	vr	= hx_vector_iter_next( iter->vector_iter );
@@ -442,7 +444,7 @@ NEXTVECTOR:
 		hx_node_id n;
 		hx_terminal* t;
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
-		_hx_index_got_vector_trigger( iter, n );
+		_hx_store_hexastore_index_got_vector_trigger( iter, n );
 		iter->terminal_iter	= hx_terminal_new_iter( t );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
@@ -452,16 +454,16 @@ NEXTVECTOR:
 		return 1;
 	} else {
 //		fprintf( stderr, "no next vector... getting next head...\n" );
-		return _hx_index_iter_next_head( iter );
+		return _hx_store_hexastore_index_iter_next_head( iter );
 	}
 	return 0;
 }
 
-int hx_index_iter_next ( hx_index_iter* iter ) {
-//	fprintf( stderr, "hx_index_iter_next( %p )\n", (void*) iter );
+int hx_store_hexastore_index_iter_next ( hx_store_hexastore_index_iter* iter ) {
+//	fprintf( stderr, "hx_store_hexastore_index_iter_next( %p )\n", (void*) iter );
 	if (iter->started == 0) {
 //		fprintf( stderr, "- iter not started... priming first result...\n" );
-		_hx_index_iter_prime_first_result( iter );
+		_hx_store_hexastore_index_iter_prime_first_result( iter );
 		if (iter->finished == 1) {
 			return 1;
 		}
@@ -477,7 +479,7 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 //		fprintf( stderr, "node_mask_c == %d\n", (int) iter->node_mask_c );
 //		fprintf( stderr, "tr == %d\n", tr );
 //		fprintf( stderr, "no next terminal... getting next vector\n" );
-		int r	= _hx_index_iter_next_vector( iter );
+		int r	= _hx_store_hexastore_index_iter_next_vector( iter );
 		if (r != 0) {
 			return r;
 		}
@@ -487,20 +489,20 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 }
 
 
-int hx_index_write( hx_index* i, FILE* f ) {
+int hx_store_hexastore_index_write( hx_store_hexastore_index* i, FILE* f ) {
 	fputc( 'I', f );
 	fwrite( i->order, sizeof( int ), 3, f );
 	return hx_head_write( (hx_head*) i->head, f );
 }
 
-hx_index* hx_index_read( FILE* f, int buffer ) {
+hx_store_hexastore_index* hx_store_hexastore_index_read( FILE* f, int buffer ) {
 	size_t read;
 	int c	= fgetc( f );
 	if (c != 'I') {
 		fprintf( stderr, "*** Bad header cookie trying to read index from file.\n" );
 		return NULL;
 	}
-	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index )  );
+	hx_store_hexastore_index* i	= (hx_store_hexastore_index*) calloc( 1, sizeof( hx_store_hexastore_index )  );
 	i->size		= 3;
 	read	= fread( i->order, sizeof( int ), 3, f );
 	
@@ -512,7 +514,7 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 	}
 }
 
-int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n ) {
+int _hx_store_hexastore_index_got_head_trigger ( hx_store_hexastore_index_iter* iter, hx_node_id n ) {
 	if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
 // 		fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
 		iter->node_mask_b	= n;
@@ -524,7 +526,7 @@ int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n ) {
 	return 0;
 }
 
-int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
+int _hx_store_hexastore_index_got_vector_trigger ( hx_store_hexastore_index_iter* iter, hx_node_id n ) {
 	if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
 // 		fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
 		iter->node_mask_c	= n;
@@ -532,7 +534,7 @@ int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
 	return 0;
 }
 
-int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
+int hx_store_hexastore_index_iter_is_sorted_by_index ( hx_store_hexastore_index_iter* iter, int index ) {
 	hx_node_id masks[3]	= { iter->node_mask_a, iter->node_mask_b, iter->node_mask_c };
 // 	fprintf( stderr, ">>> %d\n", index );
 // 	fprintf( stderr, "*** masks: { %d, %d, %d }\n", (int) masks[0], (int) masks[1], (int) masks[2] );
@@ -545,12 +547,12 @@ int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
 	} else if (index == order[2]) {
 		return (masks[0] > 0 && masks[1] > 0);
 	} else {
-		fprintf( stderr, "*** not a valid triple position index in call to hx_index_iter_is_sorted_by_index\n" );
+		fprintf( stderr, "*** not a valid triple position index in call to hx_store_hexastore_index_iter_is_sorted_by_index\n" );
 		return -1;
 	}
 }
 
-char* hx_index_name ( hx_index* idx ) {
+char* hx_store_hexastore_index_name ( hx_store_hexastore_index* idx ) {
 	int size	= idx->size;
 	int* order	= idx->order;
 	char* name		= (char*) calloc( 5, sizeof( char ) );
