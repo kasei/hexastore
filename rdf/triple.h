@@ -32,7 +32,7 @@ typedef struct {
 	hx_node_id subject;
 	hx_node_id predicate;
 	hx_node_id object;
-	hx_node_id graph
+	hx_node_id graph;
 } hx_triple_id;
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );

@@ -46,7 +46,6 @@ int hx_bgp_size ( hx_bgp* b );
 int hx_bgp_variables ( hx_bgp* b, hx_node*** vars );
 hx_triple* hx_bgp_triple ( hx_bgp* b, int index );
 int hx_bgp_reorder ( hx_bgp* , hx_hexastore* );
-hx_variablebindings_iter* hx_bgp_execute ( hx_bgp*, hx_hexastore* );
 
 hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_nodemap* map );
 

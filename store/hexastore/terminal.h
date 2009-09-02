@@ -19,6 +19,8 @@ extern "C" {
 #include "hexastore_types.h"
 #include "store/hexastore/btree.h"
 
+#define TERMINAL_TREE_BRANCHING_SIZE			4
+
 typedef struct {
 	uintptr_t triples_count;
 	uintptr_t tree;

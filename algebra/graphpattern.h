@@ -19,7 +19,6 @@ extern "C" {
 
 #include "hexastore_types.h"
 #include "hexastore.h"
-#include "engine/mergejoin.h"
 #include "algebra/expr.h"
 #include "algebra/bgp.h"
 #include "algebra/variablebindings.h"
@@ -44,8 +43,6 @@ hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size
 int hx_free_graphpattern ( hx_graphpattern* p );
 
 hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* pat, hx_variablebindings* b, hx_nodemap* map );
-
-hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore* );
 
 int hx_graphpattern_variables ( hx_graphpattern* p, hx_node*** vars );
 int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );

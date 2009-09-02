@@ -146,7 +146,7 @@ int main ( int argc, char** argv ) {
 		hx_variablebindings_iter_current( iter, &b );
 		
 		char* string;
-		hx_variablebindings_string( b, results_map, &string );
+		hx_variablebindings_string_with_nodemap( b, results_map, &string );
 		char* chars	= malloc( strlen( string ) + 2 );
 		sprintf(chars, "%s\n", string);
 		MPI_File_write_shared(file, chars, strlen(chars), MPI_BYTE, &status);

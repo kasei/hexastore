@@ -52,6 +52,13 @@ typedef struct {
 	
 	/* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 	hx_container_t* (*triple_orderings)(void* storage, hx_triple*);
+
+	/* Return an ID value for a node. */
+	hx_node_id (*node2id)(void* storage, hx_node* node);
+	
+	/* Return a node object for an ID. Caller is responsible for freeing the node. */
+	hx_node* (*id2node)(void* storage, hx_node_id id);
+	
 } hx_store_vtable;
 
 
@@ -77,6 +84,11 @@ int hx_store_contains_triple ( hx_store* store, hx_triple* triple );
 hx_container_t* hx_store_triple_orderings ( hx_store* store, hx_triple* triple );
 hx_variablebindings_iter* hx_store_get_statements ( hx_store* store, hx_triple* triple, hx_node* sort_variable );
 
+hx_node_id hx_store_get_node_id ( hx_store* store, hx_node* node );
+hx_node* hx_store_get_node ( hx_store* store, hx_node_id id );
+
+int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string );
+int hx_store_variablebindings_debug ( hx_store* store, hx_variablebindings* b );
 
 #ifdef __cplusplus
 }

@@ -356,7 +356,7 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 // 		fprintf( stderr, "- batch:\n" );
 // 		for (int i = 0; i < *batch_size; i++) {
 // 			fprintf( stderr, "- [%d] - ", i );
-// 			hx_variablebindings_debug( (*batch)[ i ], NULL );
+// 			hx_variablebindings_debug( (*batch)[ i ] );
 // 		}
 		return 0;
 	} else {

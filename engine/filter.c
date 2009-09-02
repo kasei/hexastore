@@ -151,7 +151,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		
 // 		{
 // 			char* string;
-// 			hx_variablebindings_string( b, map, &string );
+// 			hx_variablebindings_string_with_nodemap( b, map, &string );
 // 			fprintf( stderr, "- got variablebindings in filter: %s\n", string );
 // 			free(string);
 // 		}

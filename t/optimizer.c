@@ -571,11 +571,6 @@ void execute_bgp_test1 ( hx_hexastore* hx ) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current(iter, &b);
 		
-// 		char* string;
-// 		hx_variablebindings_string(b, map, &string);
-// 		fprintf( stderr, "%s\n", string );
-// 		free(string);
-		
 		hx_variablebindings_iter_next(iter);
 		counter++;
 	}

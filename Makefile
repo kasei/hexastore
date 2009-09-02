@@ -4,15 +4,16 @@ CC			= gcc $(CFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 
-STORE_OBJECTS	= store/store.o store/hexastore/hexastore.o store/hexastore/index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
-MISC_OBJECTS	= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
-RDF_OBJECTS		= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS	= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o
-ALGEBRA_OBJECTS	= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
-PARSER_OBJECTS	= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
+HEXASTORE_OBJECTS	= store/hexastore/hexastore.o store/hexastore/index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
+STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS)
+MISC_OBJECTS		= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
+RDF_OBJECTS			= rdf/node.o rdf/triple.o
+ENGINE_OBJECTS		= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
+ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
+PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
 # MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
-OPT_OBJECTS		= optimizer/optimizer.o optimizer/plan.o
-OBJECTS			= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) # $(OPT_OBJECTS)
+OPT_OBJECTS			= optimizer/optimizer.o optimizer/plan.o
+OBJECTS				= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) # $(OPT_OBJECTS)
 
 default: parse print optimize tests examples parse_query
 
@@ -68,6 +69,12 @@ misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
 
 misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h hexastore_types.h
 	$(CC) $(INC) -c -o misc/idmap.o misc/idmap.c
+
+engine/bgp.o: engine/bgp.c engine/bgp.h hexastore_types.h
+	$(CC) $(INC) -c -o engine/bgp.o engine/bgp.c
+
+engine/graphpattern.o: engine/graphpattern.c engine/graphpattern.h hexastore_types.h
+	$(CC) $(INC) -c -o engine/graphpattern.o engine/graphpattern.c
 
 engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c

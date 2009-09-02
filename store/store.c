@@ -59,3 +59,67 @@ hx_variablebindings_iter* hx_store_get_statements ( hx_store* store, hx_triple* 
 hx_container_t* hx_store_triple_orderings ( hx_store* store, hx_triple* triple ) {
 	return store->vtable->triple_orderings( store, triple );
 }
+
+hx_node_id hx_store_get_node_id ( hx_store* store, hx_node* node ) {
+	return store->vtable->node2id( store, node );
+}
+
+hx_node* hx_store_get_node ( hx_store* store, hx_node_id id ) {
+	return store->vtable->id2node( store, id );
+}
+
+int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string ) {
+	int size	= b->size;
+	hx_node_id* id	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
+	char** nodestrs	= (char**) calloc( size, sizeof( char* ) );
+	size_t len	= 5;
+	int i;
+	for (i = 0; i < size; i++) {
+		hx_node_id id	= b->nodes[ i ];
+		hx_node* node	= hx_store_get_node( store, id );
+		hx_node_string( node, &( nodestrs[i] ) );
+		len	+= strlen( nodestrs[i] ) + 2 + strlen(b->names[i]) + 1;
+	}
+	*string	= (char*) malloc( len );
+	if (*string == NULL) {
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_string\n" );
+	}
+	char* p			= *string;
+	if (*string == NULL) {
+		free( id );
+		free( nodestrs );
+		fprintf( stderr, "*** Failed to allocated memory in hx_variablebindings_string\n" );
+		return 1;
+	}
+	
+	strcpy( p, "{ " );
+	p	+= 2;
+	for (i = 0; i < size; i++) {
+		strcpy( p, b->names[i] );
+		p	+= strlen( b->names[i] );
+		
+		strcpy( p, "=" );
+		p	+= 1;
+		
+		strcpy( p, nodestrs[i] );
+		p	+= strlen( nodestrs[i] );
+		free( nodestrs[i] );
+		if (i == size-1) {
+			strcpy( p, " }" );
+		} else {
+			strcpy( p, ", " );
+		}
+		p	+= 2;
+	}
+	free( nodestrs );
+	free( id );
+	return 0;
+}
+
+int hx_store_variablebindings_debug ( hx_store* store, hx_variablebindings* b ) {
+	char* string;
+	hx_store_variablebindings_string( store, b, &string );
+	fprintf( stderr, "%s\n", string );
+	free(string);
+	return 0;
+}

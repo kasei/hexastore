@@ -307,7 +307,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_nodemap* map, hx_node*
 				fprintf( stderr, "eval expression: %s\n", e_sse );
 				free( e_sse );
 				if (b != NULL) {
-					hx_variablebindings_string( b, map, &bstring );
+					hx_variablebindings_string_with_nodemap( b, map, &bstring );
 					fprintf( stderr, "- using bindings: %s\n", bstring );
 					free( bstring );
 				}

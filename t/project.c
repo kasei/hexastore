@@ -122,19 +122,6 @@ void project_test1 ( void ) {
 		hx_variablebindings_iter_next( iter );
 		ok1( hx_variablebindings_iter_finished( iter ) );
 	
-// 	while (!hx_variablebindings_iter_finished( iter )) {
-// 		hx_variablebindings* b;
-// 		hx_node_id s, p, o;
-// 		hx_variablebindings_iter_current( iter, &b );
-// 		char* string;
-// 		hx_variablebindings_string( b, map, &string );
-// 		fprintf( stdout, "%s\n", string );
-// 		free( string );
-// 		
-// 		hx_free_variablebindings( b );
-// 		hx_variablebindings_iter_next( iter );
-// 	}
-	
 		hx_free_variablebindings_iter( iter );
 	}
 	

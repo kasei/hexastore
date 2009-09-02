@@ -292,7 +292,7 @@ void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
 	int i;
 	for (i = 0; i < info->length; i++) {
 		char* string;
-		hx_variablebindings_string( info->bindings[i], NULL, &string );
+		hx_variablebindings_string( info->bindings[i], &string );
 		fprintf( stderr, "\t[%d] %s\n", i, string );
 	}
 }
@@ -315,7 +315,7 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 	for (i = 0; i < info->length; i++) {
 		fprintf( stderr, "[%d]\n", i );
 		char* string;
-		hx_variablebindings_string( info->bindings[i], NULL, &string );
+		hx_variablebindings_string( info->bindings[i], &string );
 		fprintf( stderr, "%s%s  [%d] %s\n", indent, header, i, string );
 	}
 	free(indent);

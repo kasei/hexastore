@@ -58,21 +58,6 @@ void materialize_iter_test ( void ) {
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_materialize_iter( _iter );
 	
-// 	while (!hx_variablebindings_iter_finished( iter )) {
-// 		hx_variablebindings* b;
-// 		hx_node_id s, p, o;
-// 		hx_variablebindings_iter_current( iter, &b );
-// 		char* string;
-// 		hx_variablebindings_string( b, map, &string );
-// 		fprintf( stdout, "**************** %s\n", string );
-// 		free( string );
-// 		
-// //		hx_free_variablebindings( b );
-// 		hx_variablebindings_iter_next( iter );
-// 		hx_free_variablebindings( b );
-// 	}
-// 	return;
-	
 	_test_iter_expected_values( iter, map );
 	
 	hx_free_variablebindings_iter( iter );
@@ -156,7 +141,7 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 	{
 		// expect the first variable binding to be "subj"
 		name	= hx_variablebindings_name_for_binding( b, 0 );
-		hx_variablebindings_string( b, map, &string );
+		hx_variablebindings_string_with_nodemap( b, map, &string );
 		free( string );
 		ok1( strcmp( name, "subj" ) == 0);
 	}
@@ -185,7 +170,7 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		ok1( !hx_variablebindings_iter_finished( iter ) );
 		
 		hx_variablebindings_iter_current( iter, &b );
-		hx_variablebindings_string( b, map, &string );
+		hx_variablebindings_string_with_nodemap( b, map, &string );
 //		fprintf( stdout, "[2] bindings: %s\n", string );
 		free( string );
 
@@ -206,7 +191,7 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		ok1( !hx_variablebindings_iter_finished( iter ) );
 		
 		hx_variablebindings_iter_current( iter, &b );
-		hx_variablebindings_string( b, map, &string );
+		hx_variablebindings_string_with_nodemap( b, map, &string );
 //		fprintf( stdout, "[3] bindings: %s\n", string );
 		free( string );
 
@@ -227,7 +212,7 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 		ok1( !hx_variablebindings_iter_finished( iter ) );
 		
 		hx_variablebindings_iter_current( iter, &b );
-		hx_variablebindings_string( b, map, &string );
+		hx_variablebindings_string_with_nodemap( b, map, &string );
 //		fprintf( stdout, "[3] bindings: %s\n", string );
 		free( string );
 

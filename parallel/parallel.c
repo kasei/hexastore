@@ -228,7 +228,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		hx_variablebindings_iter_current( iter, &b );
 		char* buffer	= hx_variablebindings_freeze( b, send_args->map, &len );
 		int size		= hx_variablebindings_size( b );
-//		hx_variablebindings_debug( b, NULL );
+//		hx_variablebindings_debug( b );
 		
 		uint64_t hash	= 0;
 		
@@ -249,13 +249,6 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 // 		fprintf( stderr, "--- hash = %"PRIuHXID" (%d)\n", hash, node );
 // 		fprintf( stderr, "- sending variable bindings to node %d\n", node );
 		send_args->count++;
-		
-// 		if (ctx->join_iteration > 1) {
-// 			char* string;
-// 			hx_variablebindings_string( b, send_args->map, &string );
-// 			fprintf( stderr, "\t{J%d} node %d sending variable bindings %s with length %d to node %d\n", ctx->join_iteration, myrank, string, len, node );
-// 			free(string);
-// 		}
 		
 		async_mpi_session_reset3(ses, buffer, len, node, ses->flags | ASYNC_MPI_FLAG_FREE_BUF);
 		hx_variablebindings_iter_next(iter);
@@ -289,7 +282,7 @@ int _hx_parallel_recv_vb_handler(async_mpi_session* ses, void* args) {
 	
 	if (0) {
 		char* string;
-		hx_variablebindings_string( b, NULL, &string );
+		hx_variablebindings_string( b, &string );
 		fprintf( stderr, "node %d got variable bindings %s from %d\n", myrank, string, ses->peer );
 		free(string);
 	}

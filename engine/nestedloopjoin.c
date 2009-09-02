@@ -132,10 +132,10 @@ int _hx_nestedloopjoin_iter_vb_next ( void* data ) {
 		hx_variablebindings* rhs	= info->rhs_batch[info->rhs_batch_index];
 		
 // 		char* string;
-// 		hx_variablebindings_string( info->lhs_batch[ info->lhs_batch_index ], NULL, &string );
+// 		hx_variablebindings_string( info->lhs_batch[ info->lhs_batch_index ], &string );
 // 		fprintf( stderr, "- new lhs result in nestedloopjoin: %s\n", string );
 // 		free(string);
-// 		hx_variablebindings_string( info->rhs_batch[ info->rhs_batch_index ], NULL, &string );
+// 		hx_variablebindings_string( info->rhs_batch[ info->rhs_batch_index ], &string );
 // 		fprintf( stderr, "- new rhs result in nestedloopjoin: %s\n", string );
 // 		free(string);
 		

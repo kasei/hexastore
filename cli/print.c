@@ -32,7 +32,7 @@ hx_node* node_for_string ( char* string, hx_hexastore* hx );
 hx_node_id node_id_for_string ( char* string, hx_hexastore* hx );
 hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t* varmap );
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
-void print_variablebindings ( hx_nodemap* map, hx_variablebindings* b, int count );
+void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int count );
 char* variable_name ( varmap_t* varmap, int id );
 
 void help (int argc, char** argv) {
@@ -80,7 +80,7 @@ int main (int argc, char** argv) {
 		while (!hx_variablebindings_iter_finished(iter)) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
-			print_variablebindings( map, b, count++ );
+			print_variablebindings( hx, b, count++ );
 			hx_free_variablebindings( b );
 			hx_variablebindings_iter_next(iter);
 		}
@@ -124,7 +124,7 @@ int main (int argc, char** argv) {
 			while (!hx_variablebindings_iter_finished(iter)) {
 				hx_variablebindings* b;
 				hx_variablebindings_iter_current( iter, &b );
-				print_variablebindings( map, b, count++ );
+				print_variablebindings( hx, b, count++ );
 				hx_free_variablebindings( b );
 				hx_variablebindings_iter_next(iter);
 			}
@@ -156,7 +156,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
 			char* string;
-			hx_variablebindings_string( b, map, &string );
+			hx_store_variablebindings_string( hx->store, b, &string );
 			fprintf( stdout, "%s\n", string );
 			free( string );
 			
@@ -192,7 +192,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
 			char* string;
-			hx_variablebindings_string( b, map, &string );
+			hx_store_variablebindings_string( hx->store, b, &string );
 			fprintf( stdout, "%s\n", string );
 			free( string );
 			
@@ -205,7 +205,6 @@ int main (int argc, char** argv) {
 		char* uri	= argv[3];
 		hx_node* node	= node_for_string( uri, hx );
 		
-		hx_node* v1		= hx_new_named_variable( hx, "subj" );
 		hx_node* p1		= hx_new_named_variable( hx, "p1" );
 		hx_node* p2		= hx_new_named_variable( hx, "p2" );
 		hx_node* o1		= hx_new_named_variable( hx, "o1" );
@@ -223,7 +222,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
 			char* string;
-			hx_variablebindings_string( b, map, &string );
+			hx_store_variablebindings_string( hx->store, b, &string );
 			fprintf( stdout, "%s\n", string );
 			free( string );
 			
@@ -267,7 +266,7 @@ int main (int argc, char** argv) {
 			hx_node* on	= node_for_string_with_varmap( obj, hx, &varmap );
 
 			hx_triple* tj	= hx_new_triple( sn, pn, on );
-			hx_variablebindings_iter* _iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+			hx_variablebindings_iter* _iter	= hx_new_variablebindings_iter_for_triple( hx, tj, HX_SUBJECT );
 			
 			fprintf( stderr, "constructed variable bindings iterator #%d... constructing mergejoin...\n", _count++ );
 			hx_variablebindings_iter* join	= hx_new_mergejoin_iter( iter, _iter );
@@ -278,7 +277,7 @@ int main (int argc, char** argv) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
 			char* string;
-			hx_variablebindings_string( b, map, &string );
+			hx_store_variablebindings_string( hx->store, b, &string );
 			fprintf( stdout, "%s\n", string );
 			free( string );
 			
@@ -305,7 +304,7 @@ int main (int argc, char** argv) {
 		while (!hx_variablebindings_iter_finished(iter)) {
 			hx_variablebindings* b;
 			hx_variablebindings_iter_current( iter, &b );
-			print_variablebindings( map, b, count++ );
+			print_variablebindings( hx, b, count++ );
 			hx_free_variablebindings( b );
 			hx_variablebindings_iter_next(iter);
 		}
@@ -334,9 +333,9 @@ void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, i
 	free( so );
 }
 
-void print_variablebindings ( hx_nodemap* map, hx_variablebindings* b, int count ) {
+void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int count ) {
 	char* string;
-	hx_variablebindings_string( b, map, &string );
+	hx_store_variablebindings_string( hx->store, b, &string );
 	if (count > 0) {
 		fprintf( stdout, "[%d] ", count );
 	}

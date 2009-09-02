@@ -63,11 +63,6 @@ void filter_test1 ( void ) {
 		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, map, "obj" );
 		ok1( hx_node_is_literal(obj) == 1 );
 		
-// 		char* string;
-// 		hx_variablebindings_string( b, map, &string );
-// 		fprintf( stderr, "<< %s >>\n", string );
-// 		free(string);
-		
 		hx_variablebindings_iter_next( iter );
 	}
 	ok1( counter == 6 );

@@ -13,7 +13,7 @@ void ___hash_debug_1 ( void* key, int klen, void* value ) {
 	hx_variablebindings* b	= (hx_variablebindings*) value;
 	
 	char* string;
-	hx_variablebindings_string( b, NULL, &string );
+	hx_variablebindings_string( b, &string );
 //	fprintf( stderr, "\t(%llu => %s)\n", (unsigned long long) id, string );
 	free(string);
 }
@@ -57,7 +57,7 @@ int _hx_hashjoin_prime_results ( _hx_hashjoin_iter_vb_info* info ) {
 		hx_variablebindings_iter_current( info->lhs, &( info->current_lhs ) );
 		
 		char* string;
-		hx_variablebindings_string( info->current_lhs, NULL, &string );
+		hx_variablebindings_string( info->current_lhs, &string );
 //		fprintf( stderr, "Looking for results that join with: %s\n", string );
 		free(string);
 
@@ -72,7 +72,7 @@ int _hx_hashjoin_prime_results ( _hx_hashjoin_iter_vb_info* info ) {
 //			fprintf( stderr, "rhs_matches_index: %d\n", info->rhs_matches_index );
 			hx_variablebindings* rhs	= (hx_variablebindings*) hx_container_item( info->rhs_matches, info->rhs_matches_index );
 			char* string;
-			hx_variablebindings_string( rhs, NULL, &string );
+			hx_variablebindings_string( rhs, &string );
 //			fprintf( stderr, "- matching RHS result: %s\n", string );
 			free(string);
 			
@@ -118,7 +118,7 @@ int _hx_hashjoin_iter_vb_current ( void* data, void* results ) {
 	*b	= hx_copy_variablebindings( info->current );
 	
 	char* string;
-	hx_variablebindings_string( info->current, NULL, &string );
+	hx_variablebindings_string( info->current, &string );
 //	fprintf( stderr, "- hashjoin returning result: %s\n", string );
 	free(string);
 	
@@ -162,7 +162,7 @@ int _hx_hashjoin_iter_vb_next ( void* data ) {
 		for (; info->rhs_matches_index < size; info->rhs_matches_index++) {
 			hx_variablebindings* rhs	= (hx_variablebindings*) hx_container_item( info->rhs_matches, info->rhs_matches_index );
 			char* string;
-			hx_variablebindings_string( rhs, NULL, &string );
+			hx_variablebindings_string( rhs, &string );
 //			fprintf( stderr, "- matching RHS result: %s\n", string );
 			free(string);
 			

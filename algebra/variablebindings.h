@@ -42,8 +42,9 @@ int hx_free_variablebindings_nodes ( hx_variablebindings_nodes* b );
 hx_variablebindings* hx_variablebindings_project ( hx_variablebindings* b, int newsize, int* columns );
 hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b, int newsize, char** names );
 
-int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* m, char** string );
-void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m );
+int hx_variablebindings_string_with_nodemap ( hx_variablebindings* b, hx_nodemap* map, char** string );
+int hx_variablebindings_string ( hx_variablebindings* b, char** string );
+void hx_variablebindings_debug ( hx_variablebindings* b );
 
 int hx_variablebindings_set_names ( hx_variablebindings* b, char** names );
 int hx_variablebindings_size ( hx_variablebindings* b );

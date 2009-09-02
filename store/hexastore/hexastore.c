@@ -26,6 +26,8 @@ hx_store* _hx_new_store_hexastore_with_hx ( void* world, void* hx ) {
 	vtable->get_statements		= hx_store_hexastore_get_statements;
 	vtable->sync				= hx_store_hexastore_sync;
 	vtable->triple_orderings	= hx_store_hexastore_triple_orderings;
+	vtable->id2node				= hx_store_hexastore_id2node;
+	vtable->node2id				= hx_store_hexastore_node2id;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -52,10 +54,15 @@ hx_nodemap* hx_store_hexastore_get_nodemap ( hx_store* store ) {
 	return hx->map;
 }
 
-// int hx_store_hexastore_init (hx_store* store, void* options) {
-// 	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
-// 	return 0;
-// }
+int hx_store_hexastore_debug (hx_store* store) {
+	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
+	hx_store_hexastore_index_debug( hx->spo );
+	return 0;
+}
+
+
+
+/* ************************************************************************** */
 
 /* Close storage/model context */
 int hx_store_hexastore_close (hx_store* store) {
@@ -340,22 +347,16 @@ hx_container_t* hx_store_hexastore_triple_orderings (hx_store* store, hx_triple*
 	return NULL;
 }
 
+/* Return an ID value for a node. */
+hx_node_id hx_store_hexastore_node2id (hx_store* store, hx_node* node) {
+	hx_nodemap* map	= hx_store_hexastore_get_nodemap( store );
+	return hx_nodemap_get_node_id( map, node );
+}
 
-
-
-
-
-
-
-
-
-
-
-
-int hx_store_hexastore_debug (hx_store* store) {
-	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
-	hx_store_hexastore_index_debug( hx->spo );
-	return 0;
+/* Return a node object for an ID. Caller is responsible for freeing the node. */
+hx_node* hx_store_hexastore_id2node (hx_store* store, hx_node_id id) {
+	hx_nodemap* map	= hx_store_hexastore_get_nodemap( store );
+	return hx_nodemap_get_node( map, id );
 }
 
 

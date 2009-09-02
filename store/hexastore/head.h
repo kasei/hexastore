@@ -20,6 +20,8 @@ extern "C" {
 #include "hexastore_types.h"
 #include "store/hexastore/vector.h"
 
+#define HEAD_TREE_BRANCHING_SIZE				252
+
 typedef struct {
 	uintptr_t triples_count;
 	uintptr_t tree;

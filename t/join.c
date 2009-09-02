@@ -87,14 +87,14 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 			{
 				// expect the first variable binding to be "x"
 				name	= hx_variablebindings_name_for_binding( b, 0 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "x" ) == 0);
 			}
 			{
 				// expect the second variable binding to be "y"
 				name	= hx_variablebindings_name_for_binding( b, 1 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "y" ) == 0);
 			}
@@ -146,14 +146,14 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 			{
 				// expect the first variable binding to be "a"
 				name	= hx_variablebindings_name_for_binding( b, 0 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "a" ) == 0);
 			}
 			{
 				// expect the second variable binding to be "b"
 				name	= hx_variablebindings_name_for_binding( b, 1 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "b" ) == 0);
 			}
@@ -161,14 +161,14 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 			{
 				// expect the third variable binding to be "c"
 				name	= hx_variablebindings_name_for_binding( b, 2 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "c" ) == 0);
 			}
 			{
 				// expect the fourth variable binding to be "d"
 				name	= hx_variablebindings_name_for_binding( b, 3 );
-				hx_variablebindings_string( b, map, &string );
+				hx_store_variablebindings_string( hx->store, b, &string );
 				free( string );
 				ok1( strcmp( name, "d" ) == 0);
 			}
@@ -230,14 +230,14 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	{
 		// expect the first variable binding to be "from"
 		name	= hx_variablebindings_name_for_binding( b, 0 );
-		hx_variablebindings_string( b, map, &string );
+		hx_store_variablebindings_string( hx->store, b, &string );
 		free( string );
 		ok1( strcmp( name, "from" ) == 0);
 	}
 	{
 		// expect the first variable binding to be "from"
 		name	= hx_variablebindings_name_for_binding( b, 2 );
-		hx_variablebindings_string( b, map, &string );
+		hx_store_variablebindings_string( hx->store, b, &string );
 		free( string );
 		ok1( strcmp( name, "to" ) == 0);
 	}
@@ -294,11 +294,6 @@ void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 			int size	= hx_variablebindings_size( b );
 			ok1( size == 2 );
 			counter++;
-			
-// 			char* string;
-// 			hx_variablebindings_string( b, map, &string );
-// 			fprintf( stderr, "*** %s\n", string );
-// 			free( string );
 			
 			hx_free_variablebindings( b );
 			hx_variablebindings_iter_next( iter );

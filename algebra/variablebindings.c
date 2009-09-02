@@ -137,7 +137,11 @@ hx_variablebindings* hx_variablebindings_project_names ( hx_variablebindings* b,
 	return c;
 }
 
-int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char** string ) {
+int hx_variablebindings_string ( hx_variablebindings* b, char** string ) {
+	return hx_variablebindings_string_with_nodemap( b, NULL, string );
+}
+
+int hx_variablebindings_string_with_nodemap ( hx_variablebindings* b, hx_nodemap* map, char** string ) {
 	int size	= b->size;
 	hx_node_id* id	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	char** nodestrs	= (char**) calloc( size, sizeof( char* ) );
@@ -194,14 +198,12 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 	return 0;
 }
 
-void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m ) {
+void hx_variablebindings_debug ( hx_variablebindings* b ) {
 	char* string;
-	if (hx_variablebindings_string( b, m, &string ) != 0) {
+	if (hx_variablebindings_string( b, &string ) != 0) {
 		return;
 	}
-
 	fprintf( stderr, "%s\n", string );
-	
 	free( string );
 }
 
@@ -217,12 +219,12 @@ int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** stri
 	}
 	*string	= (char*) malloc( len );
 	if (*string == NULL) {
-		fprintf( stderr, "*** malloc failed in hx_variablebindings_string\n" );
+		fprintf( stderr, "*** malloc failed in hx_variablebindings_nodes_string\n" );
 	}
 	char* p			= *string;
 	if (*string == NULL) {
 		free( nodestrs );
-		fprintf( stderr, "*** Failed to allocated memory in hx_variablebindings_string\n" );
+		fprintf( stderr, "*** Failed to allocated memory in hx_variablebindings_nodes_string\n" );
 		return 1;
 	}
 	
