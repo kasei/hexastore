@@ -17,7 +17,6 @@ extern "C" {
 #include <unistd.h>
 
 #include "hexastore_types.h"
-#include "misc/nodemap.h"
 #include "rdf/node.h"
 #include "misc/util.h"
 
@@ -28,13 +27,6 @@ typedef struct {
 	hx_node* graph;
 } hx_triple;
 
-typedef struct {
-	hx_node_id subject;
-	hx_node_id predicate;
-	hx_node_id object;
-	hx_node_id graph;
-} hx_triple_id;
-
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );
 hx_triple* hx_new_triple2( hx_node* s, hx_node* p, hx_node* o, hx_node* g );
 hx_triple* hx_copy_triple ( hx_triple* t );
@@ -44,7 +36,6 @@ hx_node* hx_triple_node ( hx_triple* t, int i );
 
 int hx_triple_bound_count ( hx_triple* t );
 
-int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string );
 int hx_triple_string ( hx_triple* t, char** string );
 int hx_triple_debug ( hx_triple* t );
 

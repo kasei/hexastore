@@ -68,48 +68,6 @@ int hx_triple_bound_count ( hx_triple* t ) {
 	return bound;
 }
 
-int hx_triple_id_string ( hx_triple_id* t, hx_nodemap* map, char** string ) {
-	hx_node* subj	= hx_nodemap_get_node( map, t->subject );
-	hx_node* pred	= hx_nodemap_get_node( map, t->predicate );
-	hx_node* obj	= hx_nodemap_get_node( map, t->object );
-	hx_node* graph	= hx_nodemap_get_node( map, t->graph );
-	
-	int len	= 12;	// "(triple * * *)"
-					// "(quad * * * *)"
-	char *s, *p, *o, *g;
-	hx_node_string( subj, &s );
-	hx_node_string( pred, &p );
-	hx_node_string( obj, &o );
-	hx_node_string( graph, &g );
-	
-	len	+= strlen( s );
-	len	+= strlen( p );
-	len	+= strlen( o );
-	if (graph) {
-		len	+= strlen( g );
-	}
-	
-	*string	= malloc( len );
-	if (*string == NULL) {
-		fprintf( stderr, "*** malloc failed in hx_triple_id_string\n" );
-	}
-	if (*string == NULL) {
-		return 1;
-	}
-	
-	if (graph) {
-		snprintf( *string, len, "(quad %s %s %s %s)", s, p, o, g );
-		free( g );
-	} else {
-		snprintf( *string, len, "(triple %s %s %s)", s, p, o );
-	}
-	free( s );
-	free( p );
-	free( o );
-	return 0;
-	
-}
-
 int hx_triple_string ( hx_triple* t, char** string ) {
 	int len	= 12;	// "(triple * * *)"
 					// "(quad * * * *)"
