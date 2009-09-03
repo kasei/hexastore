@@ -1,4 +1,5 @@
 #include "parser/parser.h"
+#include "store/hexastore/hexastore.h"
 
 void _hx_parser_handle_triple(void* user_data, const raptor_statement* triple);
 int  _hx_parser_add_triples_batch ( hx_parser* index );
@@ -118,7 +119,6 @@ int _hx_parser_get_triple_nodes( hx_parser* index, const raptor_statement* tripl
 
 hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
 	hx_node_id id	= 0;
-	char node_type;
 	char* value;
 	int needs_free	= 0;
 	char* language	= NULL;
@@ -130,16 +130,13 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 		case RAPTOR_IDENTIFIER_TYPE_PREDICATE:
 			value		= (char*) raptor_uri_as_string((raptor_uri*)node);
 			newnode		= hx_new_node_resource( value );
-			node_type	= 'R';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_ANONYMOUS:
 			value		= (char*) node;
 			newnode		= hx_new_node_blank( value );
-			node_type	= 'B';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_LITERAL:
 			value		= (char*)node;
-			node_type	= 'L';
 			if(lang && type == RAPTOR_IDENTIFIER_TYPE_LITERAL) {
 				language	= (char*) lang;
 				newnode		= (hx_node*) hx_new_node_lang_literal( value, language );
@@ -153,7 +150,6 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 		case RAPTOR_IDENTIFIER_TYPE_XML_LITERAL:
 			value		= (char*) node;
 			datatype	= "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
-			node_type	= 'L';
 			newnode		= (hx_node*) hx_new_node_dt_literal( value, datatype );
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_ORDINAL:
@@ -164,7 +160,6 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 			}
 			sprintf( value, "http://www.w3.org/1999/02/22-rdf-syntax-ns#_%d", *((int*) node) );
 			newnode		= hx_new_node_resource( value );
-			node_type	= 'R';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_UNKNOWN:
 		default:
@@ -172,17 +167,8 @@ hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type t
 			return 0;
 	}
 	
-	id	= hx_nodemap_add_node( hx_get_nodemap( index->hx ), newnode );
-	if (0) {
-		char* string;
-		hx_node_string( newnode, &string );
-		fprintf( stderr, "*** '%s' => %d\n", string, (int) id );
-		free(string);
-	}
-	
 	if (needs_free) {
 		free( value );
-		needs_free	= 0;
 	}
 	return newnode;
 }
@@ -222,7 +208,7 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 		*(p++)	= encodingTable[ i ];
 		copy >>= 4;
 	}
-	*(p++)	= (char) 0;
+	*(p+1)	= (char) 0;
 	if (user_bnodeid != NULL) {
 		free( user_bnodeid );
 	}

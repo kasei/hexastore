@@ -60,7 +60,7 @@ void eval_test1 ( void ) {
 	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
 	hx_hexastore* hx		= hx_new_hexastore( NULL );
-	hx_nodemap* map			= hx_get_nodemap( hx );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
 	hx_bgp* b				= _test_bgp1();
@@ -73,13 +73,13 @@ void eval_test1 ( void ) {
 		hx_variablebindings* vb;
 		hx_variablebindings_iter_current( iter, &vb );
 		
-		hx_node* obj	= hx_variablebindings_node_for_binding_name( vb, map, "x" );
+		hx_node* obj	= hx_variablebindings_node_for_binding_name( vb, hx->store, "x" );
 		ok1( hx_node_is_literal(obj) == 1 );
 		char* v	= hx_node_value(obj);
 		ok1( *v == 'l' );
 		ok1( v[1] == '2' || v[1] == '5' );
 		
-		hx_node* subj	= hx_variablebindings_node_for_binding_name( vb, map, "y" );
+		hx_node* subj	= hx_variablebindings_node_for_binding_name( vb, hx->store, "y" );
 		ok1( hx_node_is_resource(subj) == 1 );
 		ok1( hx_node_cmp(subj, r1) == 0 );
 		
@@ -96,7 +96,7 @@ void eval_test2 ( void ) {
 	fprintf( stdout, "# eval test 2\n" );
 	hx_expr_debug	= 1;
 	hx_hexastore* hx		= hx_new_hexastore( NULL );
-	hx_nodemap* map			= hx_get_nodemap( hx );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
 	hx_expr* e				= hx_new_builtin_expr2( HX_EXPR_OP_EQUAL, hx_new_node_expr(v1), hx_new_node_expr(l5) );
@@ -110,13 +110,13 @@ void eval_test2 ( void ) {
 		hx_variablebindings* vb;
 		hx_variablebindings_iter_current( iter, &vb );
 		
-		hx_node* obj	= hx_variablebindings_node_for_binding_name( vb, map, "x" );
+		hx_node* obj	= hx_variablebindings_node_for_binding_name( vb, hx->store, "x" );
 		ok1( hx_node_is_literal(obj) == 1 );
 		char* v	= hx_node_value(obj);
 		ok1( *v == 'l' );
 		ok1( v[1] == '5' );
 		
-		hx_node* subj	= hx_variablebindings_node_for_binding_name( vb, map, "y" );
+		hx_node* subj	= hx_variablebindings_node_for_binding_name( vb, hx->store, "y" );
 		ok1( hx_node_is_resource(subj) == 1 );
 		ok1( hx_node_cmp(subj, r1) == 0 );
 		
@@ -266,7 +266,8 @@ void variable_test2 ( void ) {
 void gp_varsub_test1 ( void ) {
 	fprintf( stdout, "# variable substitution test\n" );
 	{
-		hx_nodemap* map			= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id l4_id		= hx_nodemap_add_node( map, l4 );
 		
 		hx_expr* e			= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, hx_new_node_expr(v1) );
@@ -279,7 +280,7 @@ void gp_varsub_test1 ( void ) {
 			nodes[0]				= l4_id;
 			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
 			
-			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, map );
+			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, hx->store );
 			char* string;
 			hx_graphpattern_sse( q, &string, "  ", 0 );
 			ok( strcmp( string, "(filter\n  (sparql:str \"l4\")\n  (bgp\n    (triple ?y <p1> \"l1\")\n    (triple ?y <p2> \"l4\")\n  )\n)\n" ) == 0, "expected graphpattern after varsub" );

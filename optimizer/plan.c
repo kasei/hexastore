@@ -232,7 +232,7 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
 	hx_hexastore* hx	= ctx->hx;
-	hx_nodemap* map		= hx_get_nodemap(hx);
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap(hx->store);
 	
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t		= plan->triple;

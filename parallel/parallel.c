@@ -1089,7 +1089,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	}
 	free( variables );
 	
-	hx_nodemap* triples_map				= hx_get_nodemap( hx );
+	hx_nodemap* triples_map				= hx_store_hexastore_get_nodemap( hx );
 	hx_nodemap* lhs_map					= triples_map;
 	hx_triple* t0						= hx_bgp_triple( b, 0 );
 	hx_variablebindings_iter* lhs		= hx_new_variablebindings_iter_for_triple( hx, t0, HX_OBJECT );

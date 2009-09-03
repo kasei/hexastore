@@ -33,7 +33,7 @@ int main ( void ) {
 
 void test_small_iter ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>

@@ -560,7 +560,7 @@ void optimize_bgp_test2 ( hx_hexastore* hx ) {
 
 void execute_bgp_test1 ( hx_hexastore* hx ) {
 	fprintf( stdout, "# execute_bgp_test1\n" );
-	hx_nodemap* map	= hx_get_nodemap(hx);
+	hx_nodemap* map	= hx_store_hexastore_get_nodemap(hx->store);
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
 	hx_bgp* b	= hx_bgp_parse_string("{ ?x a <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet> ; <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y }");

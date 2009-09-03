@@ -14,7 +14,7 @@ void ___hash_debug_1 ( void* key, int klen, void* value ) {
 	
 	char* string;
 	hx_variablebindings_string( b, &string );
-//	fprintf( stderr, "\t(%llu => %s)\n", (unsigned long long) id, string );
+	fprintf( stderr, "\t(%llu => %s)\n", (unsigned long long) id, string );
 	free(string);
 }
 
@@ -241,6 +241,7 @@ hx_variablebindings_iter* hx_new_hashjoin_iter2 ( hx_variablebindings_iter* lhs,
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_hashjoin_iter\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_hashjoin_iter_vb_finished;
 	vtable->current		= _hx_hashjoin_iter_vb_current;

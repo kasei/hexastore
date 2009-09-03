@@ -131,7 +131,7 @@ uint64_t hx_triple_hash_on_node ( hx_triple* t, hx_node_position_t pos, hx_hash_
 		default:
 			fprintf( stderr, "unrecognized triple node position %d in hx_triple_hash_on_node\n", pos );
 	};
-	char* string;
+	char* string	= NULL;
 	hx_node_string( n, &string );
 	uint64_t h	= hashfunc( string );
 	free(string);

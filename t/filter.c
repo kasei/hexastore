@@ -1,4 +1,5 @@
 #include "hexastore.h"
+#include "store/hexastore/hexastore.h"
 #include "engine/filter.h"
 #include "algebra/expr.h"
 #include "test/tap.h"
@@ -45,14 +46,14 @@ int main ( void ) {
 void filter_test1 ( void ) {
 	fprintf( stdout, "# isliteral filter test\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
 	hx_node* x						= hx_new_named_variable( hx, "obj" );
 	hx_expr* x_e					= hx_new_node_expr( x );
 	hx_expr* e						= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, map );
+	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, hx->store );
 	
 	int counter	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
@@ -60,7 +61,7 @@ void filter_test1 ( void ) {
 //		fprintf( stderr, "- loop iteration %d\n", counter );
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, map, "obj" );
+		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, hx->store, "obj" );
 		ok1( hx_node_is_literal(obj) == 1 );
 		
 		hx_variablebindings_iter_next( iter );
@@ -74,7 +75,7 @@ void filter_test2 ( void ) {
 	hx_expr_debug	= 1;
 	fprintf( stdout, "# term equal filter test\n" );
 	hx_hexastore* hx		= hx_new_hexastore( NULL );
-	hx_nodemap* map			= hx_get_nodemap( hx );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
 	hx_node* v						= hx_new_named_variable( hx, "obj" );
@@ -84,18 +85,18 @@ void filter_test2 ( void ) {
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	int counter	= 0;
 	
-	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, map );
+	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, hx->store );
 	
 	while (!hx_variablebindings_iter_finished( iter )) {
 		counter++;
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, map, "obj" );
+		hx_node* obj	= hx_variablebindings_node_for_binding_name( b, hx->store, "obj" );
 		ok1( hx_node_is_resource(obj) == 1 );
 		ok1( hx_node_cmp(obj, r1) == 0 );
 		ok1( obj != r1 );
 
-		hx_node* subj	= hx_variablebindings_node_for_binding_name( b, map, "subj" );
+		hx_node* subj	= hx_variablebindings_node_for_binding_name( b, hx->store, "subj" );
 		ok1( hx_node_is_resource(subj) == 1 );
 		ok1( hx_node_cmp(subj, r2) == 0 );
 		ok1( subj != r2 );

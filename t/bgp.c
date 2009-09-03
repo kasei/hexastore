@@ -1,5 +1,6 @@
 #include "hexastore.h"
 #include "algebra/bgp.h"
+#include "store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void bgp1_test ( void );
@@ -178,7 +179,8 @@ void bgp_vars_test2 ( void ) {
 
 void bgp_varsub_test1 ( void ) {
 	{
-		hx_nodemap* map			= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
 		
@@ -191,7 +193,7 @@ void bgp_varsub_test1 ( void ) {
 			nodes[0]				= p1_id;
 			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
 			
-			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
 			hx_bgp_sse( c, &string, "  ", 0 );
 			ok( strcmp( string, "(bgp\n  (triple <r1> <p1> \"l1\")\n)\n" ) == 0, "expected bgp after varsub" );
@@ -206,7 +208,7 @@ void bgp_varsub_test1 ( void ) {
 			nodes[0]				= p2_id;
 			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
 			
-			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
 			hx_bgp_sse( c, &string, "  ", 0 );
 			ok( strcmp( string, "(bgp\n  (triple <r1> <p2> \"l1\")\n)\n" ) == 0, "expected bgp after varsub" );
@@ -222,7 +224,8 @@ void bgp_varsub_test1 ( void ) {
 
 void bgp_varsub_test2 ( void ) {
 	{
-		hx_nodemap* map			= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
 		
@@ -236,7 +239,7 @@ void bgp_varsub_test2 ( void ) {
 			nodes[1]				= p1_id;
 			hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
 			
-			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, map );
+			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
 			hx_bgp_sse( c, &string, "  ", 0 );
 			ok( strcmp( string, "(bgp\n  (triple <p1> <p1> <p2>)\n)\n" ) == 0, "expected bgp after varsub" );

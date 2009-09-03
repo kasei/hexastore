@@ -16,8 +16,8 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "index.h"
 #include "store/store.h"
+#include "store/hexastore/index.h"
 #include "store/hexastore/btree.h"
 #include "store/hexastore/head.h"
 #include "store/hexastore/vector.h"

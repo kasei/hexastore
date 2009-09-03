@@ -43,6 +43,7 @@
 /* HEXASTORE STUFF */
 #include "hexastore.h"
 #include "algebra/bgp.h"
+#include "store/store.h"
 extern hx_bgp* parse_bgp_query_string ( char* );
 /*******************/
 
@@ -293,7 +294,6 @@ static void server_run(hx_server *server)
 //     }
 	
 	fprintf( stderr, "query: %s\n", data );
-    hx_nodemap* map	= hx_get_nodemap( server->db );;
 	hx_bgp* b	= parse_bgp_query_string( data );
 	if (b == NULL) {
 		fprintf( stderr, "Failed to parse query\n" );
@@ -312,7 +312,7 @@ static void server_run(hx_server *server)
 		hx_variablebindings_iter_current( iter, &b );
 		for (int i = 0; i < size; i++) {
 			char* string;
-			hx_node* node	= hx_variablebindings_node_for_binding( b, map, i );
+			hx_node* node	= hx_variablebindings_node_for_binding( b, server->db->store, i );
 			hx_node_string( node, &string );
 			fields[i]	= string;
 		}

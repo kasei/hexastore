@@ -142,13 +142,6 @@ hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
 	if (read == 0) {
 		return NULL;
 	} else {
-		list_size_t allocated;
-		if (buffer == 0) {
-			allocated	= used;
-		} else {
-			allocated	= used * 1.5;
-		}
-		
 		hx_terminal* terminal	= hx_new_terminal( NULL );
 		hx_node_id* p	= (hx_node_id*) calloc( used, sizeof( hx_node_id ) );
 		size_t ptr_read	= fread( p, sizeof( hx_node_id ), used, f );

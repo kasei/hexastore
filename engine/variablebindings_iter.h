@@ -40,26 +40,6 @@ typedef struct {
 	void* ptr;
 } hx_variablebindings_iter;
 
-#include "algebra/expr.h"
-#include "engine/materialize.h"
-
-typedef enum {
-	HX_VARIABLEBINDINGS_ITER_SORT_ASCENDING		= 1,
-	HX_VARIABLEBINDINGS_ITER_SORT_DESCENDING	= 2
-} hx_variablebindings_iter_sort_order;
-
-typedef struct {
-	hx_variablebindings_iter_sort_order order;
-	int sparql_order; /* is this ordering based on the SPARQL comparison function? if so, we can use it for 'ORDER BY' clauses, otherwise it's still useful for things like merge-join. */
-	hx_expr* expr;
-} hx_variablebindings_iter_sorting;
-
-hx_variablebindings_iter_sorting* hx_copy_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* );
-hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_node_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_node* node );
-hx_variablebindings_iter_sorting* hx_variablebindings_iter_new_sorting ( hx_variablebindings_iter_sort_order order, int sparql_order, hx_expr* expr );
-int hx_free_variablebindings_iter_sorting ( hx_variablebindings_iter_sorting* sorting );
-int hx_variablebindings_iter_sorting_string ( hx_variablebindings_iter_sorting* sorting, char** string );
-
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void );
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter_with_names ( int size, char** names );
 

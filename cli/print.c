@@ -31,7 +31,7 @@ int _varmap_id2name_cmp ( const void* a, const void* b, void* param ) {
 hx_node* node_for_string ( char* string, hx_hexastore* hx );
 hx_node_id node_id_for_string ( char* string, hx_hexastore* hx );
 hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t* varmap );
-void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
+void print_triple ( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count );
 void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int count );
 char* variable_name ( varmap_t* varmap, int id );
 
@@ -66,7 +66,6 @@ int main (int argc, char** argv) {
 	
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
 	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
-	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
 	fprintf( stderr, "finished loading hexastore from file...\n" );
 	
@@ -315,11 +314,11 @@ int main (int argc, char** argv) {
 	return 0;
 }
 
-void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
+void print_triple ( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
 // 	fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-	hx_node* sn	= hx_nodemap_get_node( map, s );
-	hx_node* pn	= hx_nodemap_get_node( map, p );
-	hx_node* on	= hx_nodemap_get_node( map, o );
+	hx_node* sn	= hx_store_get_node( hx->store, s );
+	hx_node* pn	= hx_store_get_node( hx->store, p );
+	hx_node* on	= hx_store_get_node( hx->store, o );
 	char *ss, *sp, *so;
 	hx_node_string( sn, &ss );
 	hx_node_string( pn, &sp );
@@ -344,7 +343,6 @@ void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int coun
 }
 
 hx_node_id node_id_for_string ( char* string, hx_hexastore* hx ) {
-	hx_nodemap* map	= hx_get_nodemap( hx );
 	static int var_id	= -100;
 	hx_node_id id;
 	hx_node* node;
@@ -356,7 +354,7 @@ hx_node_id node_id_for_string ( char* string, hx_hexastore* hx ) {
 		id	= 0 - atoi( string+1 );
 	} else {
 		node	= hx_new_node_resource( string );
-		id		= hx_nodemap_get_node_id( map, node );
+		id		= hx_store_get_node_id( hx->store, node );
 		hx_free_node( node );
 		if (id <= 0) {
 			fprintf( stderr, "No such subject found: '%s'.\n", string );

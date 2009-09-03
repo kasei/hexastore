@@ -1911,6 +1911,11 @@ hx_expr* generate_expr ( expr_t* e, prologue_t* p, hx_sparqlparser_variable_map_
 
 int variable_id_with_name ( hx_sparqlparser_variable_map_list* vmap, char* name ) {
 	int current_id	= 0;
+
+	if (vmap == NULL) {
+		fprintf( stderr, "*** NULL value passed to variable_id_with_name\n" );
+		return 0;
+	}
 	
 	hx_sparqlparser_variable_map_list* p	= vmap;
 	hx_sparqlparser_variable_map_list* last	= p;
@@ -1927,6 +1932,10 @@ int variable_id_with_name ( hx_sparqlparser_variable_map_list* vmap, char* name 
 	--current_id;
 	
 	hx_sparqlparser_variable_map_list* new	= (hx_sparqlparser_variable_map_list*) calloc( 1, sizeof( hx_sparqlparser_variable_map_list ) );
+	if (new == NULL) {
+		fprintf( stderr, "*** Failed to allocate memory for variable map in variable_id_with_name\n" );
+		return 0;
+	}
 	new->name	= name;
 	new->id		= current_id;
 	new->next	= NULL;

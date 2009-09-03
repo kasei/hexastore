@@ -11,6 +11,9 @@
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"
+#include "engine/bgp.h"
+#include "store/store.h"
+#include "store/hexastore/hexastore.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 int main ( int argc, char** argv ) {
@@ -22,7 +25,6 @@ int main ( int argc, char** argv ) {
 	}
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
 	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
-	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
 	hx_node* x			= hx_new_named_variable( hx, "x" );
@@ -73,10 +75,10 @@ int main ( int argc, char** argv ) {
 		hx_node_id y1id	= hx_variablebindings_node_id_for_binding ( b, y1i );
 		hx_node_id y2id	= hx_variablebindings_node_id_for_binding ( b, y2i );
 		hx_node_id y3id	= hx_variablebindings_node_id_for_binding ( b, y3i );
-		hx_node* x		= hx_nodemap_get_node( map, xid );
-		hx_node* y1		= hx_nodemap_get_node( map, y1id );
-		hx_node* y2		= hx_nodemap_get_node( map, y2id );
-		hx_node* y3		= hx_nodemap_get_node( map, y3id );
+		hx_node* x		= hx_store_get_node( hx->store, xid );
+		hx_node* y1		= hx_store_get_node( hx->store, y1id );
+		hx_node* y2		= hx_store_get_node( hx->store, y2id );
+		hx_node* y3		= hx_store_get_node( hx->store, y3id );
 		
 		char *xs, *y1s, *y2s, *y3s;
 		hx_node_string( x, &xs );
