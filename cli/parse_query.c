@@ -2,6 +2,10 @@
 #include <time.h>
 #include "algebra/bgp.h"
 #include "algebra/graphpattern.h"
+#include "engine/bgp.h"
+#include "engine/graphpattern.h"
+#include "store/hexastore/hexastore.h"
+
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
 extern hx_bgp* parse_bgp_query ( void );
@@ -89,7 +93,7 @@ int main( int argc, char** argv ) {
 	} else {
 		char* sse;
 		hx_bgp_sse( b, &sse, "  ", 0 );
-		fprintf( stdout, sse );
+		fprintf( stdout, "%s\n", sse );
 		free( sse );
 	}
 	
@@ -119,7 +123,7 @@ int main( int argc, char** argv ) {
 				int i;
 				for (i = 0; i < size; i++) {
 					char* string;
-					hx_node* node	= hx_variablebindings_node_for_binding( b, map, i );
+					hx_node* node	= hx_variablebindings_node_for_binding( b, store, i );
 					hx_node_string( node, &string );
 					fprintf( stdout, "\t%s: %s\n", names[i], string );
 					free( string );
