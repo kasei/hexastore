@@ -24,6 +24,7 @@ extern "C" {
 #include "algebra/variablebindings.h"
 #include "algebra/bgp.h"
 #include "optimizer/plan.h"
+#include "engine/variablebindings_iter_sorting.h"
 
 hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp* b );
 

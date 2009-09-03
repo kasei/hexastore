@@ -3,13 +3,15 @@
 int _hx_filter_prime_results ( _hx_filter_iter_vb_info* info );
 int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info );
 
-hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_nodemap* map ) {
+hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_store* store ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_filter_iter\n" );
+		return NULL;
 	}
 	if (iter == NULL) {
 		fprintf( stderr, "*** NULL iterator passed to hx_new_filter_iter\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_filter_iter_vb_finished;
 	vtable->current		= _hx_filter_iter_vb_current;
@@ -26,7 +28,7 @@ hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, h
 	info->iter		= iter;
 	info->expr		= e;
 	info->current	= NULL;
-	info->map		= map;
+	info->store		= store;
 	hx_variablebindings_iter* fiter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return fiter;
 }
@@ -56,9 +58,6 @@ int _hx_filter_iter_vb_next ( void* data ) {
 		_hx_filter_prime_results( info );
 	}
 	
-	hx_variablebindings_iter* iter	= info->iter;
-	hx_expr* e						= info->expr;
-	hx_nodemap* map					= info->map;
 	if (_hx_filter_get_next_result( info ) == 0) {
 		return 0;
 	}
@@ -137,7 +136,7 @@ int _hx_filter_prime_results ( _hx_filter_iter_vb_info* data ) {
 int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 	hx_variablebindings_iter* iter	= info->iter;
 	hx_expr* e						= info->expr;
-	hx_nodemap* map					= info->map;
+	hx_store* store					= info->store;
 	
 	if (info->started == 1) {
 		hx_variablebindings_iter_next( iter );
@@ -151,13 +150,13 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		
 // 		{
 // 			char* string;
-// 			hx_variablebindings_string_with_nodemap( b, map, &string );
+// 			hx_store_variablebindings_string( store, b, &string );
 // 			fprintf( stderr, "- got variablebindings in filter: %s\n", string );
 // 			free(string);
 // 		}
 		
 		
-		int r		= hx_expr_eval( e, b, map, &value );
+		int r		= hx_expr_eval( e, b, store, &value );
 		if (r != 0) {
 // 			fprintf( stderr, "type error in filter\n" );
 			hx_free_variablebindings(b);

@@ -96,6 +96,7 @@ double hx_node_nv ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );
 char* hx_node_dt ( hx_node_dt_literal* n );
 int hx_node_string ( hx_node* n, char** string );
+int hx_node_debug_string ( hx_node* n, char** string );
 int hx_node_debug ( hx_node* n );
 hx_node* hx_node_parse ( char* string );
 

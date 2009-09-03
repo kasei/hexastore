@@ -34,7 +34,7 @@ int main ( void ) {
 
 void project_test1 ( void ) {
 	hx_hexastore* hx		= hx_new_hexastore( NULL );
-	hx_nodemap* map			= hx_get_nodemap( hx );
+	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
@@ -88,7 +88,7 @@ void project_test1 ( void ) {
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
-			hx_node* node	= hx_variablebindings_node_for_binding( b, map, 0 );
+			hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, 0 );
 //			_debug_node( "[2] node: ", node );
 			
 			// expect the second result has "obj" of r2
@@ -101,7 +101,7 @@ void project_test1 ( void ) {
 			ok1( !hx_variablebindings_iter_finished( iter ) );
 			
 			hx_variablebindings_iter_current( iter, &b );
-			hx_node* node	= hx_variablebindings_node_for_binding( b, map, 0 );
+			hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, 0 );
 //			_debug_node( "[3] node: ", node );
 			
 			// expect the second result has "obj" of l2
@@ -112,7 +112,7 @@ void project_test1 ( void ) {
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
-			hx_node* node	= hx_variablebindings_node_for_binding( b, map, 0 );
+			hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, 0 );
 //			_debug_node( "[4] node: ", node );
 			
 			// expect the second result has "obj" of r2

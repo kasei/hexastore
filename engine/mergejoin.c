@@ -197,8 +197,6 @@ char** _hx_mergejoin_iter_vb_names ( void* data ) {
 int _hx_mergejoin_iter_sorted_by ( void* data, int index ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
 	char* name	= info->names[ index ];
-	int lhs_size		= hx_variablebindings_iter_size( info->lhs );
-	char** lhs_names	= hx_variablebindings_iter_names( info->lhs );
 	int lhs_index		= hx_variablebindings_column_index( info->lhs, name );
 	return (lhs_index == info->lhs_index);
 }
@@ -255,6 +253,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_mergejoin_iter\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_mergejoin_iter_vb_finished;
 	vtable->current		= _hx_mergejoin_iter_vb_current;

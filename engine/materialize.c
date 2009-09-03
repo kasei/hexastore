@@ -108,6 +108,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_materialize_iter\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_materialize_iter_vb_finished;
 	vtable->current		= _hx_materialize_iter_vb_current;
@@ -146,6 +147,7 @@ hx_variablebindings_iter* hx_new_materialize_iter_with_data ( int size, char** _
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_materialize_iter_with_data\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_materialize_iter_vb_finished;
 	vtable->current		= _hx_materialize_iter_vb_current;
@@ -302,6 +304,7 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 	char* indent	= (char*) malloc( _indent + 1 );
 	if (indent == NULL) {
 		fprintf( stderr, "*** malloc failed in _hx_materialize_debug\n" );
+		return NULL;
 	}
 	char* p			= indent;
 	int i;

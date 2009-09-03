@@ -21,6 +21,7 @@ hx_btree* hx_new_btree ( void* world, uint32_t branching_size ) {
 	hx_btree* tree			= (hx_btree*) calloc( 1, sizeof( hx_btree )  );
 	if (tree == NULL) {
 		fprintf( stderr, "*** Failed to allocate memory for btree in hx_new_btree\n" );
+		return NULL;
 	}
 	tree->root				= ((uintptr_t) hx_new_btree_root( branching_size ));
 	tree->branching_size	= branching_size;
@@ -70,6 +71,7 @@ hx_btree_node* hx_new_btree_node ( uint32_t branching_size ) {
 	hx_btree_node* node	= (hx_btree_node*) calloc( 1, sizeof( hx_btree_node ) + (branching_size * sizeof( hx_btree_child )) );
 	if (node == NULL) {
 		fprintf( stderr, "*** Failed to allocate memory for btree node in hx_new_btree_node\n" );
+		return NULL;
 	}
 	memcpy( &( node->type ), "HXBN", 4 );
 	node->used	= (uint32_t) 0;
@@ -674,6 +676,7 @@ hx_btree_iter* hx_btree_new_iter ( hx_btree* tree ) {
 	hx_btree_iter* iter	= (hx_btree_iter*) calloc( 1, sizeof( hx_btree_iter ) );
 	if (iter == NULL) {
 		fprintf( stderr, "*** Failed to allocate memory for btree iterator in hx_btree_new_iter\n" );
+		return NULL;
 	}
 	iter->started	= 0;
 	iter->finished	= 0;

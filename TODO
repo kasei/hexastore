@@ -12,6 +12,7 @@ Implement query plan optimizer (based on which indexes are available, pushing do
 [storage]
 
 Add a persistent, tokyocabinet-based backend store.
+- Check to ensure that code brought over from hexastore/index.c is made quad-aware.
 
 [sortedby]
 

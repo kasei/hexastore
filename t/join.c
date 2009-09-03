@@ -48,7 +48,7 @@ int main ( void ) {
 void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ), int expect ) {
 	fprintf( stdout, "# test_cartesian_join\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
@@ -197,7 +197,7 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) ) {
 	fprintf( stdout, "# test_path_join\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
@@ -277,7 +277,7 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) ) {
 	fprintf( stdout, "# test_left_join\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
 	{

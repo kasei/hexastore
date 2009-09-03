@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include "hexastore.h"
+#include "store/hexastore/hexastore.h"
 #include "algebra/expr.h"
 #include "misc/nodemap.h"
 #include "test/tap.h"
@@ -87,7 +89,8 @@ void test_eval ( void ) {
 	{
 		// variable substitution expr
 		hx_node* value	= NULL;
-		hx_nodemap* map	= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* v		= hx_new_node_named_variable( -1, "x" );
 		hx_node* l		= (hx_node*) hx_new_node_dt_literal( "1", "http://www.w3.org/2001/XMLSchema#integer" );
 		hx_node* m		= hx_new_node_literal( "ja" );
@@ -99,7 +102,7 @@ void test_eval ( void ) {
 		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* e	= hx_new_node_expr( v );
-		int r		= hx_expr_eval( e, b, map, &value );
+		int r		= hx_expr_eval( e, b, hx->store, &value );
 		ok1( r == 0 );
 		
 		ok1( value != l );
@@ -115,7 +118,8 @@ void test_eval ( void ) {
 	{
 		// built-in function expr ISLITERAL(literal)
 		hx_node* value	= NULL;
-		hx_nodemap* map	= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* x		= hx_new_node_named_variable( -1, "x" );
 		
 		hx_node* iri	= hx_new_node_resource( "http://example.org/" );
@@ -130,7 +134,7 @@ void test_eval ( void ) {
 		hx_expr* x_e	= hx_new_node_expr( x );
 		hx_expr* e		= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
 		
-		int r		= hx_expr_eval( e, b, map, &value );
+		int r		= hx_expr_eval( e, b, hx->store, &value );
 		ok1( r == 0 );
 		
 		ok1( hx_node_ebv(value) == 1 );
@@ -147,7 +151,8 @@ void expr_varsub_test1 ( void ) {
 		hx_expr* v1	= hx_new_node_expr( hx_new_node_named_variable( -1, "v" ) );
 		hx_expr* e	= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, v1 );
 
-		hx_nodemap* map			= hx_new_nodemap();
+		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		
 		char* names[1]			= { "v" };
@@ -155,7 +160,7 @@ void expr_varsub_test1 ( void ) {
 		nodes[0]				= p1_id;
 		hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
 
-		hx_expr* f				= hx_expr_substitute_variables( e, b, map );
+		hx_expr* f				= hx_expr_substitute_variables( e, b, hx->store );
 		
 		char* string;
 		hx_expr_sse( f, &string, "  ", 0 );

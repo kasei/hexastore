@@ -123,3 +123,28 @@ int hx_store_variablebindings_debug ( hx_store* store, hx_variablebindings* b ) 
 	free(string);
 	return 0;
 }
+
+
+hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_store* store, int column ) {
+	hx_node_id id	= b->nodes[ column ];
+	hx_node* node	= hx_store_get_node( store, id );
+	return node;
+}
+
+hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_store* store, char* name ) {
+	int column	= -1;
+	int i;
+	for (i = 0; i < b->size; i++) {
+		if (strcmp(b->names[i], name) == 0) {
+			column	= i;
+			break;
+		}
+	}
+	if (column >= 0) {
+		hx_node_id id	= b->nodes[ column ];
+		hx_node* node	= hx_store_get_node( store, id );
+		return node;
+	} else {
+		return NULL;
+	}
+}

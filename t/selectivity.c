@@ -16,9 +16,9 @@ int main ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	
-	hx_node* x			= hx_new_variable( hx );
-	hx_node* y			= hx_new_variable( hx );
-	hx_node* z			= hx_new_variable( hx );
+	hx_node* x			= hx_new_named_variable( hx, "x" );
+	hx_node* y			= hx_new_named_variable( hx, "y" );
+	hx_node* z			= hx_new_named_variable( hx, "z" );
 	hx_node* binding	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding" );
 	hx_node* variable	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable" );
 	hx_node* resvar		= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable" );

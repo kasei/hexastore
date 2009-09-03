@@ -9,7 +9,7 @@ TCSTORE_OBJECTS		= store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tcindex.
 STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
 MISC_OBJECTS		= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS			= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS		= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
+ENGINE_OBJECTS		= engine/variablebindings_iter.o engine/variablebindings_iter_sorting.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
 ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
 # MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
@@ -97,6 +97,9 @@ algebra/variablebindings.o: algebra/variablebindings.c algebra/variablebindings.
 
 engine/variablebindings_iter.o: engine/variablebindings_iter.c engine/variablebindings_iter.h hexastore_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/variablebindings_iter.o engine/variablebindings_iter.c
+
+engine/variablebindings_iter_sorting.o: engine/variablebindings_iter_sorting.c engine/variablebindings_iter_sorting.h hexastore_types.h rdf/node.h misc/nodemap.h
+	$(CC) $(INC) -c -o engine/variablebindings_iter_sorting.o engine/variablebindings_iter_sorting.c
 
 engine/materialize.o: engine/materialize.c engine/materialize.h hexastore_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/materialize.o engine/materialize.c

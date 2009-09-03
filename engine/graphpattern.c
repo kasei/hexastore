@@ -8,7 +8,6 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 	hx_graphpattern *gp2	= NULL;
 	hx_variablebindings_iter *iter, *iter2, *iter3;
 	hx_graphpattern** p;
-	hx_nodemap* map	= hx_get_nodemap( hx );
 	switch (pat->type) {
 		case HX_GRAPHPATTERN_BGP:
 			return hx_bgp_execute( pat->data, hx );
@@ -26,7 +25,7 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern* pat, hx_hex
 			e		= (hx_expr*) vp[0];
 			gp		= (hx_graphpattern*) vp[1];
 			iter2	= hx_graphpattern_execute( gp, hx );
-			iter	= hx_new_filter_iter( iter2, e, map );
+			iter	= hx_new_filter_iter( iter2, e, hx->store );
 			return iter;
 		case HX_GRAPHPATTERN_GRAPH:
 			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );

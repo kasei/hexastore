@@ -227,14 +227,10 @@ hx_variablebindings_iter* hx_new_nestedloopjoin_iter ( hx_variablebindings_iter*
 }
 
 hx_variablebindings_iter* hx_new_nestedloopjoin_iter2 ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, int leftjoin ) {
-	int asize		= hx_variablebindings_iter_size( lhs );
-	char** anames	= hx_variablebindings_iter_names( lhs );
-	int bsize		= hx_variablebindings_iter_size( rhs );
-	char** bnames	= hx_variablebindings_iter_names( rhs );
-	
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_nestedloopjoin_iter\n" );
+		return NULL;
 	}
 	vtable->finished	= _hx_nestedloopjoin_iter_vb_finished;
 	vtable->current		= _hx_nestedloopjoin_iter_vb_current;

@@ -98,7 +98,7 @@ int hx_free_bgp ( hx_bgp* b ) {
 }
 
 
-hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_nodemap* map ) {
+hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_store* store ) {
 	int size	= hx_bgp_size ( orig );
 	hx_triple** triples	= (hx_triple**) calloc( size, sizeof( hx_triple* ) );
 	int i;
@@ -114,7 +114,7 @@ hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_n
 			if (hx_node_is_variable(nodes[j])) {
 				char* name;
 				hx_node_variable_name( nodes[j], &name );
-				hx_node* n	= hx_variablebindings_node_for_binding_name( b, map, name );
+				hx_node* n	= hx_variablebindings_node_for_binding_name( b, store, name );
 				free(name);
 				if (n != NULL) {
 					nodes[j]	= n;

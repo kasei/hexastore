@@ -2,6 +2,7 @@
 #include "hexastore.h"
 #include "misc/nodemap.h"
 #include "rdf/node.h"
+#include "engine/materialize.h"
 #include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
@@ -47,7 +48,7 @@ int main ( void ) {
 void materialize_iter_test ( void ) {
 	fprintf( stdout, "# materialize_iter_test\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
@@ -67,7 +68,7 @@ void materialize_iter_test ( void ) {
 void materialize_reset_test ( void ) {
 	fprintf( stdout, "# materialize_reset_test\n" );
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_materialize_iter( _iter );

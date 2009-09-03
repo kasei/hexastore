@@ -14,7 +14,8 @@ int _hx_node_cmp_id ( const void* a, const void* b, void* param ) {
 int _hx_node_cmp_str ( const void* a, const void* b, void* param ) {
 	hx_nodemap_item* ia	= (hx_nodemap_item*) a;
 	hx_nodemap_item* ib	= (hx_nodemap_item*) b;
-	return hx_node_cmp(ia->node, ib->node);
+	int c	= hx_node_cmp(ia->node, ib->node);
+	return c;
 }
 
 void _hx_free_node_item (void *avl_item, void *avl_param) {
@@ -41,33 +42,43 @@ int hx_free_nodemap ( hx_nodemap* m ) {
 }
 
 hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
-	hx_node* node	= hx_node_copy( n );
 	hx_nodemap_item i;
-	i.node	= node;
+	i.node			= n;
+	i.id			= (hx_node_id) 0;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
 		if (0) {
 			char* nodestr;
-			hx_node_string( node, &nodestr );
-			fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
+			hx_node_string( n, &nodestr );
+			fprintf( stderr, "nodemap %p adding key '%s'\n", (void*) m, nodestr );
 			free(nodestr);
 		}
 		
 		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
-		item->node	= node;
+		if (item == NULL) {
+			fprintf( stderr, "*** Failed to allocate memory in hx_nodemap_add_node\n" );
+			return 0;
+		}
+		
+		item->node	= hx_node_copy( n );
 		item->id	= m->next_id++;
 		avl_insert( m->node2id, item );
 		avl_insert( m->id2node, item );
 // 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
 		
 		if (0) {
-			hx_node_id id	= hx_nodemap_get_node_id( m, node );
+			hx_node_id id	= hx_nodemap_get_node_id( m, n );
 			fprintf( stderr, "*** After adding: %d\n", (int) id );
 		}
 		
 		return item->id;
 	} else {
-		hx_free_node( node );
+		if (0) {
+			char* nodestr;
+			hx_node_string( n, &nodestr );
+			fprintf( stderr, "nodemap already has key '%s'\n", nodestr );
+			free(nodestr);
+		}
 		return item->id;
 	}
 }
@@ -140,15 +151,26 @@ hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id ) {
 
 int hx_nodemap_debug ( hx_nodemap* map ) {
 	struct avl_traverser iter;
+	
 	avl_t_init( &iter, map->id2node );
 	hx_nodemap_item* item;
-	fprintf( stderr, "Nodemap:\n" );
+	fprintf( stderr, "Nodemap (id2node):\n" );
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		char* string;
-		hx_node_string( item->node, &string );
+		hx_node_debug_string( item->node, &string );
 		fprintf( stderr, "\t%"PRIuHXID" -> %s\n", item->id, string );
 		free( string );
 	}
+	
+	avl_t_init( &iter, map->node2id );
+	fprintf( stderr, "Nodemap (node2id):\n" );
+	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+		char* string;
+		hx_node_string( item->node, &string );
+		fprintf( stderr, "\t%s -> %"PRIuHXID"\n", string, item->id );
+		free( string );
+	}
+	
 	return 0;
 }
 
@@ -188,9 +210,11 @@ hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
 		if (item == NULL) {
 			fprintf( stderr, "*** malloc failed in hx_nodemap_read\n" );
+			return NULL;
 		}
 		if ((read = fread( &( item->id ), sizeof( hx_node_id ), 1, f )) == 0) {
 			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
+			return NULL;
 		}
 		item->node	= hx_node_read( f, 0 );
 		avl_insert( m->node2id, item );

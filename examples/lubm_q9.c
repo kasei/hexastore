@@ -15,6 +15,9 @@
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"
+#include "engine/bgp.h"
+#include "store/store.h"
+#include "store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_hexastore* hx, hx_bgp* b );
@@ -46,7 +49,6 @@ int main ( int argc, char** argv ) {
 	
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
 	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
-	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
 	x			= hx_new_named_variable( hx, "x" );
@@ -105,9 +107,9 @@ int main ( int argc, char** argv ) {
 			hx_node_id xid	= hx_variablebindings_node_id_for_binding ( b, xi );
 			hx_node_id yid	= hx_variablebindings_node_id_for_binding ( b, yi );
 			hx_node_id zid	= hx_variablebindings_node_id_for_binding ( b, zi );
-			hx_node* x		= hx_nodemap_get_node( map, xid );
-			hx_node* y		= hx_nodemap_get_node( map, yid );
-			hx_node* z		= hx_nodemap_get_node( map, zid );
+			hx_node* x		= hx_store_get_node( hx->store, xid );
+			hx_node* y		= hx_store_get_node( hx->store, yid );
+			hx_node* z		= hx_store_get_node( hx->store, zid );
 			
 			char *xs, *ys, *zs;
 			hx_node_string( x, &xs );

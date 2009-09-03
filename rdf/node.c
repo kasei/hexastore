@@ -342,6 +342,17 @@ int hx_node_string ( hx_node* n, char** str ) {
 	return alloc;
 }
 
+int hx_node_debug_string ( hx_node* n, char** string ) {
+	char* ns;
+	hx_node_string( n, &ns );
+	
+	*string	= malloc( strlen(ns) + 100 + 1 );
+	sprintf( *string, "node(value=%s, type=%c, iv=%d, nv=%f)", ns, n->type, n->iv, n->nv );
+	free(ns);
+	
+	return 0;
+}
+
 int hx_node_debug ( hx_node* n ) {
 	char* string;
 	hx_node_string( n, &string );
@@ -494,15 +505,31 @@ int hx_node_nodestr( hx_node* n, char** str ) {
 int hx_node_cmp( const void* _a, const void* _b ) {
 	hx_node* a	= (hx_node*) _a;
 	hx_node* b	= (hx_node*) _b;
+
+// 	fprintf( stderr, "comparing nodes with types '%c' cmp '%c'\n", a->type, b->type );
+// 	fprintf( stderr, "\t%p \"%s\" <=> \"%s\" %p\n", a->value, a->value, b->value, b->value );
 	
-	if (a->type == b->type) {
+	char at	= a->type;
+	char bt	= b->type;
+	int same	= (at == bt);
+	if (!same) {
+		/* we want to treat all literals like the same 'type' */
+		if (at == 'L' || at == 'G' || at == 'D') {
+			if (bt == 'L' || bt == 'G' || bt == 'D') {
+				same	= 1;
+			}
+		}
+	}
+	
+	if (same) {
 		if (hx_node_is_blank( a )) {
 			return strcmp( a->value, b->value );
 		} else if (hx_node_is_resource( a )) {
 			return strcmp( a->value, b->value );
 		} else if (hx_node_is_literal( a )) {
 			// XXX need to deal with language and datatype literals
-			return strcmp( a->value, b->value );
+			int c	= strcmp( a->value, b->value );
+			return c;
 		} else if (hx_node_is_variable( a )) {
 			return (hx_node_iv( b ) - hx_node_iv( a ));
 		} else {
@@ -513,11 +540,11 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 		int a_blank	= hx_node_is_blank( a );
 		int b_blank	= hx_node_is_blank( b );
 		int a_lit	= hx_node_is_literal( a );
-		int b_lit	= hx_node_is_literal( b );
+//		int b_lit	= hx_node_is_literal( b );
 		int a_var	= hx_node_is_variable( a );
 		int b_var	= hx_node_is_variable( b );
 		int a_res	= hx_node_is_resource( a );
-		int b_res	= hx_node_is_resource( b );
+//		int b_res	= hx_node_is_resource( b );
 		
 		if (a_blank) {
 			return -1;
@@ -681,7 +708,6 @@ int _hx_node_parse_datatypes ( hx_node* n ) {
 		char* ptr;
 		char* value	= hx_node_value( n );
 		double nv	= strtod( value, &ptr );
-		int diff	= ptr - value;
 		n->nv		= nv;
 		n->flags	|= HX_NODE_NOK;
 	}

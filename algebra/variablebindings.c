@@ -292,30 +292,6 @@ hx_node_id hx_variablebindings_node_id_for_binding_name ( hx_variablebindings* b
 	}
 }
 
-hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_nodemap* map, int column ) {
-	hx_node_id id	= b->nodes[ column ];
-	hx_node* node	= hx_nodemap_get_node( map, id );
-	return node;
-}
-
-hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_nodemap* map, char* name ) {
-	int column	= -1;
-	int i;
-	for (i = 0; i < b->size; i++) {
-		if (strcmp(b->names[i], name) == 0) {
-			column	= i;
-			break;
-		}
-	}
-	if (column >= 0) {
-		hx_node_id id	= b->nodes[ column ];
-		hx_node* node	= hx_nodemap_get_node( map, id );
-		return node;
-	} else {
-		return NULL;
-	}
-}
-
 int hx_variablebindings_cmp ( void* _a, void* _b ) {
 	hx_variablebindings* a	= (hx_variablebindings*) _a;
 	hx_variablebindings* b	= (hx_variablebindings*) _b;
@@ -422,7 +398,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 			if (strcmp( name, rhs_name ) == 0) {
 // 				fprintf( stderr, "rhs_name: %s\n", rhs_name );
 // 				fprintf( stderr, "\tindex in lhs is %d\n", shared_lhs_index[j] );
-				char* lhs_name	= lhs_names[ shared_lhs_index[j] ];
+//				char* lhs_name	= lhs_names[ shared_lhs_index[j] ];
 // 				fprintf( stderr, "lhs_name: %s\n", lhs_name );
 				hx_node_id rnode	= hx_variablebindings_node_id_for_binding( right, j );
 // 				fprintf( stderr, "\tcomparing nodes %d <=> %d\n", node, rnode );
@@ -477,10 +453,12 @@ hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len, hx_nodemap* 
 	char** names		= (char**) calloc( size, sizeof( char* ) );
 	if (names == NULL) {
 		fprintf( stderr, "*** Failed to allocated names array (%d elements of %d bytes) in hx_variablebindings_thaw\n", size, sizeof(char*) );
+		return NULL;
 	}
 	hx_node_id* nodes	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	if (nodes == NULL) {
 		fprintf( stderr, "*** Failed to allocated node array (%d elements of %d bytes) in hx_variablebindings_thaw\n", size, sizeof(hx_node_id) );
+		return NULL;
 	}
 	
 	for (i = 0; i < size; i++) {
@@ -496,6 +474,7 @@ hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len, hx_nodemap* 
 		hx_node* n		= hx_node_parse( p );
 		if (n == NULL) {
 			fprintf( stderr, "hx_variablebindings_thaw call to hx_node_parse failed\n" );
+			return NULL;
 		}
 		nodes[i]		= hx_nodemap_add_node( map, n );
 		hx_free_node(n);
@@ -520,26 +499,28 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nod
 	
 // 	fprintf( stderr, "*** hx_variablebindings_thaw_noadd called with len=%d, buffer says it has %d variable bindings\n", len, size );
 	
-	if ((size == 0) || (size > 20)) {	// XXX
-		fprintf( stderr, "strange looking variablebindings size in hx_variablebindings_thaw_noadd: %d (with len=%d)\n", size, len );
-		fprintf( stderr ,"\t'%s'\n", p );
-	}
-	
 	char** names		= (char**) calloc( size, sizeof( char* ) );
 	if (names == NULL) {
 		fprintf( stderr, "*** Failed to allocated names array (%d elements of %d bytes) in hx_variablebindings_thaw_noadd\n", size, sizeof(char*) );
+		return NULL;
 	}
 	hx_node_id* nodes	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	if (nodes == NULL) {
 		fprintf( stderr, "*** Failed to allocated node array (%d elements of %d bytes) in hx_variablebindings_thaw_noadd\n", size, sizeof(hx_node_id) );
+		return NULL;
 	}
 	
 	int* noadd_columns	= (int*) calloc( size, sizeof(int) );
+	if (noadd_columns == NULL) {
+		fprintf(stderr, "*** Failed to allocate memory in hx_variablebindings_thaw_noadd\n" );
+		return NULL;
+	}
 	for (i = 0; i < size; i++) {
 		int name_len	= strlen(p);
 		char* name		= (char*) calloc( name_len + 1, sizeof( char ) );
 		if (name == NULL) {
 			fprintf( stderr, "*** Failed to allocated name buffer in hx_variablebindings_thaw_noadd\n" );
+			return NULL;
 		}
 		strcpy( name, p );
 		for (j = 0; j < join_vars_count; j++) {
@@ -600,12 +581,14 @@ char* hx_variablebindings_freeze ( hx_variablebindings* b, hx_nodemap* map, int*
 	int* name_lengths	= calloc( b->size, sizeof( int ) );
 	if (name_lengths == NULL) {
 		fprintf( stderr, "*** Failed to allocate name_lengths buffer in hx_variablebindings_freeze\n" );
+		return NULL;
 	}
 	int node_length		= 0;
 	int* node_lengths	= calloc( b->size, sizeof( int ) );
 	char** node_strings	= (char**) calloc( b->size, sizeof( char* ) );
-	if (node_strings == NULL) {
+	if (node_strings == NULL || node_lengths == NULL) {
 		fprintf( stderr, "*** Failed to allocate node_strings buffer in hx_variablebindings_freeze\n" );
+		return NULL;
 	}
 	for (i = 0; i < b->size; i++) {
 		name_lengths[i]	= strlen( b->names[i] );

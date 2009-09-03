@@ -90,6 +90,10 @@ hx_node* hx_store_get_node ( hx_store* store, hx_node_id id );
 int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string );
 int hx_store_variablebindings_debug ( hx_store* store, hx_variablebindings* b );
 
+hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_store* store, int column );
+hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_store* store, char* name );
+
+
 #ifdef __cplusplus
 }
 #endif
