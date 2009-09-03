@@ -33,14 +33,20 @@ hx_store_tokyocabinet_index* hx_new_tokyocabinet_index ( void* world, int* index
 //	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
 	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
 	tcbdbsetcache(i->bdb, 8192, 2048);
-	if(!tcbdbopen(i->bdb, filename, BDBOWRITER | BDBOCREAT)){
+	
+	char* file	= malloc( strlen(directory) + strlen(filename) + 2 );
+	sprintf( file, "%s/%s", directory, filename );
+	
+	if(!tcbdbopen(i->bdb, file, BDBOWRITER | BDBOCREAT)){
 		int ecode;
 		ecode = tcbdbecode(i->bdb);
 		fprintf(stderr, "tokyocabinet open error on %s: %s\n", filename, tcbdberrmsg(ecode));
 		free( i );
+		free(file);
 		return NULL;
 	}
 	
+	free(file);
 	return i;
 }
 
