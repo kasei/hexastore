@@ -1,11 +1,12 @@
 CDEFINES	= -DDEBUG -DBLUEGENEL -DTIMING_CPU_FREQUENCY=2400000000.0
-CFLAGS	= -I. -L. -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -Wall -ggdb
+CFLAGS		= -arch i386 -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb
 CC			= gcc $(CFLAGS)
 
-LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
+LIBS	=	-ltokyocabinet -lpthread -lraptor
 
 HEXASTORE_OBJECTS	= store/hexastore/hexastore.o store/hexastore/index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
-STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS)
+TCSTORE_OBJECTS		= store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tcindex.o
+STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
 MISC_OBJECTS		= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS			= rdf/node.o rdf/triple.o
 ENGINE_OBJECTS		= engine/variablebindings_iter.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
@@ -48,6 +49,12 @@ store/hexastore/index.o: store/hexastore/index.c store/hexastore/index.h store/h
 
 store/store.o: store/store.c store/store.h
 	$(CC) $(INC) -c -o store/store.o store/store.c
+
+store/tokyocabinet/tokyocabinet.o: store/tokyocabinet/tokyocabinet.c store/tokyocabinet/tokyocabinet.h hexastore_types.h
+	$(CC) $(INC) -c -o store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tokyocabinet.c
+
+store/tokyocabinet/tcindex.o: store/tokyocabinet/tcindex.c store/tokyocabinet/tcindex.h hexastore_types.h
+	$(CC) $(INC) -c -o store/tokyocabinet/tcindex.o store/tokyocabinet/tcindex.c
 
 store/hexastore/hexastore.o: store/hexastore/hexastore.c store/hexastore/hexastore.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h hexastore_types.h
 	$(CC) $(INC) -c -o store/hexastore/hexastore.o store/hexastore/hexastore.c
@@ -185,7 +192,7 @@ libhx.o: $(OBJECTS)
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t # t/optimizer.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/tokyocabinet.t # t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -259,6 +266,9 @@ t/optimizer.t: test/tap.o t/optimizer.c $(OBJECTS) test/tap.o
 
 t/store-hexastore.t: test/tap.o t/store-hexastore.c store/hexastore/hexastore.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/store-hexastore.t t/store-hexastore.c $(OBJECTS) test/tap.o
+
+t/tokyocabinet.t: test/tap.o t/tokyocabinet.c store/hexastore/hexastore.h $(OBJECTS) test/tap.o
+	$(CC) $(INC) $(LIBS) -o t/tokyocabinet.t t/tokyocabinet.c $(OBJECTS) test/tap.o
 
 ########
 
