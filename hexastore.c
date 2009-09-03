@@ -53,10 +53,6 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 	return 0;
 }
 
-hx_nodemap* hx_get_nodemap ( hx_hexastore* hx ) {
-	return hx_store_hexastore_get_nodemap( hx->store );
-}
-
 hx_container_t* hx_get_indexes ( hx_hexastore* hx ) {
 	if (hx->indexes == NULL) {
 		hx->indexes	= hx_new_container( 'I', 6 );

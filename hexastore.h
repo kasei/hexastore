@@ -70,7 +70,6 @@ uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node*
 
 hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );
-hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 hx_container_t* hx_get_indexes ( hx_hexastore* hx );
 
 hx_variablebindings_iter* hx_new_variablebindings_iter_for_triple ( hx_hexastore* hx, hx_triple* t, hx_node_position_t sort_position );
