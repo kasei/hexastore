@@ -5,6 +5,8 @@
 #include "hexastore.h"
 #include "rdf/node.h"
 #include "parser/parser.h"
+#include "store/hexastore/hexastore.h"
+#include "store/tokyocabinet/tokyocabinet.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
@@ -14,7 +16,10 @@ int main (int argc, char** argv);
 static int count	= 0;
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s data.rdf hexastore.out\n\n", argv[0] );
+	fprintf( stderr, "Usage: %s -store=S data.rdf data/\n\n", argv[0] );
+	fprintf( stderr, "S must be one of the following:\n" );
+	fprintf( stderr, "    'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "    'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 }
 
 void logger ( uint64_t _count ) {
@@ -23,25 +28,42 @@ void logger ( uint64_t _count ) {
 
 int main (int argc, char** argv) {
 	const char* rdf_filename	= NULL;
-	const char* output_filename	= NULL;
+	const char* output_location	= NULL;
 	
-	if (argc < 3) {
+	if (argc < 4) {
 		help(argc, argv);
 		exit(1);
 	}
 	
-	rdf_filename	= argv[1];
-	output_filename	= argv[2];
+	char type	= 'T';
+	int i	= 1;
+	if (strncmp(argv[i], "-store=", 7) == 0) {
+		switch (argv[i][7]) {
+			case 'T':
+				type	= 'T';
+				break;
+			case 'H':
+				type	= 'H';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized store type.\n\n" );
+				exit(1);
+		};
+		i++;
+	} else {
+		fprintf( stderr, "No store type specified.\n" );
+		exit(1);
+	}
 	
-	hx_hexastore* hx		= hx_new_hexastore( NULL );
+	rdf_filename	= argv[i++];
+	output_location	= argv[i++];
 	
-	FILE* f	= NULL;
-	if (strcmp(output_filename, "/dev/null") != 0) {
-		f	= fopen( output_filename, "w" );
-		if (f == NULL) {
-			perror( "Failed to open hexastore file for writing: " );
-			return 1;
-		}
+	hx_hexastore* hx;
+	if (type == 'T') {
+		hx_store* store		= hx_new_store_tokyocabinet( NULL, output_location );
+		hx		= hx_new_hexastore_with_store( NULL, store );
+	} else {
+		hx	= hx_new_hexastore( NULL );
 	}
 	
 	hx_parser* parser	= hx_new_parser();
@@ -55,16 +77,28 @@ int main (int argc, char** argv) {
 	double tps	= ((double) total / elapsed);
 	fprintf( stderr, "\rParsed %lu triples in %.1lf seconds (%.1lf triples/second)\n", (unsigned long) total, elapsed, tps );
 	
-	if (f != NULL) {
+	if (type == 'H') {
+		FILE* f = NULL;
+		if (strcmp(output_location, "/dev/null") != 0) {
+			f	= fopen( output_location, "w" );
+			if (f == NULL) {
+				perror( "Failed to open hexastore file for writing" );
+				return 1;
+			}
+		}
 		if (hx_store_hexastore_write( hx->store, f ) != 0) {
 			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 			return 1;
 		}
 	}
-	fprintf( stderr, "\n" );
 	
 	hx_free_parser( parser );
 	hx_free_hexastore( hx );
+
+	clock_t finalize_time	= clock();
+	double felapsed	= DIFFTIME(st_time, finalize_time);
+	double ftps	= ((double) total / felapsed);
+	fprintf( stderr, "\rFinalized at %.1lf seconds (%.1lf triples/second)\n", felapsed, ftps );
+	
 	return 0;
 }
-

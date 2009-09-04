@@ -1,7 +1,6 @@
 #include "tcindex.h"
 
 int _hx_check_next_triple (hx_store_tokyocabinet_index_iter* iter);
-
 int _hx_store_tokyocabinet_index_iter_vb_finished ( void* iter );
 int _hx_store_tokyocabinet_index_iter_vb_current ( void* iter, void* results );
 int _hx_store_tokyocabinet_index_iter_vb_next ( void* iter );	
@@ -26,12 +25,12 @@ hx_store_tokyocabinet_index* hx_new_tokyocabinet_index ( void* world, int* index
 //	fprintf( stderr, "hx_index is %d bytes in size\n", (int) sizeof( hx_index ) );
 	hx_store_tokyocabinet_index* i	= (hx_store_tokyocabinet_index*) calloc( 1, sizeof( hx_store_tokyocabinet_index ) );
 	int j;
-	for (j = 0; j < 4; j++) {
+	for (j = 0; j < 3; j++) {
 		i->order[j]	= index_order[j];
 	}
 	i->bdb = tcbdbnew();
-//	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
-	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
+	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+//	tcbdbtune(i->bdb, 0, 0, 0, -1, -1, BDBTLARGE|BDBTBZIP);
 	tcbdbsetcache(i->bdb, 8192, 2048);
 	
 	char* file	= malloc( strlen(directory) + strlen(filename) + 2 );
@@ -57,11 +56,61 @@ int hx_free_tokyocabinet_index ( hx_store_tokyocabinet_index* i ) {
 }
 
 int hx_store_tokyocabinet_index_debug ( hx_store_tokyocabinet_index* index ) {
+	BDBCUR *cur	= tcbdbcurnew(index->bdb);
+	tcbdbcurfirst(cur);
+
+	char* name	= hx_store_tokyocabinet_index_name( index );
+	fprintf( stderr, "Index (%s):\n", name );
+	free(name);
+	do {
+		int size;
+		hx_node_id* k	= (hx_node_id*) tcbdbcurkey(cur, &size);
+		fprintf( stderr, "\t{ %"PRIdHXID", %"PRIdHXID", %"PRIdHXID" }\n", k[0], k[1], k[2] );
+		free(k);
+	} while (tcbdbcurnext(cur));
+	
+	tcbdbcurdel(cur);
+	
 	return 0;
+}
+
+uint64_t hx_store_tokyocabinet_index_count( hx_store_tokyocabinet_index* index, hx_node_id* index_ordered ) {
+	BDBCUR *cur	= tcbdbcurnew(index->bdb);
+	tcbdbcurjump(cur, index_ordered, 3*sizeof(hx_node_id));
+	
+	uint64_t counter	= 0;
+	fprintf( stderr, "Index:\n" );
+	do {
+		int size;
+		hx_node_id* k	= (hx_node_id*) tcbdbcurkey(cur, &size);
+		fprintf( stderr, "\t{ %"PRIdHXID", %"PRIdHXID", %"PRIdHXID" }\n", k[0], k[1], k[2] );
+		
+		int match	= 1;
+		int i;
+		for (i = 0; i < 3; i++) {
+			if (index_ordered[i] != 0) {
+				if (k[i] != index_ordered[i]) {
+					match	= 0;
+					break;
+				}
+			}
+		}
+		if (!match) {
+			break;
+		}
+		
+		counter++;
+		free(k);
+	} while (tcbdbcurnext(cur));
+	
+	tcbdbcurdel(cur);
+	
+	return counter;
 }
 
 int hx_store_tokyocabinet_index_add_triple ( hx_store_tokyocabinet_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_node_id triple_ordered[3];
+	
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
@@ -70,12 +119,12 @@ int hx_store_tokyocabinet_index_add_triple ( hx_store_tokyocabinet_index* index,
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 	
-	int exists	= tcbdbvnum(index->bdb, index_ordered, 3 * sizeof(hx_node_id));
+	int exists	= tcbdbvnum(index->bdb, index_ordered, 3*sizeof(hx_node_id));
 	if (exists > 0) {
 		return 1;
 	} else {
 		char v	= (char) 0;
-		if (!tcbdbput(index->bdb, index_ordered, 3 * sizeof(hx_node_id), &v, 1)) {
+		if (!tcbdbput(index->bdb, index_ordered, 3*sizeof(hx_node_id), &v, 1)) {
 			int ecode	= tcbdbecode(index->bdb);
 			fprintf( stderr, "tokyocabinet put error: %s\n", tcbdberrmsg(ecode));
 			return 1;
@@ -107,6 +156,31 @@ uint64_t hx_store_tokyocabinet_index_triples_count ( hx_store_tokyocabinet_index
 	return (uint64_t) tcbdbrnum( index->bdb );
 }
 
+char* hx_store_tokyocabinet_index_name ( hx_store_tokyocabinet_index* idx ) {
+	int size	= 3;
+	int* order	= idx->order;
+	char* name		= (char*) calloc( 5, sizeof( char ) );
+	char* p			= name;
+	int i;
+	for (i = 0; i < size; i++) {
+		int o	= order[i];
+		switch (o) {
+			case HX_SUBJECT:
+				*(p++)	= 'S';
+				break;
+			case HX_PREDICATE:
+				*(p++)	= 'P';
+				break;
+			case HX_OBJECT:
+				*(p++)	= 'O';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized index order (%d) in _hx_optimizer_index_name\n", o );
+		};
+	}
+	return name;
+}
+
 hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter ( hx_store_tokyocabinet_index* index ) {
 	hx_store_tokyocabinet_index_iter* iter	= (hx_store_tokyocabinet_index_iter*) calloc( 1, sizeof( hx_store_tokyocabinet_index_iter ) );
 	iter->flags			= 0;
@@ -131,7 +205,7 @@ hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter1 ( hx_sto
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
 	
-//	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
+// 	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
 	
 	if (iter->node_mask_b == iter->node_mask_a && iter->node_mask_a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );
@@ -145,6 +219,7 @@ hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter1 ( hx_sto
 // 		fprintf( stderr, "*** Looking for duplicated pred/obj triples\n" );
 		iter->node_dup_c	= HX_STORE_TCINDEX_ITER_DUP_B;
 	}
+	
 	iter->cursor		= tcbdbcurnew( index->bdb );
 	hx_node_id index_ordered[3];
 	for (int i = 0; i < 3; i++) {
@@ -155,7 +230,7 @@ hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter1 ( hx_sto
 			index_ordered[i]	= 0;
 		}
 	}
-	tcbdbcurjump( iter->cursor, index_ordered, 3 * sizeof( hx_node_id ) );
+	tcbdbcurjump( iter->cursor, index_ordered, 3*sizeof( hx_node_id ) );
 	return iter;
 }
 
@@ -166,6 +241,17 @@ int hx_free_tokyocabinet_index_iter ( hx_store_tokyocabinet_index_iter* iter ) {
 }
 
 int hx_store_tokyocabinet_index_iter_finished ( hx_store_tokyocabinet_index_iter* iter ) {
+	int size;
+	hx_node_id* current	= tcbdbcurkey(iter->cursor, &size);
+	if (current == NULL) {
+		iter->finished	= 1;
+	} else {
+		int i;
+		int matches	= 1;
+		if (iter->node_mask_a > 0 && iter->node_mask_a != current[0] ) iter->finished	= 1;
+		if (iter->node_mask_b > 0 && iter->node_mask_b != current[1] ) iter->finished	= 1;
+		if (iter->node_mask_c > 0 && iter->node_mask_c != current[2] ) iter->finished	= 1;
+	}
 	return iter->finished;
 }
 
@@ -253,7 +339,7 @@ int hx_store_tokyocabinet_index_iter_is_sorted_by_index ( hx_store_tokyocabinet_
 	}
 }
 
-hx_variablebindings_iter* hx_new_tokyocabinet_index_iter_variablebindings ( hx_store_tokyocabinet_index_iter* i, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
+hx_variablebindings_iter* hx_new_tokyocabinet_index_iter_variablebindings ( hx_store_tokyocabinet_index_iter* i, char* subj_name, char* pred_name, char* obj_name ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) calloc( 1, sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished		= _hx_store_tokyocabinet_index_iter_vb_finished;
 	vtable->current			= _hx_store_tokyocabinet_index_iter_vb_current;
@@ -274,14 +360,13 @@ hx_variablebindings_iter* hx_new_tokyocabinet_index_iter_variablebindings ( hx_s
 	
 	_hx_store_tokyocabinet_index_iter_vb_info* info	= (_hx_store_tokyocabinet_index_iter_vb_info*) calloc( 1, sizeof( _hx_store_tokyocabinet_index_iter_vb_info ) );
 	info->size						= size;
-	info->subject					= subj_name;
-	info->predicate					= pred_name;
-	info->object					= obj_name;
+	info->subject					= hx_copy_string( subj_name );
+	info->predicate					= hx_copy_string( pred_name );
+	info->object					= hx_copy_string( obj_name );
 	info->iter						= i;
 	info->names						= (char**) calloc( 3, sizeof( char* ) );
 	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
 	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
-	info->free_names				= free_names;
 	info->current					= NULL;
 	
 	int j	= 0;
@@ -346,11 +431,9 @@ int _hx_store_tokyocabinet_index_iter_vb_free ( void* data ) {
 	free( info->names );
 	free( info->triple_pos_to_index );
 	free( info->index_to_triple_pos );
-	if (info->free_names) {
-		free( info->subject );
-		free( info->predicate );
-		free( info->object );
-	}
+	free( info->subject );
+	free( info->predicate );
+	free( info->object );
 	free( info );
 	return 0;
 }

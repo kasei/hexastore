@@ -38,6 +38,8 @@ typedef uint64_t hx_hash_function ( const char* s );
 
 #include "hexastore_types.h"
 
+char* hx_copy_string ( const char* string );
+
 uint64_t hx_util_hash_string ( const char* s );
 uint64_t hx_util_hash_buffer ( const char* s, size_t len );
 

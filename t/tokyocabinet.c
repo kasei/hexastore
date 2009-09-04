@@ -21,6 +21,7 @@ int main ( void ) {
 	unlink("/tmp/ops.tcb");
 	unlink("/tmp/pso.tcb");
 	unlink("/tmp/pos.tcb");
+	unlink("/tmp/counts.tcb");
 	unlink("/tmp/id2node.tcb");
 	unlink("/tmp/node2id.tcb");
 	hx_store* store		= hx_new_store_tokyocabinet( NULL, "/tmp" );
@@ -28,7 +29,6 @@ int main ( void ) {
 	_add_data( hx );
 	
 	hx_store_tokyocabinet* tc	= (hx_store_tokyocabinet*) store->ptr;
-	hx_store_tokyocabinet_debug( store );
 	
 	hx_node* x			= hx_new_named_variable( hx, "x" );
 	hx_node* y			= hx_new_named_variable( hx, "y" );

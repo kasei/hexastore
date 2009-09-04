@@ -1,11 +1,30 @@
 #include "misc/util.h"
 
+char* hx_copy_string ( const char* string ) {
+	if (string == NULL) {
+		return NULL;
+	} else {
+		int len	= strlen(string) + 1;
+		char* s	= malloc(len);
+		strncpy(s, string, len);
+		return s;
+	}
+}
+
 uint64_t hx_util_hash_string ( const char* s ) {
 	int len	= strlen(s);
 	return hx_util_hash_buffer( s, len );
 }
 
 uint64_t hx_util_hash_buffer ( const char* s, size_t len ) {
+        uint64_t hash = 0;
+        int i;  
+        for(i = 0; i < len; i++) {
+                char c = s[i]; 
+                hash = c + (hash << 6) + (hash << 16) - hash; 
+        }       
+	return hash;
+/*
 	uint64_t h	= 0;
 	int i;
 	for (i = 0; i < len; i++) {
@@ -16,6 +35,7 @@ uint64_t hx_util_hash_buffer ( const char* s, size_t len ) {
 		h = h ^ ki;										// XOR h and ki
 	}
 	return h;
+*/
 }
 
 hx_container_t* hx_new_container ( char type, int size ) {

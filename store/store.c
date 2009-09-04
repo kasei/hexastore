@@ -75,7 +75,7 @@ int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, 
 	size_t len	= 5;
 	int i;
 	for (i = 0; i < size; i++) {
-		hx_node_id id	= b->nodes[ i ];
+		hx_node_id id	= b->nodes[i];
 		hx_node* node	= hx_store_get_node( store, id );
 		hx_node_string( node, &( nodestrs[i] ) );
 		len	+= strlen( nodestrs[i] ) + 2 + strlen(b->names[i]) + 1;

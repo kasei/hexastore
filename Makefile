@@ -195,7 +195,7 @@ libhx.o: $(OBJECTS)
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/tokyocabinet.t # t/optimizer.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t # t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -269,6 +269,9 @@ t/optimizer.t: test/tap.o t/optimizer.c $(OBJECTS) test/tap.o
 
 t/store-hexastore.t: test/tap.o t/store-hexastore.c store/hexastore/hexastore.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/store-hexastore.t t/store-hexastore.c $(OBJECTS) test/tap.o
+
+t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c store/tokyocabinet/tokyocabinet.h $(OBJECTS) test/tap.o
+	$(CC) $(INC) $(LIBS) -o t/store-tokyocabinet.t t/store-tokyocabinet.c $(OBJECTS) test/tap.o
 
 t/tokyocabinet.t: test/tap.o t/tokyocabinet.c store/hexastore/hexastore.h $(OBJECTS) test/tap.o
 	$(CC) $(INC) $(LIBS) -o t/tokyocabinet.t t/tokyocabinet.c $(OBJECTS) test/tap.o

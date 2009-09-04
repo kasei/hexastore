@@ -211,8 +211,8 @@ int _mpi_rdfio_recv_lookup(async_mpi_session* ses, void* p) {
 	
 	hx_free_node( node );
 	
-	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIuHXID"].\n", lookup->pid, lookup->lid, lookup->gid);
-	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIuHXID"].\n", (*records)[(*lookupsize)-1].pid, (*records)[(*lookupsize)-1].lid, (*records)[(*lookupsize)-1].gid);
+	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIdHXID"].\n", lookup->pid, lookup->lid, lookup->gid);
+	MPI_RDFIO_DEBUG("\tReceived lookup[pid=%i, lid=%i, gid=%"PRIdHXID"].\n", (*records)[(*lookupsize)-1].pid, (*records)[(*lookupsize)-1].lid, (*records)[(*lookupsize)-1].gid);
 	
 	return 1;
 }

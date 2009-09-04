@@ -5,6 +5,7 @@
 #include "engine/bgp.h"
 #include "engine/graphpattern.h"
 #include "store/hexastore/hexastore.h"
+#include "store/tokyocabinet/tokyocabinet.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
@@ -13,7 +14,7 @@ extern hx_graphpattern* parse_query_string ( char* );
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage:\n" );
-	fprintf( stderr, "\t%s [-n] hexastore.dat [query.rq]\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S [-n] hexastore.dat [query.rq]\n", argv[0] );
 	fprintf( stderr, "\t\tReads a SPARQL query from query.rq or on standard input.\n" );
 	fprintf( stderr, "\n\n" );
 }
@@ -22,10 +23,33 @@ int main( int argc, char** argv ) {
 	int argi		= 1;
 	int dryrun		= 0;
 	
-	if (argc < 2) {
+	if (argc < 3) {
 		help( argc, argv );
 		exit(1);
-	} else if (argc > 2) {
+	}
+	
+	char store_type	= 'T';
+	if (strncmp(argv[argi], "-store=", 7) == 0) {
+		switch (argv[argi][7]) {
+			case 'T':
+				store_type	= 'T';
+				break;
+			case 'H':
+				store_type	= 'H';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized store type.\n\n" );
+				exit(1);
+		};
+		argi++;
+	} else {
+		fprintf( stderr, "No store type specified.\n" );
+		exit(1);
+	}
+	
+	
+	
+	if (argc > 3) {
 		while (argi < argc && *(argv[argi]) == '-') {
 			if (strncmp(argv[argi], "-n", 2) == 0) {
 				dryrun	= 1;
@@ -35,16 +59,21 @@ int main( int argc, char** argv ) {
 	}
 	
 	char* filename	= argv[ argi++ ];
-	FILE* f	= fopen( filename, "r" );
 	
-	if (f == NULL) {
-		perror( "Failed to open hexastore file for reading: " );
-		return 1;
+	hx_hexastore* hx;
+	if (store_type == 'T') {
+		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
+		hx		= hx_new_hexastore_with_store( NULL, store );
+	} else {
+		FILE* f	= fopen( filename, "r" );
+		if (f == NULL) {
+			perror( "Failed to open hexastore file for reading: " );
+			return 1;
+		}
+		
+		hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
+		hx		= hx_new_hexastore_with_store( NULL, store );
 	}
-	
-	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
-	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
 	hx_bgp* b;
 	hx_graphpattern* g;
@@ -123,7 +152,7 @@ int main( int argc, char** argv ) {
 				int i;
 				for (i = 0; i < size; i++) {
 					char* string;
-					hx_node* node	= hx_variablebindings_node_for_binding( b, store, i );
+					hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, i );
 					hx_node_string( node, &string );
 					fprintf( stdout, "\t%s: %s\n", names[i], string );
 					free( string );

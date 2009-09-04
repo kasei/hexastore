@@ -246,7 +246,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 		
 		int node		= hash % mysize;
 		
-// 		fprintf( stderr, "--- hash = %"PRIuHXID" (%d)\n", hash, node );
+// 		fprintf( stderr, "--- hash = %"PRIdHXID" (%d)\n", hash, node );
 // 		fprintf( stderr, "- sending variable bindings to node %d\n", node );
 		send_args->count++;
 		
@@ -476,7 +476,7 @@ hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n ) {
 		
 		if (0) {
 			hx_node_id id	= hx_nodemap_get_node_id( m, node );
-//			fprintf( stderr, "*** After adding: %"PRIuHXID"\n", (unsigned long long) id );
+//			fprintf( stderr, "*** After adding: %"PRIdHXID"\n", (unsigned long long) id );
 		}
 		
 // 		fprintf( stderr, "adding MPI node %"PRIx64"\n", item->id );
@@ -917,7 +917,7 @@ int _hx_parallel_send_gid2node_lookup(async_mpi_session* ses, void* p) {
 	hx_node_id* id = (hx_node_id*) iterator_next(giditer);
 	memcpy(ses->buf, id, sizeof(hx_node_id));
 	int peer = hx_parallel_nodemap_get_process_id(*id);
-	HPGN_DEBUG("Sending to %i [gid=%"PRIuHXID"]\n", peer, *id);
+	HPGN_DEBUG("Sending to %i [gid=%"PRIdHXID"]\n", peer, *id);
 
 	async_mpi_session_reset3(ses, ses->buf, sizeof(hx_node_id), peer, ses->flags);
 	HPGN_DEBUG("Returning from sending lookup.\n", NULL);
@@ -946,7 +946,7 @@ int _hx_parallel_recv_gid2node_lookup(async_mpi_session* ses, void* p) {
 	lookup->pid = ses->peer;
 	memcpy(&(lookup->gid), ses->buf, sizeof(hx_node_id));
 
-	HPGN_DEBUG("Received [gid=%"PRIuHXID"] from pid=%i\n", lookup->gid, lookup->pid);
+	HPGN_DEBUG("Received [gid=%"PRIdHXID"] from pid=%i\n", lookup->gid, lookup->pid);
 
 	return 1;
 }

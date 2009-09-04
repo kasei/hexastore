@@ -11,7 +11,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 
-#define PRIuHXID	PRIu64
+#define PRIdHXID	PRId64
 #define PRIxHXID	PRIx64
 
 typedef int64_t hx_node_id;

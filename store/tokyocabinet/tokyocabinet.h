@@ -29,6 +29,7 @@ typedef struct {
 	hx_node_id next_id;
 	TCBDB* id2node;
 	TCBDB* node2id;
+	TCBDB* counts;
 	hx_store_tokyocabinet_index* spo;
 	hx_store_tokyocabinet_index* sop;
 	hx_store_tokyocabinet_index* pso;

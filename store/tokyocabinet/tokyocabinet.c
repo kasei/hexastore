@@ -1,5 +1,7 @@
-#include "store/tokyocabinet/tokyocabinet.h"
+#include <sys/stat.h>
+#include <dirent.h>
 #include "hexastore.h"
+#include "store/tokyocabinet/tokyocabinet.h"
 
 hx_node_id _hx_store_tokyocabinet_get_node_id ( hx_store_tokyocabinet* hx, hx_node* node );
 int _hx_store_tokyocabinet_get_ordered_index( hx_store_tokyocabinet* hx, hx_node* sn, hx_node* pn, hx_node* on, hx_node_position_t order_position, hx_store_tokyocabinet_index** index, hx_node** nodes, int* var_count );
@@ -13,7 +15,23 @@ int _hx_store_tokyocabinet_iter_vb_sorted_by (void* data, int index );
 int _hx_store_tokyocabinet_iter_vb_iter_debug ( void* data, char* header, int indent );
 int _hx_store_tokyocabinet_add_triple_id ( hx_store_tokyocabinet* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 
+int _hx_store_tokyocabinet_directory_exists ( const char* dir ) {
+	int exists	= 0;
+	DIR* d	= opendir( dir );
+	if (d) {
+		exists	= 1;
+		closedir(d);
+	}
+	return exists;
+}
+
 hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
+	if (!_hx_store_tokyocabinet_directory_exists( directory )) {
+		if (mkdir( directory, 0755) == -1) {
+			perror( "*** Failed to create directory" );
+		}
+	}
+	
 	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) calloc( 1, sizeof(hx_store_tokyocabinet) );
 	hx->world				= world;
 	hx->directory			= directory;
@@ -21,14 +39,30 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	hx->next_id				= 1;
 	hx->id2node				= tcbdbnew();
 	hx->node2id				= tcbdbnew();
-	char* id2node_file		= malloc( strlen(directory) + 12 );
-	char* node2id_file		= malloc( strlen(directory) + 12 );
+	hx->counts				= tcbdbnew();
+
+	tcbdbtune(hx->id2node, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+	tcbdbtune(hx->node2id, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+	tcbdbtune(hx->counts, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
+
+	char* id2node_file		= malloc( strlen(directory) + 13 );
+	char* node2id_file		= malloc( strlen(directory) + 13 );
+	char* counts_file		= malloc( strlen(directory) + 13 );
 	sprintf( id2node_file, "%s/%s", directory, "id2node.tcb" );
 	sprintf( node2id_file, "%s/%s", directory, "node2id.tcb" );
-	tcbdbopen( hx->id2node, id2node_file, BDBOWRITER|BDBOCREAT|BDBOTSYNC );
-	tcbdbopen( hx->node2id, node2id_file, BDBOWRITER|BDBOCREAT|BDBOTSYNC );
+	sprintf( counts_file, "%s/%s", directory, "counts.tcb" );
+	if (!tcbdbopen( hx->id2node, id2node_file, BDBOWRITER|BDBOCREAT )) {	// |BDBOTSYNC
+		int ecode = tcbdbecode(hx->id2node);
+		fprintf( stderr, "*** error opening id2node file '%s': %s\n", id2node_file, tcbdberrmsg(ecode) );
+	}
+	if (!tcbdbopen( hx->node2id, node2id_file, BDBOWRITER|BDBOCREAT )) {	// |BDBOTSYNC
+		int ecode = tcbdbecode(hx->node2id);
+		fprintf( stderr, "*** error opening node2id file '%s': %s\n", node2id_file, tcbdberrmsg(ecode) );
+	}
+	tcbdbopen( hx->counts, counts_file, BDBOWRITER|BDBOCREAT );	// |BDBOTSYNC
 	free(node2id_file);
 	free(id2node_file);
+	free(counts_file);
 	
 	int size;
 	hx_node_id __next_key	= (hx_node_id) 0;
@@ -63,25 +97,43 @@ int hx_store_tokyocabinet_debug (hx_store* store) {
 	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
 //	hx_store_tokyocabinet_index_debug( hx->spo );
 	
-	BDBCUR *cur	= tcbdbcurnew(hx->id2node);
-	tcbdbcurfirst(cur);
+	{
+		BDBCUR *cur	= tcbdbcurnew(hx->id2node);
+		tcbdbcurfirst(cur);
+		fprintf( stderr, "Nodemap (id2node):\n" );
+		do {
+			int size;
+			void* k	= tcbdbcurkey(cur, &size);
+			char* v	= tcbdbcurval(cur, &size);
+			hx_node_id id	= *( (hx_node_id*) k );
+			if (id == 0) {
+				fprintf( stderr, "\t(next id = %"PRIdHXID")\n", *( (hx_node_id*) v ) );
+			} else {
+				fprintf( stderr, "\t%"PRIdHXID" -> %s\n", id, v );
+			}
+			free(k);
+			free(v);
+		} while (tcbdbcurnext(cur));
+		tcbdbcurdel(cur);
+	}
 	
-	fprintf( stderr, "Nodemap (id2node):\n" );
-	do {
-		int size;
-		void* k	= tcbdbcurkey(cur, &size);
-		char* v	= tcbdbcurval(cur, &size);
-		hx_node_id id	= *( (hx_node_id*) k );
-		if (id == 0) {
-			fprintf( stderr, "\t(next id = %"PRIuHXID")\n", *( (hx_node_id*) v ) );
-		} else {
-			fprintf( stderr, "\t%"PRIuHXID" -> %s\n", id, v );
-		}
-		free(k);
-		free(v);
-	} while (tcbdbcurnext(cur));
+	{
+		BDBCUR *cur	= tcbdbcurnew(hx->node2id);
+		tcbdbcurfirst(cur);
+		fprintf( stderr, "Nodemap (node2id):\n" );
+		do {
+			int size;
+			char* k	= tcbdbcurkey(cur, &size);
+			void* v	= tcbdbcurval(cur, &size);
+			hx_node_id id	= *( (hx_node_id*) v );
+			fprintf( stderr, "\t%s -> %"PRIdHXID"\n", k, id );
+			free(k);
+			free(v);
+		} while (tcbdbcurnext(cur));
+		tcbdbcurdel(cur);
+	}
 	
-	tcbdbcurdel(cur);
+	hx_store_tokyocabinet_index_debug( hx->spo );
 	
 	return 0;
 }
@@ -95,6 +147,7 @@ int hx_store_tokyocabinet_close (hx_store* store) {
 	// free the nodemap
 	tcbdbdel( hx->id2node );
 	tcbdbdel( hx->node2id );
+	tcbdbdel( hx->counts );
 	
 	if (hx->spo)
 		hx_free_tokyocabinet_index( hx->spo );
@@ -139,60 +192,38 @@ uint64_t hx_store_tokyocabinet_count (hx_store* store, hx_triple* triple) {
 	hx_node* index_ordered[3];
 	_hx_store_tokyocabinet_get_ordered_index( hx, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
 
-	hx_node_id aid	= _hx_store_tokyocabinet_get_node_id( hx, index_ordered[0] );
-	hx_node_id bid	= _hx_store_tokyocabinet_get_node_id( hx, index_ordered[1] );
-	hx_node_id cid	= _hx_store_tokyocabinet_get_node_id( hx, index_ordered[2] );
-	if (aid == 0 || bid == 0 || cid == 0) {
+	hx_node_id sid	= _hx_store_tokyocabinet_get_node_id( hx, s );
+	hx_node_id pid	= _hx_store_tokyocabinet_get_node_id( hx, p );
+	hx_node_id oid	= _hx_store_tokyocabinet_get_node_id( hx, o );
+	
+	if (sid == 0 || pid == 0 || oid == 0) {
 		return (uint64_t) 0;
 	}
-	hx_node_id index_ordered_id[3]	= { aid, bid, cid };
+	hx_node_id triple_ids[3]	= { sid, pid, oid };
 	
+	switch (vars) {
+		case 3:
+			return hx_store_tokyocabinet_size( store );
+		case 0:
+			return hx_store_tokyocabinet_contains_triple( store, triple );
+	};
 	
-	// XXX how to deal with counts in tc?
-// 	uint64_t size;
-// 	hx_head* head;
-// 	hx_vector* vector;
-// 	hx_terminal* terminal;
-// 	switch (vars) {
-// 		case 3:
-// 			return hx_store_tokyocabinet_size( store );
-// 		case 2:
-// 			head	= hx_store_tokyocabinet_index_head( index );
-// 			if (head == NULL) {
-// // 				fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
-// 				return (uint64_t) 0;
-// 			}
-// 			vector	= hx_head_get_vector( head, index_ordered_id[0] );
-// 			if (vector == NULL) {
-// //				fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
-// 				return (uint64_t) 0;
-// 			}
-// 			size	= hx_vector_triples_count( vector );
-// 			return size;
-// 			break;
-// 		case 1:
-// 			head	= hx_store_tokyocabinet_index_head( index );
-// 			if (head == NULL) {
-// //				fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
-// 				return (uint64_t) 0;
-// 			}
-// 			vector	= hx_head_get_vector( head, index_ordered_id[0] );
-// 			if (vector == NULL) {
-// //				fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
-// 				return (uint64_t) 0;
-// 			}
-// 			terminal	= hx_vector_get_terminal( vector, index_ordered_id[1] );
-// 			if (terminal == NULL) {
-// //				fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
-// 				return (uint64_t) 0;
-// 			}
-// 			size	= (uint64_t) hx_terminal_size( terminal );
-// 			return size;
-// 		case 0:
-// 			return (uint64_t) hx_store_tokyocabinet_contains_triple( store, triple );
-// 	};
-	
-	return (uint64_t) 0;
+	int size;
+	int i;
+	for (i = 0; i < 3; i++) {
+		if (triple_ids[i] < 0) {
+			triple_ids[i]	= 0;
+		}
+	}
+
+	void* ptr	= tcbdbget(hx->counts, triple_ids, 3*sizeof(hx_node_id), &size);
+	if (ptr == NULL) {
+		return 0;
+	} else {
+		uint64_t count	= (uint64_t) *( (int*) ptr );
+		free(ptr);
+		return count;
+	}
 }
 
 int _hx_nodemap_add_node ( hx_store_tokyocabinet* hx, hx_node* node ) {
@@ -204,16 +235,27 @@ int _hx_nodemap_add_node ( hx_store_tokyocabinet* hx, hx_node* node ) {
 	int len	= strlen(string) + 1;
 	int size;
 	
+	hx_node_id id;
 	void* p	= tcbdbget( node2id, string, len, &size );
 	if (p == NULL) {
-		hx_node_id __next_key	= (hx_node_id) 0;
-		hx_node_id id			= hx->next_id++;
-		tcbdbput( node2id, string, len, &id, sizeof( hx_node_id ) );
-		tcbdbput( id2node, &id, sizeof(hx_node_id), string, len );
+		static const hx_node_id __next_key	= (hx_node_id) 0;
+		id			= hx->next_id++;
+		
+		if (!tcbdbput( node2id, string, len, &id, sizeof( hx_node_id ) )) {
+			int ecode = tcbdbecode(node2id);
+			fprintf( stderr, "*** error adding to node2id: %s\n", tcbdberrmsg(ecode) );
+		}
+		if (!tcbdbput( id2node, &id, sizeof(hx_node_id), string, len )) {
+			int ecode = tcbdbecode(id2node);
+			fprintf( stderr, "*** error adding to id2node: %s\n", tcbdberrmsg(ecode) );
+		}
 		tcbdbput( id2node, &__next_key, sizeof(hx_node_id), &(hx->next_id), sizeof(hx_node_id) );
+	} else {
+		id	= *( (hx_node_id*) p );
 	}
 	
 	free(string);
+	return id;
 }
 
 /* Add a triple to the storage from the given model */
@@ -289,6 +331,12 @@ hx_variablebindings_iter* hx_store_tokyocabinet_get_statements (hx_store* store,
 	hx_node_id p	= _hx_store_tokyocabinet_get_node_id( hx, triple->predicate );
 	hx_node_id o	= _hx_store_tokyocabinet_get_node_id( hx, triple->object );
 
+	if (0) {
+		fprintf( stderr, "get statements matching { %"PRIdHXID" %"PRIdHXID" %"PRIdHXID" }\n", s, p, o );
+		hx_store_tokyocabinet_index_debug( index );
+	}
+	
+
 	if (!hx_node_is_variable( triple->subject ) && s == 0) {
 		return NULL;
 	}
@@ -300,6 +348,8 @@ hx_variablebindings_iter* hx_store_tokyocabinet_get_statements (hx_store* store,
 	}
 	
 	hx_node_id index_ordered_id[3]	= { s, p, o };
+	
+	
 	hx_store_tokyocabinet_index_iter* iter	= hx_store_tokyocabinet_index_new_iter1( index, index_ordered_id[0], index_ordered_id[1], index_ordered_id[2] );
 	
 	char* subj_name	= NULL;
@@ -397,14 +447,38 @@ hx_container_t* hx_store_tokyocabinet_triple_orderings (hx_store* store, hx_trip
 
 /* Return an ID value for a node. */
 hx_node_id hx_store_tokyocabinet_node2id (hx_store* store, hx_node* node) {
-	// XXX access the tc nodemap
-	return NULL;
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
+	TCBDB* node2id	= hx->node2id;
+	int size;
+	
+	char* string;
+	hx_node_string( node, &string );
+	int len	= strlen(string) + 1;
+	
+	hx_node_id id;
+	void* p	= tcbdbget( node2id, string, len, &size );
+	free(string);
+	if (p == NULL) {
+		return 0;
+	} else {
+		return *( (hx_node_id*) p );
+	}
 }
 
 /* Return a node object for an ID. Caller is responsible for freeing the node. */
 hx_node* hx_store_tokyocabinet_id2node (hx_store* store, hx_node_id id) {
-	// XXX access the tc nodemap
-	return NULL;
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
+	TCBDB* id2node	= hx->id2node;
+	int size;
+	
+	void* p	= tcbdbget( id2node, &id, sizeof(hx_node_id), &size );
+	if (p == NULL) {
+		return NULL;
+	} else {
+		hx_node* node	= hx_node_parse( p );
+		free(p);
+		return node;
+	}
 }
 
 
@@ -510,12 +584,86 @@ int _hx_store_tokyocabinet_add_triple_id ( hx_store_tokyocabinet* hx, hx_node_id
 	hx_store_tokyocabinet_index_add_triple( hx->pos, s, p, o );
 	hx_store_tokyocabinet_index_add_triple( hx->osp, s, p, o );
 	hx_store_tokyocabinet_index_add_triple( hx->ops, s, p, o );
+	
+	int son, pon, oon;
+	hx_node_id count_key[3];
+	for (son = 0; son <= 1; son++) {
+		if (son == 1) {
+			count_key[0]	= s;
+		} else {
+			count_key[0]	= 0;
+		}
+		for (pon = 0; pon <= 1; pon++) {
+			if (pon == 1) {
+				count_key[1]	= p;
+			} else {
+				count_key[1]	= 0;
+			}
+			for (oon = 0; oon <= 1; oon++) {
+				if (oon == 1) {
+					count_key[2]	= o;
+				} else {
+					count_key[2]	= 0;
+				}
+				
+				if (!(son == pon && pon == oon)) {
+					tcbdbaddint(hx->counts, count_key, 3*sizeof(hx_node_id), 1);
+				}
+			}
+		}
+	}
 	return 0;
 }
 
 hx_node_id _hx_store_tokyocabinet_get_node_id ( hx_store_tokyocabinet* hx, hx_node* node ) {
-	// XXX access tc nodemap
-	return (hx_node_id) 0;
+	if (hx_node_is_variable(node)) {
+		return hx_node_iv(node);
+	}
+	
+	char* string;
+	hx_node_string( node, &string );
+	int len	= strlen(string) + 1;
+	
+	int size;
+	void* p	= tcbdbget( hx->node2id, string, len, &size );
+	if (p == NULL) {
+		fprintf( stderr, "*** can't find node in nodemap: %s\n", string );
+		free(string);
+		
+		if (1) {
+			BDBCUR *cur	= tcbdbcurnew(hx->node2id);
+			if (tcbdbcurfirst(cur)) {
+				fprintf( stderr, "Nodemap (node2id):\n" );
+				do {
+					int size;
+					char* v	= tcbdbcurkey(cur, &size);
+					void* k	= tcbdbcurval(cur, &size);
+					hx_node_id id	= *( (hx_node_id*) k );
+					if (id == 0) {
+						fprintf( stderr, "\t(next id = %"PRIdHXID")\n", *( (hx_node_id*) v ) );
+					} else {
+						fprintf( stderr, "\t%"PRIdHXID" -> %s\n", id, v );
+					}
+					free(k);
+					free(v);
+				} while (tcbdbcurnext(cur));
+			} else {
+				fprintf( stderr, "*** no records in node2id?\n" );
+				uint64_t count	= tcbdbrnum(hx->node2id);
+				fprintf( stderr, "\t%"PRIu64"\n", count );
+				
+			}
+			tcbdbcurdel(cur);
+			exit(1);
+		}
+		
+		return 0;
+	} else {
+		free(string);
+		hx_node_id id	= *( (hx_node_id*) p );
+		free(p);
+		return id;
+	}
 }
 
 int _hx_store_tokyocabinet_get_ordered_index( hx_store_tokyocabinet* hx, hx_node* sn, hx_node* pn, hx_node* on, hx_node_position_t order_position, hx_store_tokyocabinet_index** index, hx_node** nodes, int* var_count ) {

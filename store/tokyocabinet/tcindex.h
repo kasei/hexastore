@@ -49,7 +49,6 @@ typedef struct {
 typedef struct {
 	hx_store_tokyocabinet_index_iter* iter;
 	int size;
-	int free_names;
 	char** names;
 	int* triple_pos_to_index;
 	int* index_to_triple_pos;
@@ -73,6 +72,9 @@ int hx_store_tokyocabinet_index_add_triple ( hx_store_tokyocabinet_index* index,
 int hx_store_tokyocabinet_index_remove_triple ( hx_store_tokyocabinet_index* i, hx_node_id s, hx_node_id p, hx_node_id o );
 uint64_t hx_store_tokyocabinet_index_triples_count ( hx_store_tokyocabinet_index* index );
 
+char* hx_store_tokyocabinet_index_name ( hx_store_tokyocabinet_index* index );
+
+
 hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter ( hx_store_tokyocabinet_index* index );
 hx_store_tokyocabinet_index_iter* hx_store_tokyocabinet_index_new_iter1 ( hx_store_tokyocabinet_index* index, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_free_tokyocabinet_index_iter ( hx_store_tokyocabinet_index_iter* iter );
@@ -83,7 +85,7 @@ int hx_store_tokyocabinet_index_iter_next ( hx_store_tokyocabinet_index_iter* it
 
 int hx_store_tokyocabinet_index_iter_is_sorted_by_index ( hx_store_tokyocabinet_index_iter* iter, int index );
 
-hx_variablebindings_iter* hx_new_tokyocabinet_index_iter_variablebindings ( hx_store_tokyocabinet_index_iter* i, char* subj_name, char* pred_name, char* obj_name, int free_names );
+hx_variablebindings_iter* hx_new_tokyocabinet_index_iter_variablebindings ( hx_store_tokyocabinet_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 
 #ifdef __cplusplus
 }

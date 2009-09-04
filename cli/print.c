@@ -6,6 +6,7 @@
 #include "engine/mergejoin.h"
 #include "misc/avl.h"
 #include "store/hexastore/hexastore.h"
+#include "store/tokyocabinet/tokyocabinet.h"
 
 typedef struct {
 	int next;
@@ -37,37 +38,67 @@ char* variable_name ( varmap_t* varmap, int id );
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage:\n" );
-	fprintf( stderr, "\t%s hexastore.dat -c\n", argv[0] );
-	fprintf( stderr, "\t%s hexastore.dat -p pred\n", argv[0] );
-	fprintf( stderr, "\t%s hexastore.dat -b subj pred obj\n", argv[0] );
-	fprintf( stderr, "\t%s hexastore.dat -j s1 p1 o1 [ s2 p2 o2 [ ... ] ]\n", argv[0] );
-	fprintf( stderr, "\t%s hexastore.dat subj pred obj\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S data -c\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S data -p pred\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S data -b subj pred obj\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S data -j s1 p1 o1 [ s2 p2 o2 [ ... ] ]\n", argv[0] );
+	fprintf( stderr, "\t%s -store=S data subj pred obj\n", argv[0] );
 	fprintf( stderr, "\n\n" );
+	fprintf( stderr, "S must be one of the following:\n" );
+	fprintf( stderr, "    'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "    'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 }
 
 int main (int argc, char** argv) {
 	const char* filename	= NULL;
 	char* arg				= NULL;
 	
-	if (argc < 2) {
+	if (argc < 3) {
 		help(argc, argv);
 		exit(1);
 	}
 
-	filename	= argv[1];
-	if (argc > 2)
-		arg		= argv[2];
-	
-	FILE* f	= fopen( filename, "r" );
-	if (f == NULL) {
-		perror( "Failed to open hexastore file for reading: " );
-		return 1;
+	char store_type	= 'T';
+	int i	= 1;
+	if (strncmp(argv[i], "-store=", 7) == 0) {
+		switch (argv[i][7]) {
+			case 'T':
+				store_type	= 'T';
+				break;
+			case 'H':
+				store_type	= 'H';
+				break;
+			default:
+				fprintf( stderr, "Unrecognized store type.\n\n" );
+				exit(1);
+		};
+		i++;
+	} else {
+		fprintf( stderr, "No store type specified.\n" );
+		exit(1);
 	}
+
+	filename	= argv[i++];
+	if (argc > 3)
+		arg		= argv[i++];
 	
-	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
 	
-	fprintf( stderr, "finished loading hexastore from file...\n" );
+	hx_hexastore* hx;
+	if (store_type == 'T') {
+		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
+		hx		= hx_new_hexastore_with_store( NULL, store );
+	} else {
+		FILE* f	= fopen( filename, "r" );
+		if (f == NULL) {
+			perror( "Failed to open hexastore file for reading: " );
+			return 1;
+		}
+		
+		hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
+		hx		= hx_new_hexastore_with_store( NULL, store );
+	}
+
+	fprintf( stderr, "finished loading triplestore...\n" );
 	
 	if (arg == NULL) {
 		int count	= 1;
@@ -87,16 +118,20 @@ int main (int argc, char** argv) {
 	} else if (strcmp( arg, "-c" ) == 0) {
 		fprintf( stdout, "Triples: %lu\n", (unsigned long) hx_triples_count( hx ) );
 	} else if (strcmp( arg, "-n" ) == 0) {
-		// print out the nodemap
-		hx_nodemap* map		= hx_store_hexastore_get_nodemap( store );
-		struct avl_traverser iter;
-		avl_t_init( &iter, map->id2node );
-		hx_nodemap_item* item;
-		while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
-			char* string;
-			hx_node_string( item->node, &string );
-			fprintf( stdout, "%-10lu\t%s\n", (unsigned long) item->id, string );
-			free( string );
+		if (store_type == 'H') {
+			// print out the nodemap
+			hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
+			struct avl_traverser iter;
+			avl_t_init( &iter, map->id2node );
+			hx_nodemap_item* item;
+			while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+				char* string;
+				hx_node_string( item->node, &string );
+				fprintf( stdout, "%-10lu\t%s\n", (unsigned long) item->id, string );
+				free( string );
+			}
+		} else {
+			fprintf( stderr, "*** Printing of the nodemap is only available for hexastore-based triplestores\n" );
 		}
 	} else if (strcmp( arg, "-id" ) == 0) {
 		if (argc != 4) {

@@ -41,7 +41,7 @@ int main (int argc, char** argv) {
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		char* string;
 		hx_node_string( item->node, &string );
-		fprintf( stdout, "%-10"PRIuHXID"\t%s\n", item->id, string );
+		fprintf( stdout, "%-10"PRIdHXID"\t%s\n", item->id, string );
 		free( string );
 	}
 	
