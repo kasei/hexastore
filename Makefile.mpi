@@ -1,3 +1,18 @@
+### This is the hexastore Makefile for MPI-based parallel query execution. It
+### should work on most unix-like systems (development and testing happens on
+### both linux and OS X). `make all` is what you want to run the first time
+### through (which importantly drags in the `make sparql` target for running
+### flex and bison). On subsequent makes, just `make` should do the trick
+### without needing to re-generate the flex/bison stuff.
+
+### After building, examples/mpi is the MPI executable for running a
+### parallelized query evaluation. It takes two arguments: the filename of an
+### N-Triples-encoded RDF file, and the filename of a query file. The query is
+### SPARQL-like, but currently must only include PREFIX declarations and graph
+### patterns. An example query would be:
+### 
+###   "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p a foaf:Person }".
+
 CDEFINES	= -DDEBUG -DASYNC_DES_CHECK_FREQ=1024 -DTIMING_CPU_FREQUENCY=2600000000.0
 CFLAGS		= -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/gpfs/large/DSSW/tokyocabinet/include -L/gpfs/large/DSSW/tokyocabinet/lib -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib -I/ext/local/include -L/ext/local/lib -g $(CDEFINES)
 CC			= mpicc $(CFLAGS)
@@ -17,7 +32,7 @@ OBJECTS			= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE
 
 default: mpi
 
-all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
+all: sparql mpi parse print optimize tests examples parse_query dumpmap assign_ids
 
 server: cli/server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server cli/server.c $(OBJECTS)

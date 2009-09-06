@@ -1,3 +1,10 @@
+### This is the generic Makefile for the hexastore code. It should work on most
+### unix-like systems (development and testing happens on both linux and OS X).
+### `make all` is what you want to run the first time through (which importantly
+### drags in the `make sparql` target for running flex and bison). On subsequent
+### makes, just `make` should do the trick without needing to re-generate the
+### flex/bison stuff.
+
 CDEFINES	= -DDEBUG -DBLUEGENEL -DTIMING_CPU_FREQUENCY=2400000000.0
 CFLAGS		= -arch i386 -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb
 CC			= gcc $(CFLAGS)

@@ -1,3 +1,20 @@
+### This is the hexastore Makefile for MPI-based parallel query execution on a
+### Blue Gene/L. `make all` is what you want to run the first time
+### through (which importantly drags in the `make sparql` target for running
+### flex and bison). The `make sparql` target is provided because our Blue Gene
+### development environment doesn't easily allow us to use flex and bison.
+### Therefore, the `make sparql` target may be run on a different machine before
+### loading into the Blue Gene environment where running `make` will finish the
+### build process.
+
+### After building, examples/mpi is the MPI executable for running a
+### parallelized query evaluation. It takes two arguments: the filename of an
+### N-Triples-encoded RDF file, and the filename of a query file. The query is
+### SPARQL-like, but currently must only include PREFIX declarations and graph
+### patterns. An example query would be:
+### 
+###   "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p a foaf:Person }".
+
 CDEFINES	= -DDEBUG -DBLUEGENEL -DASYNC_DES_CHECK_FREQ=1 -DTIMING_CPU_FREQUENCY=700000000.0
 CFLAGS		= -g -I. -L. -I/gpfs/large/DSSW/redland/local/include -L/gpfs/large/DSSW/redland/local/lib $(CDEFINES)
 CC			= mpixlc $(CFLAGS)
