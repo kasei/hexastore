@@ -31,14 +31,6 @@ Implement hx_store_triple_orderings, letting store implementations return thunks
 Revamp the sorted_by code for variablebindings iterators. Right now there's the hx_variablebindings_iter_is_sorted_by_index function, but this needs to be extended to returning an array of expressions (with flag for ascending/descending), so we can tell that a variablebindings iterator is sorted by, e.g., "ASC(?s), DESC(STR(?p))". This will be set by the store implementations for hx_store_get_statements, and all the vb iter implementations (join, project, etc.) should propogate these ordering structs up to the top level.
 
 
-[api-changes]
-
-hx_optimizer_join_plans should do garbage collection on the passed in container objects instead of making the calling code do it (the common case is probably that they're passed to hx_optimizer_join_plans and never used again, so let's make the uncommon case (as the code is now) require an explicit copy of the plan containers).
-
-
-
-
-
 
 Notes:
 
