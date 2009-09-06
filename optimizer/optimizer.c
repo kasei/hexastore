@@ -436,8 +436,9 @@ hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_containe
 			}
 		}
 	}
-
-
+	
+	hx_free_container( lhs );
+	hx_free_container( rhs );
 	
 	return join_plans;
 }

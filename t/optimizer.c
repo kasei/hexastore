@@ -235,8 +235,6 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 		hx_free_optimizer_plan( plan );
 	}
 	hx_free_container( jplans );
-	hx_free_container( plans1 );
-	hx_free_container( plans2 );
 	
 	hx_free_triple( t1 );
 	hx_free_triple( t2 );
@@ -423,8 +421,6 @@ void join_cost_test1 ( hx_hexastore* hx ) {
 	}
 	
 	hx_free_container( jplans );
-	hx_free_container( plans1 );
-	hx_free_container( plans2 );
 	
 	hx_free_triple( t1 );
 	hx_free_triple( t2 );
@@ -508,8 +504,6 @@ void prune_plans_test2 ( hx_hexastore* hx ) {
 		hx_free_optimizer_plan( plan );
 	}
 	hx_free_container( pruned );
-	hx_free_container( plans1 );
-	hx_free_container( plans2 );
 	
 	hx_free_triple( t1 );
 	hx_free_triple( t2 );
