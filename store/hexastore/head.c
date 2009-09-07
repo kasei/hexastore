@@ -51,6 +51,9 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 }
 
 int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v ) {
+	if (v == NULL) {
+		fprintf( stderr, "*** NULL vector pointer passed to hx_head_add_vector\n" );
+	}
 	uintptr_t value	= ((uintptr_t) v);
 	hx_btree_insert( (hx_btree*) h->tree, n, value );
 //	fprintf( stderr, "adding vector: %llu\n", value );
@@ -61,6 +64,9 @@ hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n ) {
 	uintptr_t vector	= hx_btree_search( (hx_btree*) h->tree, n );
 //	fprintf( stderr, "got vector: %llu\n", vector );
 	hx_vector* v	= (hx_vector*) vector;
+// 	if (v == NULL) {
+// 		fprintf( stderr, "*** Got NULL vector pointer in hx_head_get_vector\n" );
+// 	}
 	return v;
 }
 

@@ -49,6 +49,37 @@ hx_store* hx_new_store_hexastore ( void* world ) {
 	return hx_new_store_hexastore_with_nodemap( world, map );
 }
 
+hx_store* hx_new_store_hexastore_with_indexes ( void* world, const char* index_string ) {
+	hx_store_hexastore* hx	= (hx_store_hexastore*) calloc( 1, sizeof(hx_store_hexastore) );
+	hx->map					= hx_new_nodemap();
+	if (strcasestr(index_string, "spo")) {
+		fprintf( stderr, "Adding SPO index\n" );
+		hx->spo					= hx_new_index( world, HX_INDEX_ORDER_SPO );
+	}
+	if (strcasestr(index_string, "sop")) {
+		fprintf( stderr, "Adding SOP index\n" );
+		hx->sop					= hx_new_index( world, HX_INDEX_ORDER_SOP );
+	}
+	if (strcasestr(index_string, "pso")) {
+		fprintf( stderr, "Adding PSO index\n" );
+		hx->pso					= hx_new_index( world, HX_INDEX_ORDER_PSO );
+	}
+	if (strcasestr(index_string, "pos")) {
+		fprintf( stderr, "Adding POS index\n" );
+		hx->pos					= hx_new_index( world, HX_INDEX_ORDER_POS );
+	}
+	if (strcasestr(index_string, "osp")) {
+		fprintf( stderr, "Adding OSP index\n" );
+		hx->osp					= hx_new_index( world, HX_INDEX_ORDER_OSP );
+	}
+	if (strcasestr(index_string, "ops")) {
+		fprintf( stderr, "Adding OPS index\n" );
+		hx->ops					= hx_new_index( world, HX_INDEX_ORDER_OPS );
+	}
+	hx->indexes				= NULL;
+	return _hx_new_store_hexastore_with_hx( world, hx );
+}
+
 hx_nodemap* hx_store_hexastore_get_nodemap ( hx_store* store ) {
 	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
 	return hx->map;
@@ -457,25 +488,32 @@ int _hx_store_hexastore_iter_vb_iter_debug ( void* data, char* header, int inden
 
 int _hx_store_hexastore_add_triple_id ( hx_store_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_terminal* t;
-	{
+	if (hx->spo && hx->pso) {
+// 		fprintf( stderr, "using shared terminal between SPO and PSO indexes\n" );
 		int added	= hx_store_hexastore_index_add_triple_terminal( hx->spo, s, p, o, &t );
-		if (hx->pso) {
-			hx_store_hexastore_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
-		}
-	}
-
-	{
-		int added	= hx_store_hexastore_index_add_triple_terminal( hx->sop, s, p, o, &t );
-		if (hx->osp) {
-			hx_store_hexastore_index_add_triple_with_terminal( hx->osp, t, s, p, o, added );
-		}
+		hx_store_hexastore_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
+	} else {
+		if (hx->spo) hx_store_hexastore_index_add_triple( hx->spo, s, p, o );
+		if (hx->pso) hx_store_hexastore_index_add_triple( hx->pso, s, p, o );
 	}
 	
-	{
+
+	if (hx->osp && hx->sop) {
+// 		fprintf( stderr, "using shared terminal between OSP and SOP indexes\n" );
+		int added	= hx_store_hexastore_index_add_triple_terminal( hx->osp, s, p, o, &t );
+		hx_store_hexastore_index_add_triple_with_terminal( hx->sop, t, s, p, o, added );
+	} else {
+		if (hx->osp) hx_store_hexastore_index_add_triple( hx->osp, s, p, o );
+		if (hx->sop) hx_store_hexastore_index_add_triple( hx->sop, s, p, o );
+	}
+	
+	if (hx->pos && hx->ops) {
+// 		fprintf( stderr, "using shared terminal between POS and OPS indexes\n" );
 		int added	= hx_store_hexastore_index_add_triple_terminal( hx->pos, s, p, o, &t );
-		if (hx->ops) {
-			hx_store_hexastore_index_add_triple_with_terminal( hx->ops, t, s, p, o, added );
-		}
+		hx_store_hexastore_index_add_triple_with_terminal( hx->ops, t, s, p, o, added );
+	} else {
+		if (hx->pos) hx_store_hexastore_index_add_triple( hx->pos, s, p, o );
+		if (hx->ops) hx_store_hexastore_index_add_triple( hx->ops, s, p, o );
 	}
 	
 	return 0;
@@ -509,6 +547,14 @@ int _hx_store_hexastore_get_ordered_index( hx_store_hexastore* hx, hx_node* sn, 
 	int vars	= 0;
 	
 #ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "Determining appropriate index to use for triple pattern { %"PRIdHXID" %"PRIdHXID" %"PRIdHXID" }\n", s, p, o );
+	if (hx->spo) fprintf( stderr, "SPO index is present...\n" );
+	if (hx->sop) fprintf( stderr, "SOP index is present...\n" );
+	if (hx->pos) fprintf( stderr, "POS index is present...\n" );
+	if (hx->pso) fprintf( stderr, "PSO index is present...\n" );
+	if (hx->osp) fprintf( stderr, "OSP index is present...\n" );
+	if (hx->ops) fprintf( stderr, "OPS index is present...\n" );
+	
 	const char* pnames[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
 	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
 #endif
@@ -610,16 +656,30 @@ int _hx_store_hexastore_get_ordered_index( hx_store_hexastore* hx, hx_node* sn, 
 		case 0:
 			switch (index_order[1]) {
 				case 1:
+					if (hx->spo) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using spo index\n" );
+						fprintf( stderr, "using spo index\n" );
 #endif
-					*index	= hx->spo;
+						*index	= hx->spo;
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted spo index, but using pso...\n" );
+#endif
+						*index	= hx->pso;
+					}
 					break;
 				case 2:
+					if (hx->sop) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using sop index\n" );
+						fprintf( stderr, "using sop index\n" );
 #endif
-					*index	= hx->sop;
+						*index	= hx->sop;
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted sop index, but using osp...\n" );
+#endif
+						*index	= hx->osp;
+					}
 					break;
 			}
 			break;
@@ -639,10 +699,17 @@ int _hx_store_hexastore_get_ordered_index( hx_store_hexastore* hx, hx_node* sn, 
 					}
 					break;
 				case 2:
+					if (hx->pos) {
 #ifdef DEBUG_INDEX_SELECTION
-					fprintf( stderr, "using pos index\n" );
+						fprintf( stderr, "using pos index\n" );
 #endif
-					*index	= hx->pos;
+						*index	= hx->pos;
+					} else {
+#ifdef DEBUG_INDEX_SELECTION
+						fprintf( stderr, "wanted pos index, but using ops...\n" );
+#endif
+						*index	= hx->ops;
+					}
 					break;
 			}
 			break;
@@ -695,18 +762,41 @@ int hx_store_hexastore_write( hx_store* store, FILE* f ) {
 	}
 	
 	int cond	= 0;
-	if (h->spo)
+	
+	uint8_t index_count	= 0;
+	if (h->spo) index_count++;
+	if (h->sop) index_count++;
+	if (h->pso) index_count++;
+	if (h->pos) index_count++;
+	if (h->osp) index_count++;
+	if (h->ops) index_count++;
+	fprintf( stderr, "Writing %d indexes to disk\n", (int) index_count );
+	fwrite( &index_count, sizeof(uint8_t), 1, f );
+	
+	if (h->spo) {
+		fwrite( "spo", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->spo, f );
-	if (h->sop)
+	}
+	if (h->sop) {
+		fwrite( "sop", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->sop, f );
-	if (h->pso)
+	}
+	if (h->pso) {
+		fwrite( "pso", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->pso, f );
-	if (h->pos)
+	}
+	if (h->pos) {
+		fwrite( "pos", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->pos, f );
-	if (h->osp)
+	}
+	if (h->osp) {
+		fwrite( "osp", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->osp, f );
-	if (h->ops)
+	}
+	if (h->ops) {
+		fwrite( "ops", 3, 1, f );
 		cond		|= hx_store_hexastore_index_write( h->ops, f );
+	}
 	
 	if (cond != 0) {
 		fprintf( stderr, "*** Error while writing hexastore indices to disk.\n" );
@@ -730,20 +820,42 @@ hx_store* hx_store_hexastore_read( void* world, FILE* f, int buffer ) {
 		return NULL;
 	}
 	
-	hx->spo		= hx_store_hexastore_index_read( f, buffer );
-	hx->sop		= hx_store_hexastore_index_read( f, buffer );
-	hx->pso		= hx_store_hexastore_index_read( f, buffer );
-	hx->pos		= hx_store_hexastore_index_read( f, buffer );
-	hx->osp		= hx_store_hexastore_index_read( f, buffer );
-	hx->ops		= hx_store_hexastore_index_read( f, buffer );
+	uint8_t index_count;
+	fread( &index_count, sizeof(uint8_t), 1, f );
+	
+	int i;
+	for (i = 0; i < index_count; i++) {
+		char index_name[4];
+		index_name[3]	= (char) 0;
+		fread( index_name, 3, 1, f );
+		
+		hx_store_hexastore_index* index	= hx_store_hexastore_index_read( f, buffer );
+		if (index == NULL) {
+			fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
+			free( hx );
+			return NULL;
+		}
+		
+		if (strncmp(index_name, "spo", 3) == 0) {
+			hx->spo		= index;
+		} else if (strncmp(index_name, "sop", 3) == 0) {
+			hx->sop		= index;
+		} else if (strncmp(index_name, "pso", 3) == 0) {
+			hx->pso		= index;
+		} else if (strncmp(index_name, "pos", 3) == 0) {
+			hx->pos		= index;
+		} else if (strncmp(index_name, "osp", 3) == 0) {
+			hx->osp		= index;
+		} else if (strncmp(index_name, "ops", 3) == 0) {
+			hx->ops		= index;
+		} else {
+			fprintf( stderr, "*** Unrecognized index ordering in hx_store_hexastore_read\n" );
+			free(hx);
+			return NULL;
+		}
+	}
 	hx->indexes		= NULL;
 	
-	if ((hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0) || (hx->spo == 0)) {
-		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
-		free( hx );
-		return NULL;
-	} else {
-		return _hx_new_store_hexastore_with_hx( world, hx );
-	}
+	return _hx_new_store_hexastore_with_hx( world, hx );
 }
 

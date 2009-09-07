@@ -2,10 +2,11 @@
 #include <dirent.h>
 #include "hexastore.h"
 #include "rdf/node.h"
+#include "algebra/bgp.h"
 #include "engine/mergejoin.h"
 #include "engine/materialize.h"
-#include "algebra/bgp.h"
 #include "parallel/parallel.h"
+#include "store/hexastore/hexastore.h"
 
 #include "misc/timing_choices.h"
 #ifndef TIMING_CPU_FREQUENCY
@@ -16,7 +17,6 @@
 
 int DEBUG_NODE	= -1;
 
-extern hx_bgp* parse_bgp_query_string ( char* );
 hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, const char* filename );
 
 int directory_exists ( const char* dir ) {
@@ -74,7 +74,8 @@ int main ( int argc, char** argv ) {
 		sleep(5);
 	}
 
-	hx_hexastore* hx		= hx_new_hexastore( NULL );
+	hx_store* store			= hx_new_store_hexastore_with_indexes( NULL, "spo,pso,ops" );
+	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
 	
 	const char* data_filename	= argv[1];
 	const char* query_filename	= argv[2];
@@ -101,7 +102,7 @@ int main ( int argc, char** argv ) {
 	
 
 	char* query	= read_file( query_filename );
-	hx_bgp* b	= parse_bgp_query_string( query );
+	hx_bgp* b	= hx_bgp_parse_string( query );
 	
 	if (b == NULL) {
 		fprintf( stderr, "*** rank %d failed to parse BGP\n", myrank );
@@ -114,7 +115,6 @@ int main ( int argc, char** argv ) {
 	
 	
 //	hx_bgp_reorder_mpi( b, hx );
-	
 //	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
 //	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );

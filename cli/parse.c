@@ -58,12 +58,20 @@ int main (int argc, char** argv) {
 	rdf_filename	= argv[i++];
 	output_location	= argv[i++];
 	
+	const char* index_string;
+	if (i < argc) {
+		index_string	= argv[i++];
+	} else {
+		index_string	= "spo,sop,pso,pos,osp,ops";
+	}
+	
 	hx_hexastore* hx;
 	if (type == 'T') {
-		hx_store* store		= hx_new_store_tokyocabinet( NULL, output_location );
-		hx		= hx_new_hexastore_with_store( NULL, store );
+		hx_store* store	= hx_new_store_tokyocabinet( NULL, output_location );
+		hx				= hx_new_hexastore_with_store( NULL, store );
 	} else {
-		hx	= hx_new_hexastore( NULL );
+		hx_store* store	= hx_new_store_hexastore_with_indexes( NULL, index_string );
+		hx				= hx_new_hexastore_with_store( NULL, store );
 	}
 	
 	hx_parser* parser	= hx_new_parser();

@@ -47,6 +47,7 @@ typedef struct {
 
 hx_store* hx_new_store_hexastore ( void* world );
 hx_store* hx_new_store_hexastore_with_nodemap ( void* world, hx_nodemap* map );
+hx_store* hx_new_store_hexastore_with_indexes ( void* world, const char* index_string );
 
 int hx_store_hexastore_init (hx_store* store, void* options);
 hx_nodemap* hx_store_hexastore_get_nodemap ( hx_store* store );

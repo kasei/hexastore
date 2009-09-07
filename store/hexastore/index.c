@@ -84,6 +84,8 @@ int hx_store_hexastore_index_debug ( hx_store_hexastore_index* index ) {
 				hx_vector_iter_next( viter );
 				j++;
 			}
+		} else {
+			fprintf( stderr, "*** Got NULL vector pointer for head value %"PRIdHXID"\n", triple_ordered[index->order[0]] );
 		}
 		
 		hx_head_iter_next( hiter );
@@ -108,7 +110,7 @@ int hx_store_hexastore_index_add_triple_terminal ( hx_store_hexastore_index* ind
 	for (i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
-//	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
+// 	fprintf( stderr, "add_triple %s index order: { %d, %d, %d }\n", hx_store_hexastore_index_name(index), (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
 	hx_head* h	= (hx_head*) index->head;
 	hx_vector* v	= NULL;
