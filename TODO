@@ -15,6 +15,8 @@ optimizer/optimizer.c:hx_optimizer_optimize_bgp currently implements the dynamic
 
 ** the existing optimizer code needs to be fixed to not use hx_index directly (which isn't a public API following the refactoring of the backend triplestore code).
 
+Update the optimizer code to determine when variables are only referenced once, and rewrite the triple pattern to use (hx_node_id) 0 instead of an actual variable ID (hx_node_id with a negative value). This can be conditionally turned on when running under DISTINCT or REDUCED, and allow the storage implementations to only return zero or one results per variable of this kind. For example, we might want all people with foaf:name properties, but not care what the actual names are: {?p foaf:name _:a}. As long as _:a isn't referenced anywhere else in the query, performance can be improved by letting the storage backend only return a single result (with only ?p bound) for each person, even if they have many foaf:name properties.
+
 
 [storage]
 
@@ -25,6 +27,7 @@ Finish the tokyocabinet-based backend store (including more unit tests to make s
 
 Implement hx_store_triple_orderings, letting store implementations return thunks that refer to their available internal indexes. The optimizer can then use these to construct access plans. Along with this change, we'll need a new variablebindings iterator constructor (and possible also a count function for the optimizer to use in cost estimation) that can take one of these thunks as an argument so that the optimizer can force use of what it thinks is the best index. The thunks could just be strings (e.g. "SOP"), but maybe they should be more complicated to allow custom indexes (like an index on just statements involving xsd:integers or XMLLiterals). In any case, the actual thunk should be opaque to calling code.
 
+Update the hx_store_get_statements implementations to work even if an appropriate index isn't present. For example, if the SOP index is decided upon as the appropriate index, but only SPO, PSO, and OPS are available, the code should be able to fall back on one of the existing indexes (depending on the constraints of what terms are bound and what the requested ordering is) to produce results. This will require often end up looking like a "table scan" over the entire index, with code to check that the bound triple pattern terms match (this can be thought of as a low-level implementation of an all-variable triple pattern with FILTERs to check the result values).
 
 [sortedby]
 
