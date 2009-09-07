@@ -684,6 +684,7 @@ int _hx_store_tokyocabinet_get_ordered_index( hx_store_tokyocabinet* hx, hx_node
 	int vars	= 0;
 	
 #ifdef DEBUG_INDEX_SELECTION
+	const char* pnames[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
 	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
 #endif
 	int used[3]	= { 0, 0, 0 };
