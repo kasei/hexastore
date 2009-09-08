@@ -101,16 +101,18 @@ void* _mpi_file_ntriples_iterator_next(void* s) {
 		nt = (unsigned char*) _mpi_file_ntriples_iterator_next(s);
 		len = strlen((char*)nt);
 
-		size_t last_frag_len = strlen((char*)state->last_frag);
-		state->last_frag = realloc(state->last_frag, last_frag_len + len + 1);
-		if(state->last_frag == NULL) {
-			fprintf(stderr, "%s:%u: Error in _mpi_file_ntriples_iterator_next; unable to allocat %u bytes for completing last fragment.\n", __FILE__, __LINE__, last_frag_len + len + 1);
-			return NULL;
+		if(state->last_frag != NULL) {
+			size_t last_frag_len = strlen((char*)state->last_frag);
+			state->last_frag = realloc(state->last_frag, last_frag_len + len + 1);
+			if(state->last_frag == NULL) {
+				fprintf(stderr, "%s:%u: Error in _mpi_file_ntriples_iterator_next; unable to allocat %u bytes for completing last fragment.\n", __FILE__, __LINE__, last_frag_len + len + 1);
+				return NULL;
+			}
+			memcpy((char*)&(state->last_frag[last_frag_len]), (char*)nt, len + 1);
+			free(nt);
+			nt = state->last_frag;
+			state->last_frag = NULL;
 		}
-		memcpy((char*)&(state->last_frag[last_frag_len]), (char*)nt, len + 1);
-		free(nt);
-		nt = state->last_frag;
-		state->last_frag = NULL;
 		return nt;
 	}
 	if(state->first_frag == NULL) {
