@@ -6,7 +6,7 @@ char* hx_copy_string ( const char* string ) {
 	} else {
 		int len	= strlen(string) + 1;
 		char* s	= malloc(len);
-		strncpy(s, string, len);
+		memcpy(s,string,len);
 		return s;
 	}
 }

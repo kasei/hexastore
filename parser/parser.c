@@ -1,5 +1,8 @@
+#include "misc/util.h"
 #include "parser/parser.h"
 #include "store/hexastore/hexastore.h"
+
+typedef struct avl_table avl;
 
 void _hx_parser_handle_triple(void* user_data, const raptor_statement* triple);
 int  _hx_parser_add_triples_batch ( hx_parser* index );
@@ -7,9 +10,31 @@ int _hx_parser_get_triple_nodes( hx_parser* index, const raptor_statement* tripl
 hx_node* _hx_parser_node( hx_parser* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
 unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, unsigned char* user_bnodeid);
 
+typedef struct {
+	char* raptor_name;
+	char* local_name;
+} hx_parser_idmap_item;
+
+int _hx_parser_idmap_cmp ( void* _a, void* _b, void* thunk ) {
+	hx_parser_idmap_item* a	= _a;
+	hx_parser_idmap_item* b	= _b;
+	return strcmp( a->raptor_name, b->raptor_name );
+}
+
+void _hx_parser_free_bnode_map_item (void *avl_item, void *avl_param) {
+	hx_parser_idmap_item* i	= (hx_parser_idmap_item*) avl_item;
+	if (i->raptor_name != NULL) free( i->raptor_name );
+	if (i->local_name != NULL) free( i->local_name );
+	i->raptor_name	= NULL;
+	i->local_name	= NULL;
+	free( i );
+}
+
+
 hx_parser* hx_new_parser ( void ) {
 	hx_parser* p	= (hx_parser*) calloc( 1, sizeof( hx_parser ) );
 	p->next_bnode	= 0;
+	p->bnode_map	= NULL;
 	gettimeofday( &( p->tv ), NULL );
 	p->logger		= NULL;
 	return p;
@@ -33,12 +58,13 @@ uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* 
 	raptor_parser* rdf_parser	= raptor_new_parser( parser_name );
 	raptor_uri *base_uri		= raptor_uri_copy(uri);
 	
-	parser->hx		= hx;
-	parser->count	= 0;
-	parser->triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
+	parser->bnode_map	= avl_create( (avl_comparison_func*) _hx_parser_idmap_cmp, NULL, &avl_allocator_default );
+	parser->hx			= hx;
+	parser->count		= 0;
+	parser->triples		= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
 	raptor_set_statement_handler(rdf_parser, parser, _hx_parser_handle_triple);
-//	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
+	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
 	
 	raptor_parse_file(rdf_parser, uri, base_uri);
 	if (parser->count > 0) {
@@ -48,8 +74,9 @@ uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* 
 	raptor_free_parser(rdf_parser);
 	free( parser->triples );
 	free( uri_string );
-	free( base_uri );
-	free( uri );
+	raptor_free_uri( base_uri );
+	raptor_free_uri( uri );
+	avl_destroy( parser->bnode_map, _hx_parser_free_bnode_map_item );
 	return parser->total;
 }
 
@@ -59,12 +86,13 @@ int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx,
 	raptor_uri* base_uri		= raptor_new_uri((const unsigned char*) base);
 	raptor_start_parse( rdf_parser, base_uri );
 	
-	parser->hx		= hx;
-	parser->count	= 0;
-	parser->triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
+	parser->bnode_map	= avl_create( (avl_comparison_func*) _hx_parser_idmap_cmp, NULL, &avl_allocator_default );
+	parser->hx			= hx;
+	parser->count		= 0;
+	parser->triples		= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
 	raptor_set_statement_handler(rdf_parser, parser, _hx_parser_handle_triple);
-//	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
+	raptor_set_generate_id_handler(rdf_parser, parser, _hx_parser_generate_id);
 	
 	raptor_parse_chunk(rdf_parser, (const unsigned char*)string, strlen(string), 1);
 	if (parser->count > 0) {
@@ -74,6 +102,7 @@ int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx,
 	raptor_free_parser(rdf_parser);
 	raptor_free_uri( base_uri );
 	free( parser->triples );
+	avl_destroy( parser->bnode_map, _hx_parser_free_bnode_map_item );
 	return 0;
 }
 
@@ -177,6 +206,16 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 	hx_parser* parser	= (hx_parser*) user_data;
 //	fprintf( stderr, "time: %llx seconds, %llx µs\n", (unsigned long long) parser->tv.tv_sec, (unsigned long long) parser->tv.tv_usec );
 	
+	if (user_bnodeid != NULL) {
+		hx_parser_idmap_item i;
+		i.raptor_name	= user_bnodeid;
+		hx_parser_idmap_item* item	= (hx_parser_idmap_item*) avl_find( parser->bnode_map, &i );
+		if (item != NULL) {
+// 			fprintf( stderr, "bnode %s has already been assigned ID %s\n", user_bnodeid, item->local_name );
+			return hx_copy_string( item->local_name );
+		}
+	}
+	
 	uint64_t seconds	= (parser->tv.tv_sec - 1234567890);
 	uint64_t copy		= seconds;
 	static char encodingTable [64] = {
@@ -209,8 +248,15 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 		copy >>= 4;
 	}
 	*(p+1)	= (char) 0;
+	
 	if (user_bnodeid != NULL) {
+		hx_parser_idmap_item* item	= (hx_parser_idmap_item*) calloc( 1, sizeof( hx_parser_idmap_item ) );
+		item->raptor_name	= hx_copy_string( user_bnodeid );
+		item->local_name	= hx_copy_string( id );
+// 		fprintf( stderr, "*** inserting bnode mapping %s -> %s\n", item->raptor_name, item->local_name );
+		avl_insert( parser->bnode_map, item );
 		free( user_bnodeid );
 	}
+	
 	return id;
 }

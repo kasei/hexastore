@@ -33,6 +33,7 @@ typedef struct {
 	hx_hexastore* hx;
 	hx_triple* triples;
 	hx_parser_logger logger;
+	struct avl_table* bnode_map;
 } hx_parser;
 
 hx_parser* hx_new_parser ( void );

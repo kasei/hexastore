@@ -1,10 +1,5 @@
 TODO:
 
-[raptor parser]
-
-- Fix bnode id assignment code to give unique IDs, and to keep the assignments around so that they are used the next time the bnode is referenced. This code (parser/parser.c:_hx_parser_generate_id) is commented out for now, and we're just relying on raptor's own ID assignment which can give duplicate IDs if you use the parser twice in a row. _hx_parser_generate_id currently can generate unique IDs, but isn't keeping them around, so two references to a single bnode in an RDF file will result in two IDs being generated.
-
-
 [optimizer]
 
 Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
