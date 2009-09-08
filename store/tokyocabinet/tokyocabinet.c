@@ -77,19 +77,21 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	hx->pos					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_POS, directory, "pos.tcb" );
 	hx->osp					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OSP, directory, "osp.tcb" );
 	hx->ops					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OPS, directory, "ops.tcb" );
-
-	hx_store_vtable* vtable		= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
-	vtable->close				= hx_store_tokyocabinet_close;
-	vtable->size				= hx_store_tokyocabinet_size;
-	vtable->count				= hx_store_tokyocabinet_count;
-	vtable->add_triple			= hx_store_tokyocabinet_add_triple;
-	vtable->remove_triple		= hx_store_tokyocabinet_remove_triple;
-	vtable->contains_triple		= hx_store_tokyocabinet_contains_triple;
-	vtable->get_statements		= hx_store_tokyocabinet_get_statements;
-	vtable->sync				= hx_store_tokyocabinet_sync;
-	vtable->triple_orderings	= hx_store_tokyocabinet_triple_orderings;
-	vtable->id2node				= hx_store_tokyocabinet_id2node;
-	vtable->node2id				= hx_store_tokyocabinet_node2id;
+	hx->indexes				= NULL;
+	
+	hx_store_vtable* vtable				= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
+	vtable->close						= hx_store_tokyocabinet_close;
+	vtable->size						= hx_store_tokyocabinet_size;
+	vtable->count						= hx_store_tokyocabinet_count;
+	vtable->add_triple					= hx_store_tokyocabinet_add_triple;
+	vtable->remove_triple				= hx_store_tokyocabinet_remove_triple;
+	vtable->contains_triple				= hx_store_tokyocabinet_contains_triple;
+	vtable->get_statements				= hx_store_tokyocabinet_get_statements;
+	vtable->get_statements_with_index	= hx_store_tokyocabinet_get_statements_with_index;
+	vtable->sync						= hx_store_tokyocabinet_sync;
+	vtable->triple_orderings			= hx_store_tokyocabinet_triple_orderings;
+	vtable->id2node						= hx_store_tokyocabinet_id2node;
+	vtable->node2id						= hx_store_tokyocabinet_node2id;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -161,6 +163,8 @@ int hx_store_tokyocabinet_close (hx_store* store) {
 		hx_free_tokyocabinet_index( hx->osp );
 	if (hx->ops)
 		hx_free_tokyocabinet_index( hx->ops );
+	if (hx->indexes)
+		hx_free_container( hx->indexes );
 	hx->id2node		= NULL;
 	hx->node2id		= NULL;
 	hx->spo			= NULL;
@@ -326,7 +330,12 @@ hx_variablebindings_iter* hx_store_tokyocabinet_get_statements (hx_store* store,
 	}
 	
 	_hx_store_tokyocabinet_get_ordered_index( hx, triple->subject, triple->predicate, triple->object, order_position, &index, index_ordered, NULL );
-	
+	return hx_store_tokyocabinet_get_statements_with_index( store, triple, index );
+}
+
+/* Return a stream of triples matching a triple pattern with a specific index thunk (originating from the triple_orderings function) */
+hx_variablebindings_iter* hx_store_tokyocabinet_get_statements_with_index (hx_store* store, hx_triple* triple, hx_store_tokyocabinet_index* index) {
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
 	hx_node_id s	= _hx_store_tokyocabinet_get_node_id( hx, triple->subject );
 	hx_node_id p	= _hx_store_tokyocabinet_get_node_id( hx, triple->predicate );
 	hx_node_id o	= _hx_store_tokyocabinet_get_node_id( hx, triple->object );
@@ -441,8 +450,16 @@ int hx_store_tokyocabinet_sync (hx_store* store) {
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 hx_container_t* hx_store_tokyocabinet_triple_orderings (hx_store* store, hx_triple* triple) {
 	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
-	// XXX list of indexes needed for the optimizer
-	return NULL;
+	if (hx->indexes == NULL) {
+		hx->indexes	= hx_new_container('I', 6);
+		if (hx->spo) hx_container_push_item(hx->indexes, hx->spo);
+		if (hx->sop) hx_container_push_item(hx->indexes, hx->sop);
+		if (hx->pos) hx_container_push_item(hx->indexes, hx->pos);
+		if (hx->pso) hx_container_push_item(hx->indexes, hx->pso);
+		if (hx->osp) hx_container_push_item(hx->indexes, hx->osp);
+		if (hx->ops) hx_container_push_item(hx->indexes, hx->ops);
+	}
+	return hx->indexes;
 }
 
 /* Return an ID value for a node. */

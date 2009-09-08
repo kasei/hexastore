@@ -81,6 +81,9 @@ int hx_store_hexastore_contains_triple (hx_store* store, hx_triple* triple);
 /* Return a stream of triples matching a triple pattern */
 hx_variablebindings_iter* hx_store_hexastore_get_statements (hx_store* store, hx_triple* triple, hx_node* sort_variable);
 
+/* Return a stream of triples matching a triple pattern with a specific index thunk (originating from the triple_orderings function) */
+hx_variablebindings_iter* hx_store_hexastore_get_statements_with_index (hx_store* storage, hx_triple* triple, hx_store_hexastore_index* index);
+
 /* Synchronise to underlying storage */
 int hx_store_hexastore_sync (hx_store* store);
 

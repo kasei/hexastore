@@ -36,6 +36,7 @@ typedef struct {
 	hx_store_tokyocabinet_index* pos;
 	hx_store_tokyocabinet_index* osp;
 	hx_store_tokyocabinet_index* ops;
+	hx_container_t* indexes;
 } hx_store_tokyocabinet;
 
 typedef struct {
@@ -79,6 +80,9 @@ int hx_store_tokyocabinet_contains_triple (hx_store* store, hx_triple* triple);
 
 /* Return a stream of triples matching a triple pattern */
 hx_variablebindings_iter* hx_store_tokyocabinet_get_statements (hx_store* store, hx_triple* triple, hx_node* sort_variable);
+
+/* Return a stream of triples matching a triple pattern with a specific index thunk (originating from the triple_orderings function) */
+hx_variablebindings_iter* hx_store_tokyocabinet_get_statements_with_index (hx_store* storage, hx_triple* triple, hx_store_tokyocabinet_index* index);
 
 /* Synchronise to underlying storage */
 int hx_store_tokyocabinet_sync (hx_store* store);

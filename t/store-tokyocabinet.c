@@ -5,13 +5,15 @@
 void spo_test1 ( void );
 void vb_iter_test1 ( void );
 void reopen_test1( void );
+void orderings_test1 ( void );
 
 int main ( void ) {
-	plan_tests(72);
+	plan_tests(73);
 	
 	spo_test1();
 	vb_iter_test1();
 	reopen_test1();
+	orderings_test1();
 	
 	return exit_status();
 }
@@ -290,3 +292,13 @@ void reopen_test1( void ) {
 	hx_free_store(store);
 }
 
+void orderings_test1 ( void ) {
+	fprintf( stdout, "# orderings_test1\n" );
+	{
+		hx_store* store	= _new_store();
+		hx_container_t* o	= hx_store_triple_orderings( store, NULL );
+		uint64_t index_count	= hx_container_size(o);
+		ok1( index_count == 6 );
+		hx_free_store(store);
+	}
+}

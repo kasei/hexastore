@@ -15,19 +15,20 @@ int _hx_store_hexastore_iter_vb_iter_debug ( void* data, char* header, int inden
 int _hx_store_hexastore_add_triple_id ( hx_store_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 
 hx_store* _hx_new_store_hexastore_with_hx ( void* world, void* hx ) {
-	hx_store_vtable* vtable		= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
-// 	vtable->init				= hx_store_hexastore_init;
-	vtable->close				= hx_store_hexastore_close;
-	vtable->size				= hx_store_hexastore_size;
-	vtable->count				= hx_store_hexastore_count;
-	vtable->add_triple			= hx_store_hexastore_add_triple;
-	vtable->remove_triple		= hx_store_hexastore_remove_triple;
-	vtable->contains_triple		= hx_store_hexastore_contains_triple;
-	vtable->get_statements		= hx_store_hexastore_get_statements;
-	vtable->sync				= hx_store_hexastore_sync;
-	vtable->triple_orderings	= hx_store_hexastore_triple_orderings;
-	vtable->id2node				= hx_store_hexastore_id2node;
-	vtable->node2id				= hx_store_hexastore_node2id;
+	hx_store_vtable* vtable				= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
+// 	vtable->init						= hx_store_hexastore_init;
+	vtable->close						= hx_store_hexastore_close;
+	vtable->size						= hx_store_hexastore_size;
+	vtable->count						= hx_store_hexastore_count;
+	vtable->add_triple					= hx_store_hexastore_add_triple;
+	vtable->remove_triple				= hx_store_hexastore_remove_triple;
+	vtable->contains_triple				= hx_store_hexastore_contains_triple;
+	vtable->get_statements				= hx_store_hexastore_get_statements;
+	vtable->get_statements_with_index	= hx_store_hexastore_get_statements_with_index;
+	vtable->sync						= hx_store_hexastore_sync;
+	vtable->triple_orderings			= hx_store_hexastore_triple_orderings;
+	vtable->id2node						= hx_store_hexastore_id2node;
+	vtable->node2id						= hx_store_hexastore_node2id;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -53,27 +54,27 @@ hx_store* hx_new_store_hexastore_with_indexes ( void* world, const char* index_s
 	hx_store_hexastore* hx	= (hx_store_hexastore*) calloc( 1, sizeof(hx_store_hexastore) );
 	hx->map					= hx_new_nodemap();
 	if (strcasestr(index_string, "spo")) {
-		fprintf( stderr, "Adding SPO index\n" );
+// 		fprintf( stderr, "Adding SPO index\n" );
 		hx->spo					= hx_new_index( world, HX_INDEX_ORDER_SPO );
 	}
 	if (strcasestr(index_string, "sop")) {
-		fprintf( stderr, "Adding SOP index\n" );
+// 		fprintf( stderr, "Adding SOP index\n" );
 		hx->sop					= hx_new_index( world, HX_INDEX_ORDER_SOP );
 	}
 	if (strcasestr(index_string, "pso")) {
-		fprintf( stderr, "Adding PSO index\n" );
+// 		fprintf( stderr, "Adding PSO index\n" );
 		hx->pso					= hx_new_index( world, HX_INDEX_ORDER_PSO );
 	}
 	if (strcasestr(index_string, "pos")) {
-		fprintf( stderr, "Adding POS index\n" );
+// 		fprintf( stderr, "Adding POS index\n" );
 		hx->pos					= hx_new_index( world, HX_INDEX_ORDER_POS );
 	}
 	if (strcasestr(index_string, "osp")) {
-		fprintf( stderr, "Adding OSP index\n" );
+// 		fprintf( stderr, "Adding OSP index\n" );
 		hx->osp					= hx_new_index( world, HX_INDEX_ORDER_OSP );
 	}
 	if (strcasestr(index_string, "ops")) {
-		fprintf( stderr, "Adding OPS index\n" );
+// 		fprintf( stderr, "Adding OPS index\n" );
 		hx->ops					= hx_new_index( world, HX_INDEX_ORDER_OPS );
 	}
 	hx->indexes				= NULL;
@@ -268,7 +269,12 @@ hx_variablebindings_iter* hx_store_hexastore_get_statements (hx_store* store, hx
 	}
 	
 	_hx_store_hexastore_get_ordered_index( hx, triple->subject, triple->predicate, triple->object, order_position, &index, index_ordered, NULL );
-	
+	return hx_store_hexastore_get_statements_with_index( store, triple, index );
+}
+
+/* Return a stream of triples matching a triple pattern with a specific index thunk (originating from the triple_orderings function) */
+hx_variablebindings_iter* hx_store_hexastore_get_statements_with_index (hx_store* store, hx_triple* triple, hx_store_hexastore_index* index) {
+	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
 	hx_node_id s	= _hx_store_hexastore_get_node_id( hx, triple->subject );
 	hx_node_id p	= _hx_store_hexastore_get_node_id( hx, triple->predicate );
 	hx_node_id o	= _hx_store_hexastore_get_node_id( hx, triple->object );
@@ -374,8 +380,16 @@ int hx_store_hexastore_sync (hx_store* store) {
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 hx_container_t* hx_store_hexastore_triple_orderings (hx_store* store, hx_triple* triple) {
 	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
-	// XXX
-	return NULL;
+	if (hx->indexes == NULL) {
+		hx->indexes	= hx_new_container('I', 6);
+		if (hx->spo) hx_container_push_item(hx->indexes, hx->spo);
+		if (hx->sop) hx_container_push_item(hx->indexes, hx->sop);
+		if (hx->pos) hx_container_push_item(hx->indexes, hx->pos);
+		if (hx->pso) hx_container_push_item(hx->indexes, hx->pso);
+		if (hx->osp) hx_container_push_item(hx->indexes, hx->osp);
+		if (hx->ops) hx_container_push_item(hx->indexes, hx->ops);
+	}
+	return hx->indexes;
 }
 
 /* Return an ID value for a node. */

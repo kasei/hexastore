@@ -56,6 +56,26 @@ hx_variablebindings_iter* hx_store_get_statements ( hx_store* store, hx_triple* 
 	return iter;
 }
 
+hx_variablebindings_iter* hx_store_get_statements_with_index (hx_store* store, hx_triple* triple, void* thunk) {
+	hx_variablebindings_iter* iter	= store->vtable->get_statements_with_index( store, triple, thunk );
+	if (iter == NULL) {
+		char* names[3];
+		int i;
+		int j	= 0;
+		for (i = 0; i < 3; i++) {
+			hx_node* n	= hx_triple_node(triple,i);
+			if (hx_node_is_variable(n)) {
+				hx_node_variable_name(n, &(names[j++]));
+			}
+		}
+		iter	= hx_variablebindings_new_empty_iter_with_names(j, names);
+		for (i = 0; i < j; i++) {
+			free(names[i]);
+		}
+	}
+	return iter;
+}
+
 hx_container_t* hx_store_triple_orderings ( hx_store* store, hx_triple* triple ) {
 	return store->vtable->triple_orderings( store, triple );
 }

@@ -47,6 +47,9 @@ typedef struct {
 	/* Return a stream of triples matching a triple pattern */
 	hx_variablebindings_iter* (*get_statements)(void* storage, hx_triple* triple, hx_node* sort_variable);
 	
+	/* Return a stream of triples matching a triple pattern with a specific index thunk (originating from the triple_orderings function) */
+	hx_variablebindings_iter* (*get_statements_with_index)(void* storage, hx_triple* triple, void* index);
+	
 	/* Synchronise to underlying storage */
 	int (*sync)(void* storage);
 	
@@ -83,6 +86,7 @@ int hx_store_contains_triple ( hx_store* store, hx_triple* triple );
 
 hx_container_t* hx_store_triple_orderings ( hx_store* store, hx_triple* triple );
 hx_variablebindings_iter* hx_store_get_statements ( hx_store* store, hx_triple* triple, hx_node* sort_variable );
+hx_variablebindings_iter* hx_store_get_statements_with_index (hx_store* store, hx_triple* triple, void* thunk);
 
 hx_node_id hx_store_get_node_id ( hx_store* store, hx_node* node );
 hx_node* hx_store_get_node ( hx_store* store, hx_node_id id );
