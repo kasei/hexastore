@@ -5,7 +5,7 @@
 ### makes, just `make` should do the trick without needing to re-generate the
 ### flex/bison stuff.
 
-CDEFINES	= -DDEBUG -DTIMING_CPU_FREQUENCY=2400000000.0 -DDEBUG_INDEX_SELECTION
+CDEFINES	= -DDEBUG -DTIMING_CPU_FREQUENCY=2400000000.0
 CFLAGS		= -arch i386 -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb $(CDEFINES)
 CC			= gcc $(CFLAGS)
 
