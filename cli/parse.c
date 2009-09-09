@@ -8,7 +8,8 @@
 #include "store/hexastore/hexastore.h"
 #include "store/tokyocabinet/tokyocabinet.h"
 
-#define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
+// #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
+#define DIFFTIME(a,b) (b-a)
 
 void help (int argc, char** argv);
 int main (int argc, char** argv);
@@ -22,8 +23,12 @@ void help (int argc, char** argv) {
 	fprintf( stderr, "    'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 }
 
-void logger ( uint64_t _count ) {
-	fprintf( stderr, "\rParsed %lu triples...", (unsigned long) _count );
+void logger ( uint64_t _count, void* thunk ) {
+	time_t* c	= (time_t*) thunk;
+	time_t end_time	= time(NULL);
+	double elapsed	= DIFFTIME(*c, end_time);
+	double tps	= ((double) _count / elapsed);
+	fprintf( stderr, "\rParsed %lu triples in %.1lf seconds (%.1lf triples/second)...", (unsigned long) _count, elapsed, tps );
 }
 
 int main (int argc, char** argv) {
@@ -74,12 +79,15 @@ int main (int argc, char** argv) {
 		hx				= hx_new_hexastore_with_store( NULL, store );
 	}
 	
+	time_t st_time;
 	hx_parser* parser	= hx_new_parser();
-	hx_parser_set_logger( parser, logger );
+	hx_parser_set_logger( parser, logger, &st_time );
 	
-	clock_t st_time	= clock();
+	st_time	= time(NULL);
+	hx_store_begin_bulk_load( hx->store );
 	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
-	clock_t end_time	= clock();
+	hx_store_end_bulk_load( hx->store );
+	time_t end_time	= time(NULL);
 	
 	double elapsed	= DIFFTIME(st_time, end_time);
 	double tps	= ((double) total / elapsed);
@@ -103,7 +111,7 @@ int main (int argc, char** argv) {
 	hx_free_parser( parser );
 	hx_free_hexastore( hx );
 
-	clock_t finalize_time	= clock();
+	time_t finalize_time	= time(NULL);
 	double felapsed	= DIFFTIME(st_time, finalize_time);
 	double ftps	= ((double) total / felapsed);
 	fprintf( stderr, "\rFinalized at %.1lf seconds (%.1lf triples/second)\n", felapsed, ftps );

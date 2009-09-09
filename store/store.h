@@ -35,6 +35,12 @@ typedef struct {
 	/* Return the number of triples matching a triple pattern */
 	uint64_t (*count)(void* storage, hx_triple* triple);	
 	
+	/* Begin a bulk load processes. Indexes and counts won't be accurate again until finish_bulk_load is called. */
+	int (*begin_bulk_load)( void* storage );
+	
+	/* Begin a bulk load processes. Indexes and counts won't be accurate again until end_bulk_load is called. */
+	int (*end_bulk_load)( void* storage );
+	
 	/* Add a triple to the storage from the given model */
 	int (*add_triple)(void* storage, hx_triple* triple);
 	
@@ -91,12 +97,15 @@ hx_variablebindings_iter* hx_store_get_statements_with_index (hx_store* store, h
 hx_node_id hx_store_get_node_id ( hx_store* store, hx_node* node );
 hx_node* hx_store_get_node ( hx_store* store, hx_node_id id );
 
+int hx_store_begin_bulk_load ( hx_store* store );
+int hx_store_end_bulk_load ( hx_store* store );
+
+
 int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string );
 int hx_store_variablebindings_debug ( hx_store* store, hx_variablebindings* b );
 
 hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_store* store, int column );
 hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_store* store, char* name );
-
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,8 @@ typedef struct {
 	void* world;
 	const char* directory;
 	hx_node_id next_id;
+	int bulk_load;
+	hx_store_tokyocabinet_index* bulk_load_index;
 	TCBDB* id2node;
 	TCBDB* node2id;
 	TCBDB* counts;
@@ -68,6 +70,12 @@ uint64_t hx_store_tokyocabinet_size (hx_store* store);
 
 /* Return the number of triples matching a triple pattern */
 uint64_t hx_store_tokyocabinet_count (hx_store* store, hx_triple* triple);	
+
+/* Begin a bulk load processes. Indexes and counts won't be accurate again until finish_bulk_load is called. */
+int hx_store_tokyocabinet_begin_bulk_load ( hx_store* storage );
+
+/* Begin a bulk load processes. Indexes and counts won't be accurate again until end_bulk_load is called. */
+int hx_store_tokyocabinet_end_bulk_load ( hx_store* storage );
 
 /* Add a triple to the storage from the given model */
 int hx_store_tokyocabinet_add_triple (hx_store* store, hx_triple* triple);

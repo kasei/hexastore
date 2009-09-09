@@ -36,6 +36,7 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	hx->world				= world;
 	hx->directory			= directory;
 	
+	hx->bulk_load			= 0;
 	hx->next_id				= 1;
 	hx->id2node				= tcbdbnew();
 	hx->node2id				= tcbdbnew();
@@ -44,7 +45,9 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	tcbdbtune(hx->id2node, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
 	tcbdbtune(hx->node2id, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
 	tcbdbtune(hx->counts, 0, 0, 0, -1, -1, BDBTLARGE|BDBTDEFLATE);
-
+	tcbdbsetcache( hx->node2id, 4096, 2048 );
+//	tcbdbsetcache( hx->counts, 4096, 1024 );
+	
 	char* id2node_file		= malloc( strlen(directory) + 13 );
 	char* node2id_file		= malloc( strlen(directory) + 13 );
 	char* counts_file		= malloc( strlen(directory) + 13 );
@@ -78,6 +81,7 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	hx->osp					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OSP, directory, "osp.tcb" );
 	hx->ops					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OPS, directory, "ops.tcb" );
 	hx->indexes				= NULL;
+	hx->bulk_load_index		= NULL;
 	
 	hx_store_vtable* vtable				= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
 	vtable->close						= hx_store_tokyocabinet_close;
@@ -92,6 +96,8 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	vtable->triple_orderings			= hx_store_tokyocabinet_triple_orderings;
 	vtable->id2node						= hx_store_tokyocabinet_id2node;
 	vtable->node2id						= hx_store_tokyocabinet_node2id;
+	vtable->begin_bulk_load				= hx_store_tokyocabinet_begin_bulk_load;
+	vtable->end_bulk_load				= hx_store_tokyocabinet_end_bulk_load;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -262,12 +268,64 @@ int _hx_nodemap_add_node ( hx_store_tokyocabinet* hx, hx_node* node ) {
 	return id;
 }
 
+/* Begin a bulk load processes. Indexes and counts won't be accurate again until finish_bulk_load is called. */
+int hx_store_tokyocabinet_begin_bulk_load ( hx_store* store ) {
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
+	hx->bulk_load				= 1;
+	hx_container_t* indexes		= hx_store_tokyocabinet_triple_orderings(store, NULL);
+	hx->bulk_load_index			= hx_container_item(indexes, 0);
+	return 0;
+}
+
+/* Begin a bulk load processes. Indexes and counts won't be accurate again until end_bulk_load is called. */
+int hx_store_tokyocabinet_end_bulk_load ( hx_store* store ) {
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
+	hx->bulk_load				= 0;
+	hx->bulk_load_index			= NULL;
+	hx_container_t* indexes		= hx_store_tokyocabinet_triple_orderings(store, NULL);
+	int size					= hx_container_size(indexes);
+	hx_store_tokyocabinet_index* source	= hx_container_item( indexes, 0 );
+	
+	int i;
+	hx_node* s	= hx_new_node_named_variable( -1, "s" );
+	hx_node* p	= hx_new_node_named_variable( -2, "p" );
+	hx_node* o	= hx_new_node_named_variable( -3, "o" );
+	hx_triple* triple	= hx_new_triple( s, p, o );
+	for (i = 1; i < size; i++) {
+		hx_store_tokyocabinet_index* dest	= hx_container_item( indexes, i );
+		if (1) {
+			char* name	= hx_store_tokyocabinet_index_name( dest );
+			fprintf( stderr, "bulk loading triples into index %s\n", name );
+			free(name);
+		}
+		hx_variablebindings_iter* iter	= hx_store_tokyocabinet_get_statements_with_index(store, triple, source);
+		while (!hx_variablebindings_iter_finished(iter)) {
+			hx_variablebindings* b;
+			hx_variablebindings_iter_current( iter, &b );
+			hx_node_id subj	= hx_variablebindings_node_id_for_binding_name( b, "s" );
+			hx_node_id pred	= hx_variablebindings_node_id_for_binding_name( b, "p" );
+			hx_node_id obj	= hx_variablebindings_node_id_for_binding_name( b, "o" );
+			hx_store_tokyocabinet_index_add_triple( dest, subj, pred, obj );
+			hx_variablebindings_iter_next(iter);
+		}
+		hx_free_variablebindings_iter(iter);
+	}
+	
+	hx_free_node(s);
+	hx_free_node(p);
+	hx_free_node(o);
+	hx_free_triple(triple);
+	
+	return 0;
+}
+
 /* Add a triple to the storage from the given model */
 int hx_store_tokyocabinet_add_triple (hx_store* store, hx_triple* triple) {
 	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
 	hx_node_id s	= _hx_nodemap_add_node( hx, triple->subject );
 	hx_node_id p	= _hx_nodemap_add_node( hx, triple->predicate );
 	hx_node_id o	= _hx_nodemap_add_node( hx, triple->object );
+	
 	return _hx_store_tokyocabinet_add_triple_id( hx, s, p, o );
 }
 
@@ -595,12 +653,16 @@ int _hx_store_tokyocabinet_iter_vb_iter_debug ( void* data, char* header, int in
 }
 
 int _hx_store_tokyocabinet_add_triple_id ( hx_store_tokyocabinet* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
-	hx_store_tokyocabinet_index_add_triple( hx->spo, s, p, o );
-	hx_store_tokyocabinet_index_add_triple( hx->sop, s, p, o );
-	hx_store_tokyocabinet_index_add_triple( hx->pso, s, p, o );
-	hx_store_tokyocabinet_index_add_triple( hx->pos, s, p, o );
-	hx_store_tokyocabinet_index_add_triple( hx->osp, s, p, o );
-	hx_store_tokyocabinet_index_add_triple( hx->ops, s, p, o );
+	if (hx->bulk_load) {
+		hx_store_tokyocabinet_index_add_triple( hx->bulk_load_index, s, p, o );
+	} else {
+		if (hx->spo) hx_store_tokyocabinet_index_add_triple( hx->spo, s, p, o );
+		if (hx->sop) hx_store_tokyocabinet_index_add_triple( hx->sop, s, p, o );
+		if (hx->pso) hx_store_tokyocabinet_index_add_triple( hx->pso, s, p, o );
+		if (hx->pos) hx_store_tokyocabinet_index_add_triple( hx->pos, s, p, o );
+		if (hx->osp) hx_store_tokyocabinet_index_add_triple( hx->osp, s, p, o );
+		if (hx->ops) hx_store_tokyocabinet_index_add_triple( hx->ops, s, p, o );
+	}
 	
 	int son, pon, oon;
 	hx_node_id count_key[3];

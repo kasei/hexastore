@@ -23,7 +23,7 @@ extern "C" {
 #include "rdf/node.h"
 
 static int TRIPLES_BATCH_SIZE	= 5000;
-typedef void (*hx_parser_logger)( uint64_t count );
+typedef void (*hx_parser_logger)( uint64_t count, void* thunk );
 
 typedef struct {
 	uint64_t next_bnode;
@@ -34,10 +34,11 @@ typedef struct {
 	hx_triple* triples;
 	hx_parser_logger logger;
 	struct avl_table* bnode_map;
+	void* thunk;
 } hx_parser;
 
 hx_parser* hx_new_parser ( void );
-int hx_parser_set_logger( hx_parser* p, hx_parser_logger l );
+int hx_parser_set_logger( hx_parser* p, hx_parser_logger l, void* thunk );
 
 uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
 int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* string, const char* base, char* parser_name );

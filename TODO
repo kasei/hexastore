@@ -15,10 +15,7 @@ Update the optimizer code to determine when variables are only referenced once, 
 
 [storage]
 
-Finish the tokyocabinet-based backend store (including more unit tests to make sure iterators and removing of triples is working).
-
-- Add a bulk-loading API that loads new triples into indexes sequentially, one at a time (followed by updating the aggregate counts index). This should help with btree nodes being cachable (keeping 1-2 tree's nodes cached instead of 6-7).
-- Once this is working, extend the implementation to support quads.
+Finish the tokyocabinet-based backend store (including more unit tests to make sure iterators and removing of triples is working). Once this is working, extend the implementation to support quads.
 
 Update the hx_store_get_statements implementations to work even if an appropriate index isn't present. For example, if the SOP index is decided upon as the appropriate index, but only SPO, PSO, and OPS are available, the code should be able to fall back on one of the existing indexes (depending on the constraints of what terms are bound and what the requested ordering is) to produce results. This will require often end up looking like a "table scan" over the entire index, with code to check that the bound triple pattern terms match (this can be thought of as a low-level implementation of an all-variable triple pattern with FILTERs to check the result values).
 

@@ -88,6 +88,22 @@ hx_node* hx_store_get_node ( hx_store* store, hx_node_id id ) {
 	return store->vtable->id2node( store, id );
 }
 
+int hx_store_begin_bulk_load ( hx_store* store ) {
+	if (store->vtable->begin_bulk_load) {
+		return store->vtable->begin_bulk_load( store );
+	} else {
+		return 0;
+	}
+}
+
+int hx_store_end_bulk_load ( hx_store* store ) {
+	if (store->vtable->end_bulk_load) {
+		return store->vtable->end_bulk_load( store );
+	} else {
+		return 0;
+	}
+}
+
 int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string ) {
 	int size	= b->size;
 	hx_node_id* id	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );

@@ -45,8 +45,9 @@ int hx_free_parser ( hx_parser* p ) {
 	return 0;
 }
 
-int hx_parser_set_logger( hx_parser* p, hx_parser_logger l ) {
+int hx_parser_set_logger( hx_parser* p, hx_parser_logger l, void* thunk ) {
 	p->logger	= l;
+	p->thunk	= thunk;
 	return 0;
 }
 
@@ -132,7 +133,7 @@ int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 		}
 		parser->total	+= parser->count;
 		if (parser->logger != NULL) {
-			parser->logger( parser->total );
+			parser->logger( parser->total, parser->thunk );
 		}
 		parser->count	= 0;
 	}
