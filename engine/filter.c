@@ -1,4 +1,5 @@
 #include "engine/filter.h"
+#include "engine/expr.h"
 
 int _hx_filter_prime_results ( _hx_filter_iter_vb_info* info );
 int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info );

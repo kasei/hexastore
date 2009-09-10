@@ -21,13 +21,13 @@ extern "C" {
 #include "hexastore_types.h"
 #include "hexastore.h"
 #include "engine/variablebindings_iter.h"
+#include "engine/variablebindings_iter_sorting.h"
 #include "rdf/triple.h"
 #include "rdf/node.h"
 #include "store/store.h"
-#include "index.h"
 
 typedef enum {
-	HX_OPTIMIZER_PLAN_INDEX	= 0,	// access to triple pattern matching via hx_index
+	HX_OPTIMIZER_PLAN_INDEX	= 0,	// access to triple pattern matching via hx_store thunks
 	HX_OPTIMIZER_PLAN_JOIN	= 1,	// join of two hx_optimizer_plan*s
 	HX_OPTIMIZER_PLAN_LAST	= HX_OPTIMIZER_PLAN_JOIN
 } hx_optimizer_plan_type;
@@ -45,27 +45,33 @@ static char* HX_OPTIMIZER_PLAN_JOIN_NAMES[HX_OPTIMIZER_PLAN_JOIN_LAST+1]	= {
 	"nestedloop-join"
 };
 
+typedef struct {
+	hx_store* store;
+	void* source;
+	hx_triple* triple;
+} _hx_optimizer_access_plan;
+
+typedef struct {
+	hx_optimizer_plan_join_type join_type;
+	void* lhs_plan;
+	void* rhs_plan;
+	int leftjoin;
+} _hx_optimizer_join_plan;
 
 typedef struct {
 	hx_optimizer_plan_type type;
 	char* string;
-	hx_optimizer_plan_join_type join_type;
+	hx_container_t* order;
 	union {
-		hx_index* source;	// access
-		void* lhs_plan;		// join
-	};
-	union {
-		hx_triple* triple;	// access
-		void* rhs_plan;		// join
-	};
-	int leftjoin;			// join;
-	int order_count;
-	hx_variablebindings_iter_sorting** order;
+		_hx_optimizer_access_plan access;
+		_hx_optimizer_join_plan join;
+	} data;
 } hx_optimizer_plan;
 
+
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* plan );
-hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_index* source, hx_triple* t, int order_count, hx_variablebindings_iter_sorting** order );
-hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, int order_count, hx_variablebindings_iter_sorting** order, int leftjoin );
+hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order );
+hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, hx_container_t* order, int leftjoin );
 int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting );
 int hx_free_optimizer_plan ( hx_optimizer_plan* plan );
 

@@ -65,6 +65,23 @@ char* _hx_optimizer_opt_plan_access_key_inverse ( int size, char* key ) {
 	return ikey;
 }
 
+char* _hx_optimizer_key_triples_list( void* key, int klen ) {
+	char* k	= (char*) key;
+	char* s	= (char*) calloc( 1, 5 * klen );
+	char* p	= s;
+	int i;
+	for (i = 0; i < klen; i++) {
+		if (k[i] == 'b') {
+			char* num	= calloc(1,10);
+			sprintf(num,"%d ",i);
+			strcat(s,num);
+			free(num);
+		}
+	}
+	strcat(s,"\n");
+	return s;
+}
+
 void _hx_optimizer_optplans_debug_cb ( void* key, int klen, void* value ) {
 	int i;
 	int j	= 0;
@@ -73,14 +90,15 @@ void _hx_optimizer_optplans_debug_cb ( void* key, int klen, void* value ) {
 	hx_container_t* plans	= (hx_container_t*) value;
 	int size	= hx_container_size(plans);
 	
-	fprintf( stderr, "%d optPlan for subquery with triples: ", size );
-	for (i = 0; i < klen; i++) {
-		if (k[i] == 'b') {
-			if (j++ > 0) fprintf( stderr, ", " );
-			fprintf( stderr, "%d", i );
-		}
-	}
-	fprintf( stderr, "\n" );
+	char* triples	= _hx_optimizer_key_triples_list( key, klen );
+	fprintf( stderr, "%d optPlan for subquery with triples: %s", size, triples );
+// 	for (i = 0; i < klen; i++) {
+// 		if (k[i] == 'b') {
+// 			if (j++ > 0) fprintf( stderr, ", " );
+// 			fprintf( stderr, "%d", i );
+// 		}
+// 	}
+// 	fprintf( stderr, "\n" );
 }
 
 void _hx_optimizer_debug_plans ( hx_execution_context* ctx, char* message, hx_container_t* plans ) {
@@ -123,7 +141,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 		hx_hash_add( optPlans, key, bgpsize, pruned );
 		free(key);
 	}
-//	hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
+// 	hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 	
 	
 	for (i = 2; i <= bgpsize; i++) {
@@ -154,8 +172,6 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 // 			fprintf( stderr, "S (%d subset of BGP) has triples", i );
 // 			_hx_optimizer_debug_key( "", s_key, bgpsize );
 			
-			
-			
 			hx_container_t* optPlan	= hx_new_container( 'P', bgpsize );
 			
 			int k;
@@ -174,9 +190,17 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 // 					fprintf( stderr, "%d ", triple_number );
 				}
 // 				fprintf( stderr, "\n" );
+
+// 				if (1) {
+// 					char* keystr	= _hx_optimizer_key_triples_list( o_key, bgpsize );
+// 					fprintf(stderr, "*** %s\n", keystr);
+// 					free(keystr);
+// 					hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
+// 				}
+
 				hx_container_t* optPlanO	= hx_hash_get( optPlans, o_key, bgpsize );
 				int z;
-// 				fprintf( stderr, "LHS (%p):\n", (void*) optPlanO );
+// 				fprintf( stderr, "LHS (%p size %d):\n", (void*) optPlanO, hx_container_size(optPlanO) );
 // 				for (z = 0; z < bgpsize; z++) {
 // 					if (o_key[z]) {
 // 						fprintf( stderr, "- includes triple (%d)\n", z );
@@ -193,17 +217,18 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 				}
 				hx_container_t* optPlanSO	= hx_hash_get( optPlans, s_not_o_key, bgpsize );
 				
-// 				fprintf( stderr, "RHS (%p):\n", (void*) optPlanSO );
+// 				fprintf( stderr, "RHS (%p size %d):\n", (void*) optPlanSO, hx_container_size(optPlanSO) );
 // 				for (z = 0; z < bgpsize; z++) {
 // 					if (s_not_o_key[z]) {
 // 						fprintf( stderr, "- includes triple (%d)\n", z );
 // 					}
 // 				}
 				
-//				hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
+// 				hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 				
+				hx_container_t* joins		= hx_optimizer_join_plans( ctx, hx_copy_container(optPlanO), hx_copy_container(optPlanSO), 0 );
+// 				fprintf( stderr, "got join plan %p\n", joins );
 				
-				hx_container_t* joins		= hx_optimizer_join_plans( ctx, optPlanO, optPlanSO, 0 );
 				int joins_size	= hx_container_size(joins);
 				for (j = 0; j < joins_size; j++) {
 					hx_container_push_item( optPlan, hx_container_item(joins,j) );
@@ -261,7 +286,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 // - accessPlans (get vb iter construct info from a triple pattern, which index to use?)
 hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple* t ) {
 	hx_hexastore* hx		= ctx->hx;
-	hx_container_t* indexes	= hx_get_indexes( hx );
+	hx_container_t* indexes	= hx_store_triple_orderings( hx->store, t );
 	int size				= hx_container_size(indexes);
 	
 	int i,j;
@@ -273,105 +298,25 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 	int bound	= hx_triple_bound_count(t);
 // 	fprintf( stderr, "triple has %d bound terms\n", bound );
 	
-	int repeated_variable	= 0;
-	int bound_nodes[3]	= {1,1,1};
-	if (bound == 3) {
-	} else {
-		for (i = 0; i < 3; i++) {
-			hx_node* n	= hx_triple_node( t, i );
-			if (hx_node_is_variable(n)) {
-// 				fprintf( stderr, "- %s is unbound\n", HX_POSITION_NAMES[i] );
-				bound_nodes[i]	= 0;
-				// scan through the other node positions, checking for repeated variables
-				for (j = i+1; j < 3; j++) {
-					hx_node* m	= hx_triple_node( t, j );
-					if (hx_node_is_variable(m)) {
-						if (hx_node_iv(n) == hx_node_iv(m)) {
-							repeated_variable	= hx_node_iv(n);
-						}
-					}
-				}
-			}
-		}
-	}
-	
-// 	if (repeated_variable) {
-// 		fprintf( stderr, "triple has a shared variable\n" );
-// 	}
-// 	
-// 	for (i = 0; i < 3; i++) {
-// 		if (bound_nodes[i]) {
-// 			fprintf( stderr, "prefix of index must have %s\n", HX_POSITION_NAMES[i] );
-// 		}
-// 	}
-	
 	hx_container_t* access_plans	= hx_new_container( 'A', 6 );
 	for (i = 0; i < size; i++) {
-		hx_index* idx	= (hx_index*) hx_container_item( indexes, i );
-		int isize	= idx->size;
-		char* name	= hx_index_name( idx );
-//		fprintf( stderr, "hexastore has index %s (%p)\n", name, (void*) idx );
+		void* idx	= hx_container_item( indexes, i );
+		char* name	= hx_store_ordering_name( hx->store, idx );
+//		fprintf( stderr, "store has index %s (%p)\n", name, (void*) idx );
 		
-		int index_is_ok	= 1;
-		for (j = 0; j < bound; j++) {
-			if (!bound_nodes[ idx->order[j] ]) {
-				index_is_ok	= 0;
-//				fprintf( stderr, "- won't work because %s comes before some bound terms\n", HX_POSITION_NAMES[ idx->order[j] ] );
-			}
-		}
+// 		fprintf( stderr, "%s index can be used\n", name );
 		
-		if (bound == 0) {
-			// there are 3 variables. if we have shared variables, they must appear sequentially, and as a prefix of the index order
-			// (the nodes in index->order[0] and index->order[1] have to be the shared variable)
-			if (repeated_variable) {
-				hx_node* first	= hx_triple_node( t, idx->order[0] );
-				hx_node* middle	= hx_triple_node( t, idx->order[1] );
-				
-// 				char* string;
-// 				hx_node_string( middle, &string );
-// 				fprintf( stderr, "middle-of-index node: %s (%d)\n", string, hx_node_iv(middle) );
-// 				free(string);
-//				fprintf( stderr, "repeated variable: %d\n", repeated_variable );
-				
-				if (hx_node_iv(first) != repeated_variable) {
-// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[0] ] );
-					index_is_ok	= 0;
-				}
-				if (hx_node_iv(middle) != repeated_variable) {
-// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[1] ] );
-					index_is_ok	= 0;
-				}
-			}
-		}
+		hx_container_t* order	= hx_store_iter_sorting( hx->store, t, idx );
+		int order_count	= hx_container_size(order);
+		hx_optimizer_plan* plan	= hx_new_optimizer_access_plan( hx->store, idx, t, order );
+		hx_container_push_item( access_plans, plan );
 		
-		if (index_is_ok) {
-// 			fprintf( stderr, "%s index can be used\n", name );
-			
-			int order_count	= 3 - bound;
-			hx_variablebindings_iter_sorting** order	= (hx_variablebindings_iter_sorting**) calloc( order_count, sizeof(hx_variablebindings_iter_sorting*) );
-			
-			int k;
-			int l	= 0;
-			for (k = bound; k < 3; k++) {
-				int ordered_by	= idx->order[ k ];
-				hx_node* n	= hx_triple_node( t, ordered_by );
-				char* string;
-				hx_node_string( n, &string );
-// 				fprintf( stderr, "\tSorted by %s (%s)\n", HX_POSITION_NAMES[ ordered_by ], string );
-				free(string);
-				
-				hx_variablebindings_iter_sorting* sorting	= hx_variablebindings_iter_new_node_sorting( HX_VARIABLEBINDINGS_ITER_SORT_ASCENDING, 0, n );
-				order[ l++ ]	= sorting;
-			}
-			
-			hx_optimizer_plan* plan	= hx_new_optimizer_access_plan( idx, t, order_count, order );
-			hx_container_push_item( access_plans, plan );
-			
-			for (k = 0; k < order_count; k++) {
-				hx_free_variablebindings_iter_sorting( order[k] );
-			}
-			free(order);
+		int k;
+		for (k = 0; k < order_count; k++) {
+			hx_variablebindings_iter_sorting* s	= hx_container_item( order, k );
+			hx_free_variablebindings_iter_sorting( s );
 		}
+		hx_free_container(order);
 		free(name);
 	}
 	
@@ -392,45 +337,45 @@ hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_containe
 	
 	for (i = 0; i < hx_container_size(lhs); i++) {
 		hx_optimizer_plan* lhsp	= hx_container_item( lhs, i );
-		int lhs_order_count	= lhsp->order_count;
-		hx_variablebindings_iter_sorting** lhs_order	= lhsp->order;
+		int lhs_order_count	= hx_container_size( lhsp->order );
+		hx_container_t* lhs_order	= lhsp->order;
 		for (j = 0; j < hx_container_size(rhs); j++) {
 			hx_optimizer_plan* rhsp	= hx_container_item( rhs, j );
-			int rhs_order_count	= rhsp->order_count;
-			hx_variablebindings_iter_sorting** rhs_order	= rhsp->order;
+			int rhs_order_count	= hx_container_size( rhsp->order );
+			hx_container_t* rhs_order	= rhsp->order;
 			
 			if (1) {
 				{					// LHS nestedloop-join RHS
-					hx_optimizer_plan* nl_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN, lhsp, rhsp, lhs_order_count, lhs_order, leftjoin );
+					hx_optimizer_plan* nl_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN, lhsp, rhsp, lhs_order, leftjoin );
 					hx_container_push_item( join_plans, nl_lr );
 				}
 				
 				if (!leftjoin) {	// RHS nestedloop-join LHS
-					hx_optimizer_plan* nl_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN, rhsp, lhsp, rhs_order_count, rhs_order, leftjoin );
+					hx_optimizer_plan* nl_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN, rhsp, lhsp, rhs_order, leftjoin );
 					hx_container_push_item( join_plans, nl_rl );
 				}
 			}
 			
 			if (1) {
 				{					// LHS hash-join RHS
-					hx_optimizer_plan* hj_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, lhsp, rhsp, lhs_order_count, lhs_order, leftjoin );
+					hx_optimizer_plan* hj_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, lhsp, rhsp, lhs_order, leftjoin );
 					hx_container_push_item( join_plans, hj_lr );
 				}
 				
 				if (!leftjoin) {	// RHS hash-join LHS
-					hx_optimizer_plan* hj_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, rhsp, lhsp, rhs_order_count, rhs_order, leftjoin );
+					hx_optimizer_plan* hj_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, rhsp, lhsp, rhs_order, leftjoin );
 					hx_container_push_item( join_plans, hj_rl );
 				}
 			}
 			
 			if (1) {
 				{					// LHS merge-join RHS
-					hx_optimizer_plan* nl_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_MERGEJOIN, lhsp, rhsp, lhs_order_count, lhs_order, leftjoin );
+					hx_optimizer_plan* nl_lr	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_MERGEJOIN, lhsp, rhsp, lhs_order, leftjoin );
 					hx_container_push_item( join_plans, nl_lr );
 				}
 				
 				if (!leftjoin) {	// RHS merge-join LHS
-					hx_optimizer_plan* nl_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_MERGEJOIN, rhsp, lhsp, rhs_order_count, rhs_order, leftjoin );
+					hx_optimizer_plan* nl_rl	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_MERGEJOIN, rhsp, lhsp, rhs_order, leftjoin );
 					hx_container_push_item( join_plans, nl_rl );
 				}
 			}

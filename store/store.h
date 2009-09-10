@@ -19,6 +19,7 @@ extern "C" {
 #include "hexastore_types.h"
 #include "algebra/variablebindings.h"
 #include "engine/variablebindings_iter.h"
+#include "engine/variablebindings_iter_sorting.h"
 #include "misc/util.h"
 #include "rdf/triple.h"
 
@@ -61,6 +62,9 @@ typedef struct {
 	
 	/* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 	hx_container_t* (*triple_orderings)(void* storage, hx_triple*);
+	
+	/* Get a string representation of a triple ordering returned by triple_orderings */
+	char* (*ordering_name)(void* storage, void* ordering);
 
 	/* Return an ID value for a node. */
 	hx_node_id (*node2id)(void* storage, hx_node* node);
@@ -68,6 +72,10 @@ typedef struct {
 	/* Return a node object for an ID. Caller is responsible for freeing the node. */
 	hx_node* (*id2node)(void* storage, hx_node_id id);
 	
+	/* Return the sort ordering that will result from calling get_statements_with_index on a particular ordering thunk */
+	/* The container contains hx_variablebindings_iter_sorting* objects */
+	hx_container_t* (*iter_sorting)( void* storage, hx_triple* triple, void* ordering );
+
 } hx_store_vtable;
 
 
@@ -99,6 +107,9 @@ hx_node* hx_store_get_node ( hx_store* store, hx_node_id id );
 
 int hx_store_begin_bulk_load ( hx_store* store );
 int hx_store_end_bulk_load ( hx_store* store );
+
+char* hx_store_ordering_name (hx_store* storage, void* ordering);
+hx_container_t* hx_store_iter_sorting ( hx_store* storage, hx_triple* triple, void* ordering );
 
 
 int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string );

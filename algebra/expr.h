@@ -19,7 +19,6 @@ extern "C" {
 #include "hexastore_types.h"
 #include "algebra/variablebindings.h"
 #include "rdf/node.h"
-#include "store/store.h"
 
 static int hx_expr_debug	= 0;
 
@@ -82,11 +81,8 @@ hx_expr* hx_new_builtin_expr3 ( hx_expr_subtype_t type, hx_expr* data1, hx_expr*
 hx_expr* hx_copy_expr ( hx_expr* e );
 int hx_free_expr ( hx_expr* e );
 
-hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_store* store );
-
 int hx_expr_type_arity ( hx_expr_subtype_t type );
 int hx_expr_sse ( hx_expr* e, char** string, char* indent, int level );
-int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_store* store, hx_node** result );
 
 #ifdef __cplusplus
 }

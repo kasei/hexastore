@@ -5,7 +5,7 @@
 ### makes, just `make` should do the trick without needing to re-generate the
 ### flex/bison stuff.
 
-CDEFINES	= -DDEBUG -DTIMING_CPU_FREQUENCY=2400000000.0
+CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 # -DDEBUG
 CFLAGS		= -arch i386 -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb $(CDEFINES)
 CC			= gcc $(CFLAGS)
 
@@ -16,12 +16,12 @@ TCSTORE_OBJECTS		= store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tcindex.
 STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
 MISC_OBJECTS		= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.c
 RDF_OBJECTS			= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS		= engine/variablebindings_iter.o engine/variablebindings_iter_sorting.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
+ENGINE_OBJECTS		= engine/expr.o engine/variablebindings_iter.o engine/variablebindings_iter_sorting.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
 ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
 # MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
 OPT_OBJECTS			= optimizer/optimizer.o optimizer/plan.o
-OBJECTS				= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) # $(OPT_OBJECTS)
+OBJECTS				= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 default: parse print optimize tests examples parse_query
 
@@ -87,6 +87,9 @@ misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h hexastore_types.h
 engine/bgp.o: engine/bgp.c engine/bgp.h hexastore_types.h
 	$(CC) $(INC) -c -o engine/bgp.o engine/bgp.c
 
+engine/expr.o: engine/expr.c engine/expr.h hexastore_types.h
+	$(CC) $(INC) -c -o engine/expr.o engine/expr.c
+
 engine/graphpattern.o: engine/graphpattern.c engine/graphpattern.h hexastore_types.h
 	$(CC) $(INC) -c -o engine/graphpattern.o engine/graphpattern.c
 
@@ -144,39 +147,6 @@ optimizer/optimizer.o: optimizer/optimizer.c optimizer/optimizer.h
 optimizer/plan.o: optimizer/plan.c optimizer/plan.h
 	$(CC) $(INC) -c -o optimizer/plan.o optimizer/plan.c
 
-# parallel/safealloc.o: parallel/safealloc.c parallel/safealloc.h
-# 	$(CC) $(INC) -c -o parallel/safealloc.o parallel/safealloc.c
-# 
-# parallel/async_mpi.o: parallel/async_mpi.c parallel/async_mpi.h parallel/safealloc.h parallel/async.h
-# 	$(CC) $(INC) -c -o parallel/async_mpi.o parallel/async_mpi.c
-# 
-# parallel/async_des.o: parallel/async_des.c parallel/async_des.h parallel/async_mpi.h parallel/safealloc.h
-# 	$(CC) $(INC) -c -o parallel/async_des.o parallel/async_des.c
-# 
-# parallel/parallel.o: parallel/parallel.c parallel/parallel.h parallel/async_des.o parallel/async_mpi.o parallel/safealloc.o
-# 	$(CC) $(INC) -c -o parallel/parallel.o parallel/parallel.c
-# 
-# parallel/mpi_file_iterator.o: parallel/mpi_file_iterator.c parallel/mpi_file_iterator.h parallel/genmap/iterator.h parallel/genmap/buffer.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_iterator.o parallel/mpi_file_iterator.c
-# 
-# parallel/mpi_file_ntriples_iterator.o: parallel/mpi_file_ntriples_iterator.c parallel/mpi_file_ntriples_iterator.h parallel/mpi_file_iterator.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_iterator.c
-# 
-# parallel/mpi_file_ntriples_node_iterator.o: parallel/mpi_file_ntriples_node_iterator.c parallel/mpi_file_ntriples_node_iterator.h parallel/mpi_file_ntriples_iterator.h
-# 	$(CC) $(INC) -c -o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_file_ntriples_node_iterator.c
-# 	
-# parallel/mpi_rdfio.o: parallel/mpi_rdfio.c parallel/mpi_rdfio.h hexastore.h parallel/mpi_file_ntriples_node_iterator.h parallel/async_des.h parallel/genmap/avl_tree_map.h
-# 	$(CC) $(INC) -c -o parallel/mpi_rdfio.o parallel/mpi_rdfio.c
-# 
-# parallel/genmap/avl_tree_map.o: parallel/genmap/avl_tree_map.c parallel/genmap/avl_tree_map.h parallel/genmap/map.h parallel/genmap/iterator.h misc/avl.h
-# 	$(CC) $(INC) -c parallel/genmap/avl_tree_map.c -o parallel/genmap/avl_tree_map.o
-# 
-# parallel/genmap/iterator.o: parallel/genmap/iterator.c parallel/genmap/iterator.h
-# 	$(CC) $(INC) -c parallel/genmap/iterator.c -o parallel/genmap/iterator.o
-# 
-# parallel/genmap/map.o: parallel/genmap/map.c parallel/genmap/map.h parallel/genmap/iterator.h
-# 	$(CC) $(INC) -c parallel/genmap/map.c -o parallel/genmap/map.o
-
 ########
 
 # SPARQLParser.c:
@@ -202,7 +172,7 @@ libhx.o: $(OBJECTS)
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t # t/optimizer.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 

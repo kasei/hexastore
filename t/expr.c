@@ -2,6 +2,7 @@
 #include "hexastore.h"
 #include "store/hexastore/hexastore.h"
 #include "algebra/expr.h"
+#include "engine/expr.h"
 #include "misc/nodemap.h"
 #include "test/tap.h"
 

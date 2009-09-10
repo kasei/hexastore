@@ -31,7 +31,6 @@ typedef struct {
 	hx_store_hexastore_index* pos;
 	hx_store_hexastore_index* osp;
 	hx_store_hexastore_index* ops;
-	hx_container_t* indexes;
 	int next_var;
 } hx_store_hexastore;
 
@@ -90,12 +89,17 @@ int hx_store_hexastore_sync (hx_store* store);
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 hx_container_t* hx_store_hexastore_triple_orderings (hx_store* store, hx_triple*);
 
+/* Get a string representation of a triple ordering returned by triple_orderings */
+char* hx_store_hexastore_ordering_name (hx_store* store, void* ordering);
+
 /* Return an ID value for a node. */
 hx_node_id hx_store_hexastore_node2id (hx_store* storage, hx_node* node);
 
 /* Return a node object for an ID. Caller is responsible for freeing the node. */
 hx_node* hx_store_hexastore_id2node (hx_store* storage, hx_node_id id);
 
+/* Return the sort ordering that will result from calling get_statements_with_index on a particular ordering thunk */
+hx_container_t* hx_store_hexastore_iter_sorting ( hx_store* storage, hx_triple* triple, void* ordering );
 
 
 #ifdef __cplusplus

@@ -38,7 +38,6 @@ typedef struct {
 	hx_store_tokyocabinet_index* pos;
 	hx_store_tokyocabinet_index* osp;
 	hx_store_tokyocabinet_index* ops;
-	hx_container_t* indexes;
 } hx_store_tokyocabinet;
 
 typedef struct {
@@ -97,6 +96,9 @@ int hx_store_tokyocabinet_sync (hx_store* store);
 
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
 hx_container_t* hx_store_tokyocabinet_triple_orderings (hx_store* store, hx_triple*);
+
+/* Get a string representation of a triple ordering returned by triple_orderings */
+char* hx_store_tokyocabinet_ordering_name (hx_store* store, void* ordering);
 
 /* Return an ID value for a node. */
 hx_node_id hx_store_tokyocabinet_node2id (hx_store* storage, hx_node* node);

@@ -11,6 +11,7 @@ int _hx_store_hexastore_iter_vb_size ( void* data );
 char** _hx_store_hexastore_iter_vb_names ( void* data );
 int _hx_store_hexastore_iter_vb_sorted_by (void* data, int index );
 int _hx_store_hexastore_iter_vb_iter_debug ( void* data, char* header, int indent );
+int _hx_store_hexastore_index_ok_for_triple( hx_store* store, hx_store_hexastore_index* idx, hx_triple* t );
 
 int _hx_store_hexastore_add_triple_id ( hx_store_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 
@@ -29,6 +30,8 @@ hx_store* _hx_new_store_hexastore_with_hx ( void* world, void* hx ) {
 	vtable->triple_orderings			= hx_store_hexastore_triple_orderings;
 	vtable->id2node						= hx_store_hexastore_id2node;
 	vtable->node2id						= hx_store_hexastore_node2id;
+	vtable->ordering_name				= hx_store_hexastore_ordering_name;
+	vtable->iter_sorting				= hx_store_hexastore_iter_sorting;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -41,7 +44,6 @@ hx_store* hx_new_store_hexastore_with_nodemap ( void* world, hx_nodemap* map ) {
 	hx->pos					= hx_new_index( world, HX_INDEX_ORDER_POS );
 	hx->osp					= hx_new_index( world, HX_INDEX_ORDER_OSP );
 	hx->ops					= hx_new_index( world, HX_INDEX_ORDER_OPS );
-	hx->indexes				= NULL;
 	return _hx_new_store_hexastore_with_hx( world, hx );
 }
 
@@ -77,7 +79,6 @@ hx_store* hx_new_store_hexastore_with_indexes ( void* world, const char* index_s
 // 		fprintf( stderr, "Adding OPS index\n" );
 		hx->ops					= hx_new_index( world, HX_INDEX_ORDER_OPS );
 	}
-	hx->indexes				= NULL;
 	return _hx_new_store_hexastore_with_hx( world, hx );
 }
 
@@ -112,8 +113,6 @@ int hx_store_hexastore_close (hx_store* store) {
 		hx_free_index( hx->osp );
 	if (hx->ops)
 		hx_free_index( hx->ops );
-	if (hx->indexes)
-		hx_free_container( hx->indexes );
 	hx->map			= NULL;
 	hx->spo			= NULL;
 	hx->sop			= NULL;
@@ -121,7 +120,6 @@ int hx_store_hexastore_close (hx_store* store) {
 	hx->pos			= NULL;
 	hx->osp			= NULL;
 	hx->ops			= NULL;
-	hx->indexes		= NULL;
 	free( hx );
 	return 0;
 }
@@ -378,18 +376,124 @@ int hx_store_hexastore_sync (hx_store* store) {
 }
 
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
-hx_container_t* hx_store_hexastore_triple_orderings (hx_store* store, hx_triple* triple) {
+hx_container_t* hx_store_hexastore_triple_orderings (hx_store* store, hx_triple* t) {
 	hx_store_hexastore* hx	= (hx_store_hexastore*) store->ptr;
-	if (hx->indexes == NULL) {
-		hx->indexes	= hx_new_container('I', 6);
-		if (hx->spo) hx_container_push_item(hx->indexes, hx->spo);
-		if (hx->sop) hx_container_push_item(hx->indexes, hx->sop);
-		if (hx->pos) hx_container_push_item(hx->indexes, hx->pos);
-		if (hx->pso) hx_container_push_item(hx->indexes, hx->pso);
-		if (hx->osp) hx_container_push_item(hx->indexes, hx->osp);
-		if (hx->ops) hx_container_push_item(hx->indexes, hx->ops);
+	hx_container_t* indexes	= hx_new_container('I', 6);
+	if (hx->spo && _hx_store_hexastore_index_ok_for_triple(store, hx->spo, t))
+		hx_container_push_item(indexes, hx->spo);
+	if (hx->sop && _hx_store_hexastore_index_ok_for_triple(store, hx->sop, t))
+		hx_container_push_item(indexes, hx->sop);
+	if (hx->pos && _hx_store_hexastore_index_ok_for_triple(store, hx->pos, t))
+		hx_container_push_item(indexes, hx->pos);
+	if (hx->pso && _hx_store_hexastore_index_ok_for_triple(store, hx->pso, t))
+		hx_container_push_item(indexes, hx->pso);
+	if (hx->osp && _hx_store_hexastore_index_ok_for_triple(store, hx->osp, t))
+		hx_container_push_item(indexes, hx->osp);
+	if (hx->ops && _hx_store_hexastore_index_ok_for_triple(store, hx->ops, t))
+		hx_container_push_item(indexes, hx->ops);
+	return indexes;
+}
+
+int _hx_store_hexastore_index_ok_for_triple( hx_store* store, hx_store_hexastore_index* idx, hx_triple* t ) {
+	if (t == NULL) {
+		return 1;
 	}
-	return hx->indexes;
+	int i, j;
+	int bound	= hx_triple_bound_count(t);
+	int repeated_variable	= 0;
+	int bound_nodes[3]	= {1,1,1};
+	if (bound == 3) {
+	} else {
+		for (i = 0; i < 3; i++) {
+			hx_node* n	= hx_triple_node( t, i );
+			if (hx_node_is_variable(n)) {
+// 				fprintf( stderr, "- %s is unbound\n", HX_POSITION_NAMES[i] );
+				bound_nodes[i]	= 0;
+				// scan through the other node positions, checking for repeated variables
+				for (j = i+1; j < 3; j++) {
+					hx_node* m	= hx_triple_node( t, j );
+					if (hx_node_is_variable(m)) {
+						if (hx_node_iv(n) == hx_node_iv(m)) {
+							repeated_variable	= hx_node_iv(n);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+// 	if (repeated_variable) {
+// 		fprintf( stderr, "triple has a shared variable\n" );
+// 	}
+// 	
+// 	for (i = 0; i < 3; i++) {
+// 		if (bound_nodes[i]) {
+// 			fprintf( stderr, "prefix of index must have %s\n", HX_POSITION_NAMES[i] );
+// 		}
+// 	}
+	
+	char* name	= hx_store_ordering_name( store, idx );
+//	fprintf( stderr, "store has index %s (%p)\n", name, (void*) idx );
+		
+	int index_is_ok	= 1;
+	for (j = 0; j < bound; j++) {
+		if (!bound_nodes[ idx->order[j] ]) {
+			index_is_ok	= 0;
+//				fprintf( stderr, "- won't work because %s comes before some bound terms\n", HX_POSITION_NAMES[ idx->order[j] ] );
+		}
+	}
+	
+	if (bound == 0) {
+		// there are 3 variables. if we have shared variables, they must appear sequentially, and as a prefix of the index order
+		// (the nodes in index->order[0] and index->order[1] have to be the shared variable)
+		if (repeated_variable) {
+			hx_node* first	= hx_triple_node( t, idx->order[0] );
+			hx_node* middle	= hx_triple_node( t, idx->order[1] );
+			
+// 			char* string;
+// 			hx_node_string( middle, &string );
+// 			fprintf( stderr, "middle-of-index node: %s (%d)\n", string, hx_node_iv(middle) );
+// 			free(string);
+//			fprintf( stderr, "repeated variable: %d\n", repeated_variable );
+			
+			if (hx_node_iv(first) != repeated_variable) {
+// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[0] ] );
+				index_is_ok	= 0;
+			}
+			if (hx_node_iv(middle) != repeated_variable) {
+// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[1] ] );
+				index_is_ok	= 0;
+			}
+		}
+	}
+	return index_is_ok;
+}
+
+hx_container_t* hx_store_hexastore_iter_sorting ( hx_store* storage, hx_triple* t, void* ordering ) {
+	hx_store_hexastore_index* idx	= (hx_store_hexastore_index*) ordering;
+	int bound	= hx_triple_bound_count(t);
+	int order_count	= 3 - bound;
+	
+	hx_container_t* order	= hx_new_container( 'S', order_count );
+	
+	int k;
+	int l	= 0;
+	for (k = bound; k < 3; k++) {
+		int ordered_by	= idx->order[ k ];
+		hx_node* n	= hx_triple_node( t, ordered_by );
+		char* string;
+		hx_node_string( n, &string );
+// 		fprintf( stderr, "\tSorted by %s (%s)\n", HX_POSITION_NAMES[ ordered_by ], string );
+		free(string);
+		
+		hx_variablebindings_iter_sorting* sorting	= hx_variablebindings_iter_new_node_sorting( HX_VARIABLEBINDINGS_ITER_SORT_ASCENDING, 0, n );
+		hx_container_push_item( order, sorting );
+	}
+	return order;
+}
+
+char* hx_store_hexastore_ordering_name (hx_store* store, void* ordering) {
+	return hx_store_hexastore_index_name( ordering );
 }
 
 /* Return an ID value for a node. */
@@ -868,7 +972,6 @@ hx_store* hx_store_hexastore_read( void* world, FILE* f, int buffer ) {
 			return NULL;
 		}
 	}
-	hx->indexes		= NULL;
 	
 	return _hx_new_store_hexastore_with_hx( world, hx );
 }

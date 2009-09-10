@@ -6,6 +6,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/plan.h"
 #include "algebra/bgp.h"
+#include "store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );
@@ -83,16 +84,17 @@ void access_plans_test1 ( hx_hexastore* hx ) {
 // 			free(string);
 // 		}
 		
-		hx_index* i	= plan->source;
-		char* name	= hx_index_name( i );
+		void* i	= plan->data.access.source;
+		char* name	= hx_store_ordering_name( hx->store, i );
 		ok1( *name == 'P' );
-		ok1( plan->order_count == 2 );
+		hx_container_t* order	= plan->order;
+		ok1( hx_container_size(order) == 2 );
 		
 		
 //		fprintf( stderr, "- %s\n", name );
 		char* string[2];
-		hx_variablebindings_iter_sorting_string( plan->order[0], &(string[0]) );
-		hx_variablebindings_iter_sorting_string( plan->order[1], &(string[1]) );
+		hx_variablebindings_iter_sorting_string( hx_container_item(plan->order, 0), &(string[0]) );
+		hx_variablebindings_iter_sorting_string( hx_container_item(plan->order, 1), &(string[1]) );
 		
 		int cmp	= (strcmp( string[0], string[1] ) > 0) ? 1 : 0;
 		sorting_ok[ cmp ]	= 1;
@@ -139,13 +141,14 @@ void access_plans_test2 ( hx_hexastore* hx ) {
 //	fprintf( stderr, "%d plans (container %p)\n", size, (void*) plans );
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
-		hx_index* i	= plan->source;
-		char* name	= hx_index_name( i );
+		void* i	= plan->data.access.source;
+		char* name	= hx_store_ordering_name( hx->store, i );
 		ok1( name[2] == 'S' );
-		ok1( plan->order_count == 1 );
+		hx_container_t* order	= plan->order;
+		ok1( hx_container_size(order) == 1 );
 		
 		char* string;
-		hx_variablebindings_iter_sorting_string( plan->order[0], &string );
+		hx_variablebindings_iter_sorting_string( hx_container_item(plan->order, 0), &string );
 		ok1( strcmp(string, "ASC(?x)") == 0 );
 		
 		free(string);
@@ -178,7 +181,7 @@ void access_plans_test3 ( hx_hexastore* hx ) {
 	int size				= hx_container_size(plans);
 	ok1( size == 6 );
 	hx_optimizer_plan* plan	= hx_container_item( plans, 0 );
-	ok1( plan->order_count == 3 );
+	ok1( hx_container_size(plan->order) == 3 );
 	
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
@@ -217,8 +220,8 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 	
 	hx_container_t* jplans	= hx_optimizer_join_plans( ctx, plans1, plans2, 0 );
 	
-	for (i = 0; i < size1; i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
-	for (i = 0; i < size2; i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
+// 	for (i = 0; i < size1; i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
+// 	for (i = 0; i < size2; i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
 	
 	int size				= hx_container_size(jplans);
 	ok1( size == (size1 * size2 * 6) );	// a-join-b and b-join-a for each of the three join implementations
@@ -392,8 +395,8 @@ void join_cost_test1 ( hx_hexastore* hx ) {
 	
 	hx_container_t* jplans	= hx_optimizer_join_plans( ctx, plans1, plans2, 0 );
 	
-	for (i = 0; i < size1; i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
-	for (i = 0; i < size2; i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
+// 	for (i = 0; i < size1; i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
+// 	for (i = 0; i < size2; i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
 	
 	int size				= hx_container_size(jplans);
 	for (i = 0; i < size; i++) {

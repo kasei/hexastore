@@ -104,6 +104,14 @@ int hx_store_end_bulk_load ( hx_store* store ) {
 	}
 }
 
+char* hx_store_ordering_name (hx_store* store, void* ordering) {
+	return store->vtable->ordering_name( store, ordering );
+}
+
+hx_container_t* hx_store_iter_sorting ( hx_store* store, hx_triple* triple, void* ordering ) {
+	return store->vtable->iter_sorting( store, triple, ordering );
+}
+
 int hx_store_variablebindings_string ( hx_store* store, hx_variablebindings* b, char** string ) {
 	int size	= b->size;
 	hx_node_id* id	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );

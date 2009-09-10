@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "hexastore.h"
@@ -80,7 +81,6 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	hx->pos					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_POS, directory, "pos.tcb" );
 	hx->osp					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OSP, directory, "osp.tcb" );
 	hx->ops					= hx_new_tokyocabinet_index( world, HX_STORE_TCINDEX_ORDER_OPS, directory, "ops.tcb" );
-	hx->indexes				= NULL;
 	hx->bulk_load_index		= NULL;
 	
 	hx_store_vtable* vtable				= (hx_store_vtable*) calloc( 1, sizeof(hx_store_vtable) );
@@ -98,6 +98,7 @@ hx_store* hx_new_store_tokyocabinet ( void* world, const char* directory ) {
 	vtable->node2id						= hx_store_tokyocabinet_node2id;
 	vtable->begin_bulk_load				= hx_store_tokyocabinet_begin_bulk_load;
 	vtable->end_bulk_load				= hx_store_tokyocabinet_end_bulk_load;
+	vtable->ordering_name				= hx_store_tokyocabinet_ordering_name;
 	return hx_new_store( world, vtable, hx );
 }
 
@@ -169,8 +170,6 @@ int hx_store_tokyocabinet_close (hx_store* store) {
 		hx_free_tokyocabinet_index( hx->osp );
 	if (hx->ops)
 		hx_free_tokyocabinet_index( hx->ops );
-	if (hx->indexes)
-		hx_free_container( hx->indexes );
 	hx->id2node		= NULL;
 	hx->node2id		= NULL;
 	hx->spo			= NULL;
@@ -506,18 +505,115 @@ int hx_store_tokyocabinet_sync (hx_store* store) {
 }
 
 /* Return a list of ordering arrays, giving the possible access patterns for the given triple */
-hx_container_t* hx_store_tokyocabinet_triple_orderings (hx_store* store, hx_triple* triple) {
+hx_container_t* hx_store_tokyocabinet_triple_orderings (hx_store* store, hx_triple* t) {
 	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
-	if (hx->indexes == NULL) {
-		hx->indexes	= hx_new_container('I', 6);
-		if (hx->spo) hx_container_push_item(hx->indexes, hx->spo);
-		if (hx->sop) hx_container_push_item(hx->indexes, hx->sop);
-		if (hx->pos) hx_container_push_item(hx->indexes, hx->pos);
-		if (hx->pso) hx_container_push_item(hx->indexes, hx->pso);
-		if (hx->osp) hx_container_push_item(hx->indexes, hx->osp);
-		if (hx->ops) hx_container_push_item(hx->indexes, hx->ops);
+	hx_container_t* indexes	= hx_new_container('I', 6);
+	if (hx->spo && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->spo, t))
+		hx_container_push_item(indexes, hx->spo);
+	if (hx->sop && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->sop, t))
+		hx_container_push_item(indexes, hx->sop);
+	if (hx->pos && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->pos, t))
+		hx_container_push_item(indexes, hx->pos);
+	if (hx->pso && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->pso, t))
+		hx_container_push_item(indexes, hx->pso);
+	if (hx->osp && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->osp, t))
+		hx_container_push_item(indexes, hx->osp);
+	if (hx->ops && _hx_store_tokyocabinet_index_ok_for_triple(store, hx->ops, t))
+		hx_container_push_item(indexes, hx->ops);
+	return indexes;
+}
+
+int _hx_store_tokyocabinet_index_ok_for_triple( hx_store* store, hx_store_tokyocabinet_index* idx, hx_triple* t ) {
+	if (t == NULL) {
+		return 1;
 	}
-	return hx->indexes;
+	int i, j;
+	int bound	= hx_triple_bound_count(t);
+	int repeated_variable	= 0;
+	int bound_nodes[3]	= {1,1,1};
+	if (bound == 3) {
+	} else {
+		for (i = 0; i < 3; i++) {
+			hx_node* n	= hx_triple_node( t, i );
+			if (hx_node_is_variable(n)) {
+// 				fprintf( stderr, "- %s is unbound\n", HX_POSITION_NAMES[i] );
+				bound_nodes[i]	= 0;
+				// scan through the other node positions, checking for repeated variables
+				for (j = i+1; j < 3; j++) {
+					hx_node* m	= hx_triple_node( t, j );
+					if (hx_node_is_variable(m)) {
+						if (hx_node_iv(n) == hx_node_iv(m)) {
+							repeated_variable	= hx_node_iv(n);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+// 	if (repeated_variable) {
+// 		fprintf( stderr, "triple has a shared variable\n" );
+// 	}
+// 	
+// 	for (i = 0; i < 3; i++) {
+// 		if (bound_nodes[i]) {
+// 			fprintf( stderr, "prefix of index must have %s\n", HX_POSITION_NAMES[i] );
+// 		}
+// 	}
+	
+	char* name	= hx_store_ordering_name( store, idx );
+//	fprintf( stderr, "store has index %s (%p)\n", name, (void*) idx );
+		
+	int index_is_ok	= 1;
+	for (j = 0; j < bound; j++) {
+		if (!bound_nodes[ idx->order[j] ]) {
+			index_is_ok	= 0;
+//				fprintf( stderr, "- won't work because %s comes before some bound terms\n", HX_POSITION_NAMES[ idx->order[j] ] );
+		}
+	}
+	
+	if (bound == 0) {
+		// there are 3 variables. if we have shared variables, they must appear sequentially, and as a prefix of the index order
+		// (the nodes in index->order[0] and index->order[1] have to be the shared variable)
+		if (repeated_variable) {
+			hx_node* first	= hx_triple_node( t, idx->order[0] );
+			hx_node* middle	= hx_triple_node( t, idx->order[1] );
+			
+// 			char* string;
+// 			hx_node_string( middle, &string );
+// 			fprintf( stderr, "middle-of-index node: %s (%d)\n", string, hx_node_iv(middle) );
+// 			free(string);
+//			fprintf( stderr, "repeated variable: %d\n", repeated_variable );
+			
+			if (hx_node_iv(first) != repeated_variable) {
+// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[0] ] );
+				index_is_ok	= 0;
+			}
+			if (hx_node_iv(middle) != repeated_variable) {
+// 					fprintf( stderr, "- %s won't work because the %s isn't the shared variable\n", name, HX_POSITION_NAMES[ idx->order[1] ] );
+				index_is_ok	= 0;
+			}
+		}
+	}
+	return index_is_ok;
+}
+
+/* Get a string representation of a triple ordering returned by triple_orderings */
+char* hx_store_tokyocabinet_ordering_name (hx_store* store, void* ordering) {
+	hx_store_tokyocabinet* hx	= (hx_store_tokyocabinet*) store->ptr;
+	if (ordering == hx->spo) {
+		return hx_copy_string("SPO");
+	} else if (ordering == hx->sop) {
+		return hx_copy_string("SOP");
+	} else if (ordering == hx->pos) {
+		return hx_copy_string("POS");
+	} else if (ordering == hx->pso) {
+		return hx_copy_string("PSO");
+	} else if (ordering == hx->osp) {
+		return hx_copy_string("OSP");
+	} else if (ordering == hx->ops) {
+		return hx_copy_string("OPS");
+	}
 }
 
 /* Return an ID value for a node. */

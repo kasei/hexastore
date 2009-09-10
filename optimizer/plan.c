@@ -6,42 +6,45 @@
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
-hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_index* source, hx_triple* t, int order_count, hx_variablebindings_iter_sorting** order ) {
+hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order ) {
+	int order_count			= hx_container_size( order );
 	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
-	plan->type			= HX_OPTIMIZER_PLAN_INDEX;
-	plan->triple		= hx_copy_triple(t);
-	plan->source		= source;
-	plan->order_count	= order_count;
-	plan->order			= (hx_variablebindings_iter_sorting**) calloc( order_count, sizeof(hx_variablebindings_iter_sorting*) );
-	plan->string		= NULL;
+	plan->type				= HX_OPTIMIZER_PLAN_INDEX;
+	plan->data.access.triple	= hx_copy_triple(t);
+	plan->data.access.source	= source;
+	plan->data.access.store		= store;
+	plan->order				= hx_new_container( 'S', order_count );
+	plan->string			= NULL;
 	int i;
 	for (i = 0; i < order_count; i++) {
-		plan->order[i]	= hx_copy_variablebindings_iter_sorting( order[i] );
+		hx_variablebindings_iter_sorting* s	= hx_container_item( order, i );
+		hx_container_push_item( plan->order, hx_copy_variablebindings_iter_sorting( s ) );
 	}
 	return plan;
 }
 
-hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, int order_count, hx_variablebindings_iter_sorting** order, int leftjoin ) {
+hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, hx_container_t* order, int leftjoin ) {
+	int order_count			= hx_container_size( order );
 	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
 	plan->type			= HX_OPTIMIZER_PLAN_JOIN;
-	plan->join_type		= type;
-	plan->lhs_plan		= hx_copy_optimizer_plan(lhs);
-	plan->rhs_plan		= hx_copy_optimizer_plan(rhs);
-	plan->order_count	= order_count;
-	plan->order			= (hx_variablebindings_iter_sorting**) calloc( order_count, sizeof(hx_variablebindings_iter_sorting*) );
+	plan->data.join.join_type		= type;
+	plan->data.join.lhs_plan		= hx_copy_optimizer_plan(lhs);
+	plan->data.join.rhs_plan		= hx_copy_optimizer_plan(rhs);
+	plan->order			= hx_new_container( 'S', order_count );
 	plan->string		= NULL;
 	int i;
 	for (i = 0; i < order_count; i++) {
-		plan->order[i]	= hx_copy_variablebindings_iter_sorting( order[i] );
+		hx_variablebindings_iter_sorting* s	= hx_container_item( order, i );
+		hx_container_push_item( plan->order, hx_copy_variablebindings_iter_sorting( s ) );
 	}
 	return plan;
 }
 
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
-		return hx_new_optimizer_access_plan( p->source, p->triple, p->order_count, p->order );
+		return hx_new_optimizer_access_plan( p->data.access.store, p->data.access.source, p->data.access.triple, p->order );
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
-		return hx_new_optimizer_join_plan( p->join_type, p->lhs_plan, p->rhs_plan, p->order_count, p->order, p->leftjoin );
+		return hx_new_optimizer_join_plan( p->data.join.join_type, p->data.join.lhs_plan, p->data.join.rhs_plan, p->order, p->data.join.leftjoin );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
 		return NULL;
@@ -50,22 +53,22 @@ hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
 
 int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
 	int i;
-	int size	= p->order_count;
+	int size	= hx_container_size( p->order );
 	for (i = 0; i < size; i++) {
-		hx_variablebindings_iter_sorting* s	= p->order[i];
+		hx_variablebindings_iter_sorting* s	= hx_container_item( p->order, i );
 		hx_free_variablebindings_iter_sorting( s );
 	}
-	free( p->order );
+	hx_free_container( p->order );
 	
 	if (p->string) {
 		free(p->string);
 	}
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
-		hx_free_triple( p->triple );
+		hx_free_triple( p->data.access.triple );
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
-		hx_free_optimizer_plan( p->lhs_plan );
-		hx_free_optimizer_plan( p->rhs_plan );
+		hx_free_optimizer_plan( p->data.join.lhs_plan );
+		hx_free_optimizer_plan( p->data.join.rhs_plan );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_free_optimizer_plan\n" );
 		return 1;
@@ -84,14 +87,15 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		char *tstring;
-		hx_triple* t	= p->triple;
+		hx_triple* t	= p->data.access.triple;
 		
 		hx_bgp* b		= hx_new_bgp1( hx_copy_triple(t) );
 		hx_bgp_string( b, &tstring );
 		hx_free_bgp(b);
 		
-		hx_index* i	= p->source;
-		char* iname	= hx_index_name( i );
+		hx_store* store	= p->data.access.store;
+		void* i			= p->data.access.source;
+		char* iname		= hx_store_ordering_name( store, i );
 		
 		int len	= strlen(iname) + strlen(tstring) + 3;
 		*string	= (char*) calloc( len, sizeof(char) );
@@ -106,10 +110,10 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		free(tstring);
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
 		char *lhs_string, *rhs_string;
-		const char* jname	= HX_OPTIMIZER_PLAN_JOIN_NAMES[ p->join_type ];
+		const char* jname	= HX_OPTIMIZER_PLAN_JOIN_NAMES[ p->data.join.join_type ];
 		
-		hx_optimizer_plan* lhs	= p->lhs_plan;
-		hx_optimizer_plan* rhs	= p->rhs_plan;
+		hx_optimizer_plan* lhs	= p->data.join.lhs_plan;
+		hx_optimizer_plan* rhs	= p->data.join.rhs_plan;
 		hx_optimizer_plan_string( lhs, &lhs_string );
 		hx_optimizer_plan_string( rhs, &rhs_string );
 		
@@ -136,20 +140,21 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 }
 
 int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting ) {
-	int count	= plan->order_count;
+	int count	= hx_container_size( plan->order );
 	*sorting	= (hx_variablebindings_iter_sorting**) calloc( count, sizeof(hx_variablebindings_iter_sorting*) );
 	int i;
 	for (i = 0; i < count; i++) {
-		(*sorting)[i]	= hx_copy_variablebindings_iter_sorting( plan->order[i] );
+		hx_variablebindings_iter_sorting* s	= hx_container_item( plan->order, i );
+		(*sorting)[i]	= hx_copy_variablebindings_iter_sorting( s );
 	}
 	return count;
 }
 
-int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p, int* accumulator, int level ) {
+int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p, int64_t* accumulator, int level ) {
 	hx_hexastore* hx	= ctx->hx;
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
-		hx_triple* t	= p->triple;
+		hx_triple* t	= p->data.access.triple;
 		uint64_t count;
 		if (hx) {
 			count	= hx_count_statements( hx, t->subject, t->predicate, t->object );
@@ -158,14 +163,14 @@ int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* 
 		}
 		return (int64_t) count;
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
-		int64_t lhsc	= _hx_optimizer_plan_cost( ctx, p->lhs_plan, accumulator, level+1 );
-		int64_t rhsc	= _hx_optimizer_plan_cost( ctx, p->rhs_plan, accumulator, level+1 );
+		int64_t lhsc	= _hx_optimizer_plan_cost( ctx, p->data.join.lhs_plan, accumulator, level+1 );
+		int64_t rhsc	= _hx_optimizer_plan_cost( ctx, p->data.join.rhs_plan, accumulator, level+1 );
 		int64_t cost	= (lhsc * rhsc);
-		if (p->join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
+		if (p->data.join.join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
 			cost	+= ctx->nestedloopjoin_penalty;
-		} else if (p->join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
+		} else if (p->data.join.join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
 			cost	+= ctx->hashjoin_penalty;
-		} else if (p->join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
+		} else if (p->data.join.join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
 			if (_hx_optimizer_plan_mergeable_sorting( ctx, p )) {
 				// if the iterators are sorted appropriately for a merge-join
 			} else {
@@ -194,8 +199,8 @@ int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
 	hx_variablebindings_iter_sorting **lhs_sorting, **rhs_sorting;
-	int lhs_count	= hx_optimizer_plan_sorting( p->lhs_plan, &lhs_sorting );
-	int rhs_count	= hx_optimizer_plan_sorting( p->rhs_plan, &rhs_sorting );
+	int lhs_count	= hx_optimizer_plan_sorting( p->data.join.lhs_plan, &lhs_sorting );
+	int rhs_count	= hx_optimizer_plan_sorting( p->data.join.rhs_plan, &rhs_sorting );
 	int i;
 	
 	if (lhs_count == 0 || rhs_count == 0) {
@@ -232,42 +237,20 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
 	hx_hexastore* hx	= ctx->hx;
-	hx_nodemap* map		= hx_store_hexastore_get_nodemap(hx->store);
 	
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
-		hx_triple* t		= plan->triple;
-		hx_node_id s		= hx_nodemap_get_node_id( map, t->subject );
-		hx_node_id p		= hx_nodemap_get_node_id( map, t->predicate );
-		hx_node_id o		= hx_nodemap_get_node_id( map, t->object );
-		if (!hx_node_is_variable( t->subject ) && s == 0) {
-			return NULL;
-		}
-		if (!hx_node_is_variable( t->predicate ) && p == 0) {
-			return NULL;
-		}
-		if (!hx_node_is_variable( t->object ) && o == 0) {
-			return NULL;
-		}
-		hx_index_iter* titer	= hx_index_new_iter1( plan->source, s, p, o );
-		
-		char *sname, *pname, *oname;
-		hx_node_variable_name( t->subject, &sname );
-		hx_node_variable_name( t->predicate, &pname );
-		hx_node_variable_name( t->object, &oname );
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, sname, pname, oname );
-		free(sname);
-		free(pname);
-		free(oname);
+		hx_triple* t		= plan->data.access.triple;
+		hx_variablebindings_iter* iter	= hx_store_get_statements_with_index (hx->store, t, plan->data.access.source);
 		return iter;
 	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
-		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->lhs_plan );
-		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->rhs_plan );
+		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->data.join.lhs_plan );
+		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->data.join.rhs_plan );
 		hx_variablebindings_iter* iter;
-		if (plan->join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
-			return hx_new_nestedloopjoin_iter2( lhs, rhs, plan->leftjoin );
-		} else if (plan->join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
-			return hx_new_hashjoin_iter2( lhs, rhs, plan->leftjoin );
-		} else if (plan->join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
+		if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
+			return hx_new_nestedloopjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
+		} else if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
+			return hx_new_hashjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
+		} else if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
 			return hx_new_mergejoin_iter( lhs, rhs );
 		} else {
 			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_execute\n" );
