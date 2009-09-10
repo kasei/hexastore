@@ -19,7 +19,6 @@ RDF_OBJECTS			= rdf/node.o rdf/triple.o
 ENGINE_OBJECTS		= engine/expr.o engine/variablebindings_iter.o engine/variablebindings_iter_sorting.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
 ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
-# MPI_OBJECTS		= parallel/safealloc.o parallel/async_mpi.o parallel/async_des.o parallel/parallel.o parallel/mpi_file_iterator.o parallel/mpi_file_ntriples_iterator.o parallel/mpi_file_ntriples_node_iterator.o parallel/mpi_rdfio.o parallel/genmap/avl_tree_map.o parallel/genmap/iterator.o parallel/genmap/map.o
 OPT_OBJECTS			= optimizer/optimizer.o optimizer/plan.o
 OBJECTS				= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
@@ -278,9 +277,6 @@ examples/lubm8_6m: examples/lubm8_6m.c $(OBJECTS)
 
 examples/lubm16_6m: examples/lubm16_6m.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c $(OBJECTS)
-
-examples/mpi: examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
-	$(CC) $(INC) $(LIBS) -o examples/mpi examples/mpi.c $(OBJECTS) $(MPI_OBJECTS)
 
 ########
 
