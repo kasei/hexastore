@@ -43,6 +43,9 @@ char* hx_copy_string ( const char* string );
 uint64_t hx_util_hash_string ( const char* s );
 uint64_t hx_util_hash_buffer ( const char* s, size_t len );
 
+uint64_t hx_util_hash_string2 ( const char* s, uint64_t hash );
+uint64_t hx_util_hash_buffer2 ( const char* s, size_t len, uint64_t hash );
+
 hx_container_t* hx_new_container ( char type, int size );
 hx_container_t* hx_copy_container ( hx_container_t* c );
 int hx_free_container ( hx_container_t* c );

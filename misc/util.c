@@ -12,30 +12,25 @@ char* hx_copy_string ( const char* string ) {
 }
 
 uint64_t hx_util_hash_string ( const char* s ) {
-	int len	= strlen(s);
-	return hx_util_hash_buffer( s, len );
+	return hx_util_hash_string2( s, (uint64_t) 0 );
 }
 
 uint64_t hx_util_hash_buffer ( const char* s, size_t len ) {
-        uint64_t hash = 0;
-        int i;  
-        for(i = 0; i < len; i++) {
-                char c = s[i]; 
-                hash = c + (hash << 6) + (hash << 16) - hash; 
-        }       
+	return hx_util_hash_buffer2( s, len, (uint64_t) 0 );
+}
+
+uint64_t hx_util_hash_buffer2 ( const char* s, size_t len, uint64_t hash ) {
+	int i;  
+	for(i = 0; i < len; i++) {
+		char c = s[i]; 
+		hash = c + (hash << 6) + (hash << 16) - hash; 
+	}       
 	return hash;
-/*
-	uint64_t h	= 0;
-	int i;
-	for (i = 0; i < len; i++) {
-		unsigned char ki	= (unsigned char) s[i];
-		uint64_t highorder	= h & 0xfffffffff8000000LL;	// extract high-order 37 bits from h
-		h	= h << 37;									// shift h left by 37 bits
-		h	= h ^ (highorder >> 37);					// move the highorder 37 bits to the low-order end and XOR into h
-		h = h ^ ki;										// XOR h and ki
-	}
-	return h;
-*/
+}
+
+uint64_t hx_util_hash_string2 ( const char* s, uint64_t hash ) {
+	int len	= strlen(s);
+	return hx_util_hash_buffer2( s, len, hash );
 }
 
 hx_container_t* hx_new_container ( char type, int size ) {

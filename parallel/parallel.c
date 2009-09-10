@@ -240,7 +240,7 @@ int _hx_parallel_send_vb_handler(async_mpi_session* ses, void* args) {
 			hx_node* n		= hx_nodemap_get_node( send_args->map, id );
 			char* string;
 			hx_node_string( n, &string );
-			hash			+= hx_util_hash_string( string );
+			hash			= hx_util_hash_string2( string, hash );
 			free(string);
 		}
 		
