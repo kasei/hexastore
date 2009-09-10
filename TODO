@@ -8,8 +8,6 @@ optimizer/optimizer.c:hx_optimizer_optimize_bgp currently implements the dynamic
 
 ** the computation for interesting plans needs to take into account possible mergejoins later on in the query plan.
 
-** the existing optimizer code needs to be fixed to not use hx_index directly (which isn't a public API following the refactoring of the backend triplestore code).
-
 Update the optimizer code to determine when variables are only referenced once, and rewrite the triple pattern to use (hx_node_id) 0 instead of an actual variable ID (hx_node_id with a negative value). This can be conditionally turned on when running under DISTINCT or REDUCED, and allow the storage implementations to only return zero or one results per variable of this kind. For example, we might want all people with foaf:name properties, but not care what the actual names are: {?p foaf:name _:a}. As long as _:a isn't referenced anywhere else in the query, performance can be improved by letting the storage backend only return a single result (with only ?p bound) for each person, even if they have many foaf:name properties.
 
 
