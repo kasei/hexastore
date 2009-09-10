@@ -4,8 +4,9 @@
 #include "misc/util.h"
 #include "engine/mergejoin.h"
 #include "engine/nestedloopjoin.h"
+#include "store/hexastore/hexastore.h"
 
-// #define HPGN_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
+// #define HPGN_DEBUG(s, ...) fprintf(stderr, "%s:%lu: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define HPGN_DEBUG(s, ...)
 
 typedef struct {
@@ -57,15 +58,15 @@ void _hx_parallel_trans_message_counts ( int* num_sends, int* num_recvs ) {
 }
 
 
-hx_parallel_execution_context* hx_parallel_new_execution_context ( const char* path, char* job_id ) {
+hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_hexastore* hx, const char* path, char* job_id ) {
 	int myrank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
 	hx_parallel_execution_context* ctx	= (hx_parallel_execution_context*) calloc( 1, sizeof( hx_parallel_execution_context ) );
+	hx_execution_context_init( (hx_execution_context*) ctx, world, hx );
 	ctx->root					= 0;
-	
 	ctx->job_id					= malloc( strlen(job_id) + 1 );
-	sprintf( (char*) ctx->job_id, job_id );
+	sprintf( (char*) ctx->job_id, "%s", job_id );
 	
 	static const char* map_template	= "%s/rendezvous-map.%s.%d";
 	char *mapfile		= malloc(strlen(path) + strlen(map_template) + strlen(job_id) + 6 + 1);
@@ -94,7 +95,7 @@ int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ct
 
 	const char* mapfile		= ctx->local_nodemap_file;
 	if(!mpi_rdfio_readnt((char*) file, (char*) mapfile, 1048576, &destination, MPI_COMM_WORLD)) {
-		fprintf(stderr, "%s:%u:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
+		fprintf(stderr, "%s:%d:%i: Error; read failed.\n", __FILE__, __LINE__, rank);
 		MPI_Abort(MPI_COMM_WORLD, 127);
 	}
 	return 0;
@@ -104,7 +105,7 @@ hx_node_id* hx_parallel_lookup_node_ids (hx_parallel_execution_context* ctx, int
 	hx_node_id *ids = malloc(count*sizeof(hx_node_id));
 	hx_node_id *allids = malloc(count*sizeof(hx_node_id));
 	if(ids == NULL || allids == NULL) {
-		fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for arrays of hx_node_id.\n", __FILE__, __LINE__, 2*count*sizeof(hx_node_id));
+		fprintf(stderr, "%s:%d: Error; cannot allocate %lu bytes for arrays of hx_node_id.\n", __FILE__, __LINE__, 2*count*sizeof(hx_node_id));
 		return NULL;
 	}
 	MPI_File file;
@@ -343,7 +344,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 
 	buffer = malloc(bufsize);
 	if(buffer == NULL) {
-		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for buffer.\n", __FILE__, __LINE__, rank, bufsize);
+		fprintf(stderr, "%s:%d:%d: Error in broadcast_nodes; cannot allocate %d bytes for buffer.\n", __FILE__, __LINE__, rank, (int) bufsize);
 		bufsize = 0;
 	}
 
@@ -387,7 +388,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 	*maxiv = min_iv;
 	char** map = calloc(min_iv+1, sizeof(char*));
 	if(map == NULL) {
-		fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for map.\n", __FILE__, __LINE__, rank, min_iv*sizeof(char*));
+		fprintf(stderr, "%s:%d:%d: Error in broadcast_nodes; cannot allocate %lu bytes for map.\n", __FILE__, __LINE__, rank, min_iv*sizeof(char*));
 		return NULL;
 	}
 
@@ -402,7 +403,7 @@ char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_no
 		if(namelen > 0) {
 			map[iv] = malloc(namelen+1);
 			if(map[iv] == NULL) {
-				fprintf(stderr, "%s:%u:%d: Error in broadcast_nodes; cannot allocate %lu bytes for node name.\n", __FILE__, __LINE__, rank, namelen + 1);
+				fprintf(stderr, "%s:%d:%d: Error in broadcast_nodes; cannot allocate %d bytes for node name.\n", __FILE__, __LINE__, rank, (int) namelen + 1);
 				return NULL;
 			}
 			memcpy(map[iv], b, namelen);
@@ -686,7 +687,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 		for(i = 0; i < size; i++) {
 			hx_node_id *id = malloc(sizeof(hx_node_id));
 			if(id == NULL) {
-				fprintf(stderr, "%s:%u: Unable to allocate an hx_node_id.\n", __FILE__, __LINE__);
+				fprintf(stderr, "%s:%d: Unable to allocate an hx_node_id.\n", __FILE__, __LINE__);
 				return -1;
 			}
 			*id = hx_variablebindings_node_id_for_binding(bindings, i);
@@ -700,7 +701,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 
 	iterator_t giditer = map_key_iterator(gid2node);
 	if(giditer == NULL) {
-		fprintf(stderr, "%s:%u: Unable to allocate iterator over gid2node.\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s:%d: Unable to allocate iterator over gid2node.\n", __FILE__, __LINE__);
 		return -1;
 	}
 
@@ -708,7 +709,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 	size_t lookupmaxsize = 256;
 	_hx_parallel_gid2node_lookup *lookups = malloc(lookupmaxsize*sizeof(_hx_parallel_gid2node_lookup));
 	if(lookups == NULL) {
-		fprintf(stderr, "%s:%u: Unable to allocate %u bytes for lookup table.\n", __FILE__, __LINE__, lookupmaxsize*sizeof(_hx_parallel_gid2node_lookup));
+		fprintf(stderr, "%s:%d: Unable to allocate %lu bytes for lookup table.\n", __FILE__, __LINE__, lookupmaxsize*sizeof(_hx_parallel_gid2node_lookup));
 		return -1;
 	}
 
@@ -727,7 +728,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 	_hx_parallel_trans_message_counts( &num_sends, &num_recvs );
 	async_des_session *des = async_des_session_create(num_sends, &_hx_parallel_send_gid2node_lookup, &pack, num_recvs, &_hx_parallel_recv_gid2node_lookup, &pack2, sizeof(hx_node_id));
 	if(des == NULL) {
-		fprintf(stderr, "%s:%u: Error; cannot allocate des session.\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s:%d: Error; cannot allocate des session.\n", __FILE__, __LINE__);
 		return -1;
 	}
 
@@ -737,7 +738,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 	} while(astat == ASYNC_PENDING);
 
 	if(astat == ASYNC_FAILURE) {
-		fprintf(stderr, "%s:%u: Error; des session failed.\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s:%d: Error; des session failed.\n", __FILE__, __LINE__);
 		async_des_session_destroy(des);
 		return -1;
 	}
@@ -779,7 +780,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 	//int numvbs = hx_variablebindings_iter_size(miter);
 	*varbinds = malloc(numvbs*sizeof(hx_variablebindings_nodes*));
 	if(*varbinds == NULL) {
-		fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for new variable bindings nodes.\n", __FILE__, __LINE__, numvbs*sizeof(hx_variablebindings_nodes*));
+		fprintf(stderr, "%s:%d: Error; cannot allocate %lu bytes for new variable bindings nodes.\n", __FILE__, __LINE__, (long unsigned int) (numvbs*sizeof(hx_variablebindings_nodes*)));
 		return -1;
 	}
 
@@ -792,7 +793,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 		char **names = malloc(size*sizeof(char*));
 		hx_node **nodes = malloc(size*sizeof(hx_node*));
 		if(names == NULL || nodes == NULL) {
-			fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for names and nodes pointers.\n", __FILE__, __LINE__, size*(sizeof(char*) + sizeof(hx_node*)));
+			fprintf(stderr, "%s:%d: Error; cannot allocate %lu bytes for names and nodes pointers.\n", __FILE__, __LINE__, (long unsigned int) (size*(sizeof(char*) + sizeof(hx_node*))));
 			return -1;
 		}
 
@@ -802,20 +803,20 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 			size_t namelen = strlen(nametocopy);
 			names[i] = malloc(namelen + 1);
 			if(names[i] == NULL) {
-				fprintf(stderr, "%s:%u: Error; cannot allocate %u bytes for variable binding name.\n", __FILE__, __LINE__, namelen + 1);
+				fprintf(stderr, "%s:%d: Error; cannot allocate %lu bytes for variable binding name.\n", __FILE__, __LINE__, (long unsigned int) (namelen + 1));
 				return -1;
 			}
 			strcpy(names[i], nametocopy);
 			hx_node_id hxni = hx_variablebindings_node_id_for_binding(bindings, i);
 			nodes[i] = hx_node_copy((hx_node*)map_get(gid2node, &hxni));
 			if(nodes[i] == NULL) {
-				fprintf(stderr, "%s:%u: Logical error; nodes[i] shouldn't be NULL.\n", __FILE__, __LINE__);
+				fprintf(stderr, "%s:%d: Logical error; nodes[i] shouldn't be NULL.\n", __FILE__, __LINE__);
 			}
                 }
 
 		(*varbinds)[cnt] = hx_new_variablebindings_nodes(size, names, nodes);
 		if((*varbinds)[cnt] == NULL) {
-			fprintf(stderr, "%s:%u: Error; cannot instantiate variablebindings_nodes.\n", __FILE__, __LINE__);
+			fprintf(stderr, "%s:%d: Error; cannot instantiate variablebindings_nodes.\n", __FILE__, __LINE__);
 			return -1;
 		}
 
@@ -937,7 +938,7 @@ int _hx_parallel_recv_gid2node_lookup(async_mpi_session* ses, void* p) {
 		*lookupmaxsize *= 2;
 		_hx_parallel_gid2node_lookup *tmp = realloc(*lookups, (*lookupmaxsize)*sizeof(_hx_parallel_gid2node_lookup));
 		if(tmp == NULL) {
-			fprintf(stderr, "%s:%u; Error; cannot allocate %u bytes for resizing lookups table.\n", __FILE__, __LINE__, (*lookupmaxsize)*sizeof(_hx_parallel_gid2node_lookup));
+			fprintf(stderr, "%s:%d; Error; cannot allocate %lu bytes for resizing lookups table.\n", __FILE__, __LINE__, (long unsigned int) ((*lookupmaxsize)*sizeof(_hx_parallel_gid2node_lookup)));
 			return -1;
 		}
 		*lookups = tmp;
@@ -971,7 +972,7 @@ int _hx_parallel_send_gid2node_answer(async_mpi_session* ses, void* p) {
 	int sz = hx_node_string(node, &str);
 	str = realloc(str, sz + sizeof(hx_node_id));
 	if(str == NULL) {
-		fprintf(stderr, "%s:%u: Error; cannot reallocate string to %u bytes to fit gid.\n", __FILE__, __LINE__, sz + sizeof(hx_node_id));
+		fprintf(stderr, "%s:%d: Error; cannot reallocate string to %lu bytes to fit gid.\n", __FILE__, __LINE__, (long unsigned int) (sz + sizeof(hx_node_id)));
 		return -1;
 	}
 	memmove(&str[sizeof(hx_node_id)], str, sz);
@@ -1054,8 +1055,9 @@ int _hx_parallel_variablebindings_iter_shared_columns( hx_triple* t, char** node
 	return shared_count;
 }
 
-hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_hexastore* hx, hx_bgp* b, hx_nodemap** results_map ) {
+hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_bgp* b, hx_nodemap** results_map ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	hx_hexastore* hx	= ctx->hx;
 	int triple_count	= hx_bgp_size(b);
 	int node_count		= triple_count * 3;
 	// create node_names[] that maps node positions in the BGP (blocks of 3 nodes per triple) to the name of the variable node in that position (NULL if not a variable)

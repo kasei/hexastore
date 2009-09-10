@@ -1,4 +1,5 @@
 #include "engine/variablebindings_iter.h"
+#include "engine/materialize.h"
 
 hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );

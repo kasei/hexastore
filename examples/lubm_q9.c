@@ -62,25 +62,18 @@ int main ( int argc, char** argv ) {
 	student		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Student");
 	takesCourse	= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#takesCourse");
 	
-	hx_triple t0, t1, t2, t3, t4, t5;
+
 	hx_triple* triples[6];
-	{
-		_fill_triple( &t0, x, advisor, y );
-		_fill_triple( &t1, x, type, student );
-		_fill_triple( &t2, x, takesCourse, z );
-		_fill_triple( &t3, y, type, faculty );
-		_fill_triple( &t4, y, teacherOf, z );
-		_fill_triple( &t5, z, type, course );
-		triples[0]	= &t0;
-		triples[1]	= &t1;
-		triples[2]	= &t2;
-		triples[3]	= &t3;
-		triples[4]	= &t4;
-		triples[5]	= &t5;
-	}
+	triples[0]	= hx_new_triple( x, advisor, y );
+	triples[1]	= hx_new_triple( x, type, student );
+	triples[2]	= hx_new_triple( x, takesCourse, z );
+	triples[3]	= hx_new_triple( y, type, faculty );
+	triples[4]	= hx_new_triple( y, teacherOf, z );
+	triples[5]	= hx_new_triple( z, type, course );
 	
 	hx_bgp* b	= hx_new_bgp( 5, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
 	uint64_t counter	= 0;
 	if (iter != NULL) {
 	//	hx_variablebindings_iter_debug( iter, "lubm9> ", 0 );
@@ -130,6 +123,7 @@ int main ( int argc, char** argv ) {
 	if (counter == 0) {
 		fprintf( stderr, "No results found.\n" );
 	}
+	
 	hx_free_bgp( b );
 	hx_free_node( x );
 	hx_free_node( y );
@@ -142,6 +136,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( student );
 	hx_free_node( takesCourse );
 	
+	hx_free_execution_context( ctx );
 	hx_free_hexastore( hx );
 	
 	return 0;

@@ -7,6 +7,8 @@
 #include "rdf/node.h"
 #include "test/tap.h"
 #include "algebra/bgp.h"
+#include "engine/bgp.h"
+#include "store/hexastore/hexastore.h"
 
 void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );
@@ -279,12 +281,13 @@ void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	hx_hexastore* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
 	{
 		hx_bgp* lhs	= hx_bgp_parse_string("{ ?x <p1> ?y }");
 		hx_bgp* rhs	= hx_bgp_parse_string("{ ?x <p2> \"l1\" }");
-		hx_variablebindings_iter* lhsi	= hx_bgp_execute( lhs, hx );
-		hx_variablebindings_iter* rhsi	= hx_bgp_execute( rhs, hx );
+		hx_variablebindings_iter* lhsi	= hx_bgp_execute( ctx, lhs );
+		hx_variablebindings_iter* rhsi	= hx_bgp_execute( ctx, rhs );
 		
 		int counter	= 0;
 		hx_variablebindings_iter* iter	= join_constructor( lhsi, rhsi, 1 );
@@ -309,8 +312,8 @@ void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	{
 		hx_bgp* lhs	= hx_bgp_parse_string("{ ?x <p1> _:a }");
 		hx_bgp* rhs	= hx_bgp_parse_string("{ ?x ?p \"l1\" }");
-		hx_variablebindings_iter* lhsi	= hx_bgp_execute( lhs, hx );
-		hx_variablebindings_iter* rhsi	= hx_bgp_execute( rhs, hx );
+		hx_variablebindings_iter* lhsi	= hx_bgp_execute( ctx, lhs );
+		hx_variablebindings_iter* rhsi	= hx_bgp_execute( ctx, rhs );
 		
 		int* sizes	= calloc( 3, sizeof( int ) );
 		int counter	= 0;
@@ -331,6 +334,7 @@ void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 		ok1( sizes[1] == 1 );
 		ok1( sizes[2] == 1 );
 		
+		hx_free_execution_context( ctx );
 		hx_free_variablebindings_iter( iter );
 		hx_free_bgp( lhs );
 		hx_free_bgp( rhs );

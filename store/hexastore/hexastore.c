@@ -540,6 +540,9 @@ int _hx_store_hexastore_iter_vb_current ( void* data, void* results ) {
 int _hx_store_hexastore_iter_vb_next ( void* data ) {
 	_hx_store_hexastore_iter_vb_info* info	= (_hx_store_hexastore_iter_vb_info*) data;
 	hx_store_hexastore_index_iter* iter		= (hx_store_hexastore_index_iter*) info->iter;
+	if (hx_store_hexastore_index_iter_finished(iter)) {
+		return 1;
+	}
 	if (info->current) {
 		hx_free_variablebindings( info->current );
 	}

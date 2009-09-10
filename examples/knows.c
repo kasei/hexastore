@@ -3,7 +3,8 @@
 #include "rdf/triple.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
-#include "algebra/bgp.h"
+#include "engine/bgp.h"
+#include "store/hexastore/hexastore.h"
 
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];
@@ -34,7 +35,8 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 3, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -83,6 +85,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( knows );
 	hx_free_node( name );
 	hx_free_hexastore( hx );
+	hx_free_execution_context( ctx );
 	
 	return 0;
 }

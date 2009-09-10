@@ -131,10 +131,11 @@ int main( int argc, char** argv ) {
 		uint64_t count	= 0;
 		
 		hx_variablebindings_iter* iter;
+		hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 		if (g) {
-			iter	= hx_graphpattern_execute( g, hx );
+			iter	= hx_graphpattern_execute( ctx, g );
 		} else {
-			iter	= hx_bgp_execute( b, hx );
+			iter	= hx_bgp_execute( ctx, b );
 		}
 	// 	for (int i = 0; i < size; i++) {
 	// 		fprintf( stderr, "column: %s\n", names[i] );
@@ -167,6 +168,8 @@ int main( int argc, char** argv ) {
 		
 		fprintf( stderr, "%d total results\n", (int) count );
 		fprintf( stderr, "query execution time: %lfs\n", DIFFTIME(st_time, end_time) );
+		
+		hx_free_execution_context( ctx );
 	}
 	
 	if (g) {

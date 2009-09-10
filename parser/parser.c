@@ -209,11 +209,11 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 	
 	if (user_bnodeid != NULL) {
 		hx_parser_idmap_item i;
-		i.raptor_name	= user_bnodeid;
+		i.raptor_name	= (char*) user_bnodeid;
 		hx_parser_idmap_item* item	= (hx_parser_idmap_item*) avl_find( parser->bnode_map, &i );
 		if (item != NULL) {
 // 			fprintf( stderr, "bnode %s has already been assigned ID %s\n", user_bnodeid, item->local_name );
-			return hx_copy_string( item->local_name );
+			return (unsigned char*) hx_copy_string( item->local_name );
 		}
 	}
 	
@@ -252,8 +252,8 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 	
 	if (user_bnodeid != NULL) {
 		hx_parser_idmap_item* item	= (hx_parser_idmap_item*) calloc( 1, sizeof( hx_parser_idmap_item ) );
-		item->raptor_name	= hx_copy_string( user_bnodeid );
-		item->local_name	= hx_copy_string( id );
+		item->raptor_name	= hx_copy_string( (char*) user_bnodeid );
+		item->local_name	= hx_copy_string( (char*) id );
 // 		fprintf( stderr, "*** inserting bnode mapping %s -> %s\n", item->raptor_name, item->local_name );
 		avl_insert( parser->bnode_map, item );
 		free( user_bnodeid );

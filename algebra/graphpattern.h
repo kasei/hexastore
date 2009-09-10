@@ -41,9 +41,9 @@ typedef struct {
 
 hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... );
 hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size, void* ptr );
-int hx_free_graphpattern ( hx_graphpattern* p );
+hx_graphpattern* hx_graphpattern_parse_string ( const char* string );
 
-hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* pat, hx_variablebindings* b, hx_store* store );
+int hx_free_graphpattern ( hx_graphpattern* p );
 
 int hx_graphpattern_variables ( hx_graphpattern* p, hx_node*** vars );
 int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );

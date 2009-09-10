@@ -3,7 +3,12 @@
 #include "engine/hashjoin.h"
 #include "engine/project.h"
 
-hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
+hx_variablebindings_iter* hx_bgp_execute2 ( hx_execution_context* ctx, hx_bgp* b, void* thunk ) {
+	return hx_bgp_execute( ctx, b );
+}
+
+hx_variablebindings_iter* hx_bgp_execute ( hx_execution_context* ctx, hx_bgp* b ) {
+	hx_hexastore* hx	= ctx->hx;
 	int size	= hx_bgp_size( b );
 	
 	hx_triple* t0	= hx_bgp_triple( b, 0 );

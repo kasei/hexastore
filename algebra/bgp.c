@@ -302,7 +302,7 @@ int hx_bgp_debug ( hx_bgp* b ) {
 	char* string;
 	int r	= hx_bgp_string( b, &string );
 	if (r == 0) {
-		fprintf( stderr, string );
+		fprintf( stderr, "%s", string );
 		free( string );
 		return 0;
 	} else {

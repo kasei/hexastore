@@ -3,6 +3,7 @@
 #include "hexastore.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"
+#include "algebra/graphpattern.h"
 #include "engine/mergejoin.h"
 #include "engine/materialize.h"
 #include "parallel/parallel.h"
@@ -84,7 +85,8 @@ int main ( int argc, char** argv ) {
 	const char* dir			= (directory_exists("/gpfs"))
 							? "/gpfs/large/DSSW/rendezvous"
 							: "/tmp";
-	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( dir, job );
+	hx_parallel_execution_context* ctx	= hx_parallel_new_execution_context( NULL, hx, dir, job );
+	
 	if (myrank == 0)
 		fprintf( stderr, "using %s for output files\n", dir );
 	
@@ -102,10 +104,11 @@ int main ( int argc, char** argv ) {
 	
 
 	char* query	= read_file( query_filename );
-	hx_bgp* b	= hx_bgp_parse_string( query );
+	hx_graphpattern* g	= hx_graphpattern_parse_string( query );
+//	hx_bgp* b	= hx_bgp_parse_string( query );
 	
-	if (b == NULL) {
-		fprintf( stderr, "*** rank %d failed to parse BGP\n", myrank );
+	if (g == NULL) {
+		fprintf( stderr, "*** rank %d failed to parse query\n", myrank );
 		fflush( stderr );
 		sleep(10);
 		MPI_Barrier( MPI_COMM_WORLD );
@@ -113,26 +116,19 @@ int main ( int argc, char** argv ) {
 	}
 	MPI_Barrier( MPI_COMM_WORLD );
 	
-	
-//	hx_bgp_reorder_mpi( b, hx );
-//	hx_bgp* b					= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name; foaf:nick ?nick . ?d foaf:maker ?p }" );
-//	hx_bgp* b					= parse_bgp_query_string( "{ ?s a <http://simile.mit.edu/2006/01/ontologies/mods3#Record> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#origin> <info:marcorg/MYG> . }" );
-//	hx_bgp* b					= parse_bgp_query_string( "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://simile.mit.edu/2006/01/ontologies/mods3#Text> . ?s <http://simile.mit.edu/2006/01/ontologies/mods3#language> <http://simile.mit.edu/2006/01/language/iso639-2b/fre> }" );
-//	hx_bgp* b					= parse_bgp_query_string( "{ ?as <http://simile.mit.edu/2006/01/ontologies/mods3#point> \"end\" ; <http://simile.mit.edu/2006/01/ontologies/mods3#encoding> ?bo ; a ?co }" ); 
-//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { ?x a :GraduateStudent . ?x :takesCourse <http://www.Department0.University0.edu/GraduateCourse0> . } " ); 
-//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> {?x a :Person .  ?x :memberOf <http://www.Department0.University0.edu> .} " ); 
-//	hx_bgp* b					= parse_bgp_query_string( "PREFIX : <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#> { <http://www.Department0.University0.edu/AssociateProfessor0> :teacherOf ?y . ?x :takesCourse ?y ; a :Student . ?y a :Course . } " ); 
-
 	if (myrank == 0) {
-		fprintf( stderr, "BGP DEBUG (on rank 0):\n" );
-		hx_bgp_debug( b );
+		fprintf( stderr, "GRAPHPATTERN DEBUG (on rank 0):\n" );
+		hx_graphpattern_debug( g );
 		fprintf( stderr, "\n" );
 	}
 	
 	exec_start	= TIME();
 	
 	hx_nodemap* results_map;
-	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, hx, b, &results_map );
+	hx_execution_context_set_bgp_exec_func((hx_execution_context*) ctx, hx_parallel_rendezvousjoin, &results_map );
+	hx_variablebindings_iter* iter	= hx_graphpattern_execute( ctx, g );
+//	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
+//	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, b, &results_map );
 	
 	int results	= 0;
 	MPI_File file;
@@ -177,7 +173,8 @@ int main ( int argc, char** argv ) {
 		free(query);
 		hx_free_variablebindings_iter(iter);
 		hx_free_nodemap( results_map );
-		hx_free_bgp(b);
+//		hx_free_bgp(b);
+		hx_free_graphpattern(g);
 		hx_free_hexastore( hx );
 		hx_parallel_free_parallel_execution_context( ctx );
 	}

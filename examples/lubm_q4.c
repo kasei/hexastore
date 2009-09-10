@@ -41,16 +41,15 @@ int main ( int argc, char** argv ) {
 	hx_node* tel		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#telephone");
 	
 	hx_triple* triples[5];
-	{
-		triples[0]	= hx_new_triple( x, type, prof );
-		triples[1]	= hx_new_triple( x, worksFor, univ0 );
-		triples[2]	= hx_new_triple( x, name, y1 );
-		triples[3]	= hx_new_triple( x, email, y2 );
-		triples[4]	= hx_new_triple( x, tel, y3 );
-	}
+	triples[0]	= hx_new_triple( x, type, prof );
+	triples[1]	= hx_new_triple( x, worksFor, univ0 );
+	triples[2]	= hx_new_triple( x, name, y1 );
+	triples[3]	= hx_new_triple( x, email, y2 );
+	triples[4]	= hx_new_triple( x, tel, y3 );
 	
 	hx_bgp* b	= hx_new_bgp( 5, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -109,6 +108,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( email );
 	hx_free_node( tel );
 	
+	hx_free_execution_context( ctx );
 	hx_free_hexastore( hx );
 	
 	return 0;

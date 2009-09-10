@@ -14,7 +14,8 @@
 #include "algebra/variablebindings.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
-#include "algebra/bgp.h"
+#include "engine/bgp.h"
+#include "store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_hexastore* hx, hx_bgp* b );
@@ -44,7 +45,8 @@ double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
 double bench ( hx_hexastore* hx, hx_bgp* b ) {
 	clock_t st_time	= clock();
 	
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
 //	hx_variablebindings_iter_debug( iter, "lubm8> ", 0 );
 	
 	int size		= hx_variablebindings_iter_size( iter );
@@ -92,6 +94,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b ) {
 	clock_t end_time	= clock();
 	
 	hx_free_variablebindings_iter( iter );
+	hx_free_execution_context( ctx );
 	return DIFFTIME(st_time, end_time);
 }
 

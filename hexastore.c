@@ -1,5 +1,6 @@
 #include "hexastore.h"
 #include "store/hexastore/hexastore.h"
+#include "engine/bgp.h"
 
 // #define DEBUG_INDEX_SELECTION
 
@@ -18,12 +19,25 @@ char** _hx_iter_vb_names ( void* iter );
 
 hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx ) {
 	hx_execution_context* c	= (hx_execution_context*) calloc( 1, sizeof( hx_execution_context ) );
+	hx_execution_context_init( c, world, hx );
+	return c;
+}
+
+int hx_execution_context_init ( hx_execution_context* c, void* world, hx_hexastore* hx ) {
 	c->world	= world;
 	c->hx		= hx;
 	c->unsorted_mergejoin_penalty	= 2;
 	c->hashjoin_penalty				= 1;
 	c->nestedloopjoin_penalty		= 3;
-	return c;
+	c->bgp_exec_func				= hx_bgp_execute2;
+	c->bgp_exec_func_thunk			= NULL;
+	return 0;
+}
+
+int hx_execution_context_set_bgp_exec_func ( hx_execution_context* ctx, hx_variablebindings_iter* (*func)( void*, hx_hexastore*, void* ), void* thunk ) {
+	ctx->bgp_exec_func			= func;
+	ctx->bgp_exec_func_thunk	= thunk;
+	return 0;
 }
 
 int hx_free_execution_context ( hx_execution_context* c ) {
@@ -129,7 +143,7 @@ int hx_debug ( hx_hexastore* hx ) {
 		counter++;
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_store_variablebindings_debug( b, hx->store );
+		hx_store_variablebindings_debug( hx->store, b );
 		hx_variablebindings_iter_next( iter );
 	}
 	fprintf( stderr, "%d triples ---------\n", counter );

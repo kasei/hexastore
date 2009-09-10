@@ -176,8 +176,6 @@ tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
 # mpi: examples/mpi
-# 
-# bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
 
 ########
 t/node.t: test/tap.o t/node.c rdf/node.h $(OBJECTS) test/tap.o
@@ -269,15 +267,6 @@ examples/bench: examples/bench.c $(OBJECTS)
 examples/knows: examples/knows.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/knows examples/knows.c $(OBJECTS)
 
-examples/lubm7_6m: examples/lubm7_6m.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o examples/lubm7_6m examples/lubm7_6m.c $(OBJECTS)
-
-examples/lubm8_6m: examples/lubm8_6m.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o examples/lubm8_6m examples/lubm8_6m.c $(OBJECTS)
-
-examples/lubm16_6m: examples/lubm16_6m.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c $(OBJECTS)
-
 ########
 
 misc/avl.o: misc/avl.c misc/avl.h hexastore_types.h
@@ -289,9 +278,6 @@ test/tap.o: test/tap.c test/tap.h
 distclean:
 	rm -f SPARQL parser/SPARQLParser.o parser/SPARQLScanner.o parser/SPARQLParser.c parser/SPARQLScanner.c parser/SPARQLParser.h
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
-	rm -rf examples/lubm7_6m examples/lubm7_6m.dSYM
-	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
-	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
 	rm -f *.o */*.o */*/*.o
@@ -301,9 +287,6 @@ distclean:
 	
 clean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
-	rm -rf examples/lubm7_6m examples/lubm7_6m.dSYM
-	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
-	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
 	rm -f *.o */*.o */*/*.o

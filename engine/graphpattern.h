@@ -23,7 +23,8 @@ extern "C" {
 #include "engine/mergejoin.h"
 #include "algebra/variablebindings.h"
 
-hx_variablebindings_iter* hx_graphpattern_execute ( hx_graphpattern*, hx_hexastore* );
+hx_variablebindings_iter* hx_graphpattern_execute ( hx_execution_context*, hx_graphpattern* );
+hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* pat, hx_variablebindings* b, hx_store* store );
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,7 @@
 #include "algebra/graphpattern.h"
+#include "parser/SPARQLParser.h"
+
+extern hx_graphpattern* parse_query_string ( char* );
 
 int _hx_graphpattern_string_concat ( char** string, char* _new, int* alloc );
 
@@ -79,6 +82,10 @@ hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size
 	return pat;
 }
 
+hx_graphpattern* hx_graphpattern_parse_string ( const char* string ) {
+	return parse_query_string( (char*) string );
+}
+
 int hx_free_graphpattern ( hx_graphpattern* pat ) {
 	int i;
 	void** vp;
@@ -116,33 +123,6 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 	};
 	free( pat );
 	return 0;
-}
-
-hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, hx_variablebindings* b, hx_store* store ) {
-	void** vp;
-	hx_expr *e, *e2;
-	hx_graphpattern *gp1, *gp2;
-	switch (orig->type) {
-		case HX_GRAPHPATTERN_BGP:
-			return hx_new_graphpattern(
-					HX_GRAPHPATTERN_BGP,
-					hx_bgp_substitute_variables( (hx_bgp*) orig->data, b, store )
-				);
-		case HX_GRAPHPATTERN_FILTER:
-			vp		= (void**) orig->data;
-			e		= (hx_expr*) vp[0];
-			e2		= hx_expr_substitute_variables( e, b, store );
-			gp1		= (hx_graphpattern*) vp[1];
-			gp2		= hx_graphpattern_substitute_variables( gp1, b, store );
-			return hx_new_graphpattern( HX_GRAPHPATTERN_FILTER,	e2, gp2 );
-		case HX_GRAPHPATTERN_UNION:
-		case HX_GRAPHPATTERN_OPTIONAL:
-		case HX_GRAPHPATTERN_GROUP:
-		case HX_GRAPHPATTERN_GRAPH:
-		default:
-			fprintf( stderr, "*** Unrecognized or unimplemented graph pattern type '%c' in hx_graphpattern_substitute_variables\n", orig->type );
-			return NULL;
-	}
 }
 
 /* returns the number of variables referenced in the graph pattern, and sets vars to an array containing copies of those variables (must be freed by the caller) */

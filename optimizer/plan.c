@@ -257,6 +257,6 @@ hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx,
 		}
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_execute\n" );
-		return -1;
+		return NULL;
 	}
 }

@@ -20,7 +20,8 @@ extern "C" {
 #include "hexastore.h"
 #include "algebra/bgp.h"
 
-hx_variablebindings_iter* hx_bgp_execute ( hx_bgp*, hx_hexastore* );
+hx_variablebindings_iter* hx_bgp_execute ( hx_execution_context*, hx_bgp* );
+hx_variablebindings_iter* hx_bgp_execute2 ( hx_execution_context*, hx_bgp*, void* );
 
 #ifdef __cplusplus
 }

@@ -45,15 +45,21 @@ typedef struct {
 	hx_container_t* indexes;
 } hx_hexastore;
 
+#include "algebra/bgp.h"
+
 typedef struct {
 	void* world;
 	hx_hexastore* hx;
 	int64_t nestedloopjoin_penalty;
 	int64_t hashjoin_penalty;
 	int64_t unsorted_mergejoin_penalty;
+	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_hexastore*, void* thunk );
+	void* bgp_exec_func_thunk;
 } hx_execution_context;
 
 hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx );
+int hx_execution_context_init ( hx_execution_context* c, void* world, hx_hexastore* hx );
+int hx_execution_context_set_bgp_exec_func ( hx_execution_context* ctx, hx_variablebindings_iter* (*)( void*, hx_hexastore*, void* ), void* thunk );
 int hx_free_execution_context ( hx_execution_context* c );
 
 hx_hexastore* hx_new_hexastore ( void* world );
