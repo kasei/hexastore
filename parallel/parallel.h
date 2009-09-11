@@ -39,6 +39,7 @@ typedef struct {
 	int64_t hashjoin_penalty;
 	int64_t unsorted_mergejoin_penalty;
 	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_hexastore*, void* thunk );
+	hx_node* (*lookup_node)( void*, hx_node_id );
 	void* bgp_exec_func_thunk;
 	
 	int root;
@@ -46,6 +47,7 @@ typedef struct {
 	const char* local_output_file;
 	const char* job_id;
 	int join_iteration;
+	hx_nodemap** local_nodemap;
 } hx_parallel_execution_context;
 
 hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_hexastore* hx, const char* path, char* job_id );

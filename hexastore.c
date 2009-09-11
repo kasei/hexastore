@@ -29,6 +29,7 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_hexasto
 	c->unsorted_mergejoin_penalty	= 2;
 	c->hashjoin_penalty				= 1;
 	c->nestedloopjoin_penalty		= 3;
+	c->lookup_node					= hx_execution_context_lookup_node;
 	c->bgp_exec_func				= hx_bgp_execute2;
 	c->bgp_exec_func_thunk			= NULL;
 	return 0;
@@ -38,6 +39,11 @@ int hx_execution_context_set_bgp_exec_func ( hx_execution_context* ctx, hx_varia
 	ctx->bgp_exec_func			= func;
 	ctx->bgp_exec_func_thunk	= thunk;
 	return 0;
+}
+
+hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_id nodeid ) {
+	hx_store* store	= ctx->hx->store;
+	return hx_store_get_node ( store, nodeid );
 }
 
 int hx_free_execution_context ( hx_execution_context* c ) {

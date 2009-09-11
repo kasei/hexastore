@@ -54,13 +54,16 @@ typedef struct {
 	int64_t hashjoin_penalty;
 	int64_t unsorted_mergejoin_penalty;
 	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_hexastore*, void* thunk );
+	hx_node* (*lookup_node)( void*, hx_node_id );
 	void* bgp_exec_func_thunk;
 } hx_execution_context;
 
 hx_execution_context* hx_new_execution_context ( void* world, hx_hexastore* hx );
 int hx_execution_context_init ( hx_execution_context* c, void* world, hx_hexastore* hx );
 int hx_execution_context_set_bgp_exec_func ( hx_execution_context* ctx, hx_variablebindings_iter* (*)( void*, hx_hexastore*, void* ), void* thunk );
+hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_id nodeid );
 int hx_free_execution_context ( hx_execution_context* c );
+
 
 hx_hexastore* hx_new_hexastore ( void* world );
 hx_hexastore* hx_new_hexastore_with_store ( void* world, hx_store* store );

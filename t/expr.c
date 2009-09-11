@@ -91,6 +91,7 @@ void test_eval ( void ) {
 		// variable substitution expr
 		hx_node* value	= NULL;
 		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* v		= hx_new_node_named_variable( -1, "x" );
 		hx_node* l		= (hx_node*) hx_new_node_dt_literal( "1", "http://www.w3.org/2001/XMLSchema#integer" );
@@ -103,7 +104,7 @@ void test_eval ( void ) {
 		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* e	= hx_new_node_expr( v );
-		int r		= hx_expr_eval( e, b, hx->store, &value );
+		int r		= hx_expr_eval( e, b, ctx, &value );
 		ok1( r == 0 );
 		
 		ok1( value != l );
@@ -114,12 +115,14 @@ void test_eval ( void ) {
 		hx_free_node( v );
 		hx_free_node( l );
 		hx_free_node( m );
+		hx_free_execution_context( ctx );
 	}
 	
 	{
 		// built-in function expr ISLITERAL(literal)
 		hx_node* value	= NULL;
 		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* x		= hx_new_node_named_variable( -1, "x" );
 		
@@ -135,7 +138,7 @@ void test_eval ( void ) {
 		hx_expr* x_e	= hx_new_node_expr( x );
 		hx_expr* e		= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
 		
-		int r		= hx_expr_eval( e, b, hx->store, &value );
+		int r		= hx_expr_eval( e, b, ctx, &value );
 		ok1( r == 0 );
 		
 		ok1( hx_node_ebv(value) == 1 );
@@ -143,6 +146,7 @@ void test_eval ( void ) {
 		hx_free_node(x);
 		hx_free_node(iri);
 		hx_free_node(lit);
+		hx_free_execution_context( ctx );
 	}
 }
 

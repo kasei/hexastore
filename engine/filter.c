@@ -4,7 +4,8 @@
 int _hx_filter_prime_results ( _hx_filter_iter_vb_info* info );
 int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info );
 
-hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_store* store ) {
+hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_execution_context* ctx ) {
+	hx_store* store	= ctx->hx->store;
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_filter_iter\n" );
@@ -30,6 +31,7 @@ hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, h
 	info->expr		= e;
 	info->current	= NULL;
 	info->store		= store;
+	info->ctx		= ctx;
 	hx_variablebindings_iter* fiter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return fiter;
 }
@@ -157,7 +159,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 // 		}
 		
 		
-		int r		= hx_expr_eval( e, b, store, &value );
+		int r		= hx_expr_eval( e, b, info->ctx, &value );
 		if (r != 0) {
 // 			fprintf( stderr, "type error in filter\n" );
 			hx_free_variablebindings(b);

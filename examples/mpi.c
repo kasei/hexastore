@@ -59,6 +59,11 @@ char* read_file ( const char* qf ) {
 	return query;
 }
 
+hx_node* hx_parallel_execution_context_lookup_node ( hx_parallel_execution_context* ctx, hx_node_id nodeid ) {
+	hx_nodemap* map	= *( ctx->local_nodemap );
+	return hx_nodemap_get_node( map, nodeid );
+}
+
 int main ( int argc, char** argv ) {
 	MPI_Init(&argc, &argv);
 	
@@ -126,6 +131,9 @@ int main ( int argc, char** argv ) {
 	
 	hx_nodemap* results_map;
 	hx_execution_context_set_bgp_exec_func((hx_execution_context*) ctx, hx_parallel_rendezvousjoin, &results_map );
+	ctx->local_nodemap	= &results_map;
+	ctx->lookup_node	= hx_parallel_execution_context_lookup_node;
+	
 	hx_variablebindings_iter* iter	= hx_graphpattern_execute( ctx, g );
 //	hx_variablebindings_iter* iter	= hx_bgp_execute( ctx, b );
 //	hx_variablebindings_iter* iter	= hx_parallel_rendezvousjoin( ctx, b, &results_map );

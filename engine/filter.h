@@ -29,6 +29,7 @@ typedef struct {
 	hx_variablebindings* current;
 	hx_variablebindings_iter* iter;
 	hx_store* store;
+	hx_execution_context* ctx;
 } _hx_filter_iter_vb_info;
 
 int _hx_filter_iter_vb_finished ( void* iter );
@@ -40,7 +41,7 @@ char** _hx_filter_iter_vb_names ( void* iter );
 int _hx_filter_iter_sorted_by ( void* data, int index );
 int _hx_filter_debug ( void* data, char* header, int _indent );
 
-hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_store* store );
+hx_variablebindings_iter* hx_new_filter_iter ( hx_variablebindings_iter* iter, hx_expr* e, hx_execution_context* ctx );
 
 
 #ifdef __cplusplus

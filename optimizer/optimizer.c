@@ -68,7 +68,6 @@ char* _hx_optimizer_opt_plan_access_key_inverse ( int size, char* key ) {
 char* _hx_optimizer_key_triples_list( void* key, int klen ) {
 	char* k	= (char*) key;
 	char* s	= (char*) calloc( 1, 5 * klen );
-	char* p	= s;
 	int i;
 	for (i = 0; i < klen; i++) {
 		if (k[i] == 'b') {
@@ -85,7 +84,7 @@ char* _hx_optimizer_key_triples_list( void* key, int klen ) {
 void _hx_optimizer_optplans_debug_cb ( void* key, int klen, void* value ) {
 	int i;
 	int j	= 0;
-	char* k	= (char*) key;
+//	char* k	= (char*) key;
 	
 	hx_container_t* plans	= (hx_container_t*) value;
 	int size	= hx_container_size(plans);
@@ -295,7 +294,7 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 // 	fprintf( stderr, "triple: %s\n", string );
 // 	free(string);
 	
-	int bound	= hx_triple_bound_count(t);
+//	int bound	= hx_triple_bound_count(t);
 // 	fprintf( stderr, "triple has %d bound terms\n", bound );
 	
 	hx_container_t* access_plans	= hx_new_container( 'A', 6 );
@@ -337,11 +336,11 @@ hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_containe
 	
 	for (i = 0; i < hx_container_size(lhs); i++) {
 		hx_optimizer_plan* lhsp	= hx_container_item( lhs, i );
-		int lhs_order_count	= hx_container_size( lhsp->order );
+//		int lhs_order_count	= hx_container_size( lhsp->order );
 		hx_container_t* lhs_order	= lhsp->order;
 		for (j = 0; j < hx_container_size(rhs); j++) {
 			hx_optimizer_plan* rhsp	= hx_container_item( rhs, j );
-			int rhs_order_count	= hx_container_size( rhsp->order );
+//			int rhs_order_count	= hx_container_size( rhsp->order );
 			hx_container_t* rhs_order	= rhsp->order;
 			
 			if (1) {

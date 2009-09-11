@@ -16,11 +16,12 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
+#include "hexastore.h"
 #include "algebra/expr.h"
 #include "store/store.h"
 
 hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, hx_store* store );
-int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_store* store, hx_node** result );
+int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_execution_context* ctx, hx_node** result );
 
 #ifdef __cplusplus
 }

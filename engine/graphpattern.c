@@ -30,7 +30,7 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_execution_context* ctx, h
 			e		= (hx_expr*) vp[0];
 			gp		= (hx_graphpattern*) vp[1];
 			iter2	= hx_graphpattern_execute( ctx, gp );
-			iter	= hx_new_filter_iter( iter2, e, hx->store );
+			iter	= hx_new_filter_iter( iter2, e, ctx );
 			return iter;
 		case HX_GRAPHPATTERN_GRAPH:
 			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );

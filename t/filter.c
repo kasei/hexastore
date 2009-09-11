@@ -49,11 +49,12 @@ void filter_test1 ( void ) {
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
+	hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 	hx_node* x						= hx_new_named_variable( hx, "obj" );
 	hx_expr* x_e					= hx_new_node_expr( x );
 	hx_expr* e						= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
-	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, hx->store );
+	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, ctx );
 	
 	int counter	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
@@ -69,6 +70,7 @@ void filter_test1 ( void ) {
 	ok1( counter == 6 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx );
+	hx_free_execution_context( ctx );
 }
 
 void filter_test2 ( void ) {
@@ -78,6 +80,7 @@ void filter_test2 ( void ) {
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
+	hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 	hx_node* v						= hx_new_named_variable( hx, "obj" );
 	hx_expr* v_e					= hx_new_node_expr( v );
 	hx_expr* lit_e					= hx_new_node_expr( r1 );
@@ -85,7 +88,7 @@ void filter_test2 ( void ) {
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	int counter	= 0;
 	
-	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, hx->store );
+	hx_variablebindings_iter* iter	= hx_new_filter_iter( _iter, e, ctx );
 	
 	while (!hx_variablebindings_iter_finished( iter )) {
 		counter++;
@@ -106,6 +109,7 @@ void filter_test2 ( void ) {
 	ok1( counter == 1 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_hexastore( hx );
+	hx_free_execution_context( ctx );
 }
 
 void _add_data ( hx_hexastore* hx ) {

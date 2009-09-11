@@ -52,14 +52,19 @@ hx_expr* hx_expr_substitute_variables ( hx_expr* orig, hx_variablebindings* b, h
 	return NULL;
 }
 
-int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_store* store, hx_node** result ) {
+int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_execution_context* ctx, hx_node** result ) {
+	hx_store* store;
+	if (ctx) {
+		store	= ctx->hx->store;
+	}
 	if (e->type == HX_EXPR_BUILTIN) {
 		if (e->subtype == HX_EXPR_OP_NODE) {
 			hx_node* n	= (hx_node*) e->operands;
 			if (hx_node_is_variable( n )) {
 				char* vname;
 				hx_node_variable_name( n, &vname );
-				hx_node* v	= hx_variablebindings_node_for_binding_name( b, store, vname );
+				hx_node_id id	= hx_variablebindings_node_id_for_binding_name( b, vname );
+				hx_node* v	= ctx->lookup_node( ctx, id );
 				free( vname );
 				if (v == NULL) {
 					return 1;
@@ -88,7 +93,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_store* store, hx_node*
 				hx_expr** args	= (hx_expr**) e->operands;
 				hx_expr* child	= args[0];
 				hx_node* value;
-				int r	= hx_expr_eval( child, b, store, &value );
+				int r	= hx_expr_eval( child, b, ctx, &value );
 				if (r != 0) {
 					if (hx_expr_debug) {	// ---------------------------------------------
 						fprintf( stderr, "- error in sub-eval\n" );
@@ -119,8 +124,8 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_store* store, hx_node*
 				hx_expr* child1	= args[0];
 				hx_expr* child2	= args[1];
 				hx_node *value1, *value2;
-				int r1	= hx_expr_eval( child1, b, store, &value1 );
-				int r2	= hx_expr_eval( child2, b, store, &value2 );
+				int r1	= hx_expr_eval( child1, b, ctx, &value1 );
+				int r2	= hx_expr_eval( child2, b, ctx, &value2 );
 				if (r1 != 0 || r2 != 0) {
 					return r1 || r2;
 				}
