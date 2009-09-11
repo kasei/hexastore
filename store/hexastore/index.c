@@ -355,6 +355,9 @@ int _hx_store_hexastore_index_iter_prime_first_result( hx_store_hexastore_index_
 			}
 			
 			iter->terminal_iter	= hx_terminal_new_iter( t );
+			if (iter->terminal_iter == NULL) {
+				fprintf( stderr, "*** got NULL terminal iterator in _hx_store_hexastore_index_iter_prime_first_result\n" );
+			}
 			if (iter->node_mask_c > (hx_node_id) 0) {
 //				fprintf( stderr, "- terminal seeking to %d\n", (int) iter->node_mask_c );
 				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
@@ -393,10 +396,14 @@ NEXTHEAD:
 	hr	= hx_head_iter_next( iter->head_iter );
 	if (hr == 0 && (iter->node_mask_a < (hx_node_id) 0)) {
 //		fprintf( stderr, "got next head\n" );
-		hx_free_terminal_iter( iter->terminal_iter );
-		iter->terminal_iter	= NULL;
-		hx_free_vector_iter( iter->vector_iter );
-		iter->vector_iter	= NULL;
+		if (iter->terminal_iter != NULL) {
+			hx_free_terminal_iter( iter->terminal_iter );
+			iter->terminal_iter	= NULL;
+		}
+		if (iter->vector_iter != NULL) {
+			hx_free_vector_iter( iter->vector_iter );
+			iter->vector_iter	= NULL;
+		}
 		
 		// set up vector and terminal iterators
 		hx_node_id n;
@@ -422,12 +429,18 @@ NEXTHEAD:
 		return 0;
 	} else {
 //		fprintf( stderr, "no next head... iterator is finished...\n" );
-		hx_free_head_iter( iter->head_iter );
-		iter->head_iter	= NULL;
-		hx_free_vector_iter( iter->vector_iter );
-		iter->vector_iter	= NULL;
-		hx_free_terminal_iter( iter->terminal_iter );
-		iter->terminal_iter	= NULL;
+		if (iter->head_iter != NULL) {
+			hx_free_head_iter( iter->head_iter );
+			iter->head_iter	= NULL;
+		}
+		if (iter->vector_iter != NULL) {
+			hx_free_vector_iter( iter->vector_iter );
+			iter->vector_iter	= NULL;
+		}
+		if (iter->terminal_iter != NULL) {
+			hx_free_terminal_iter( iter->terminal_iter );
+			iter->terminal_iter	= NULL;
+		}
 		iter->finished	= 1;
 		return 1;
 	}
