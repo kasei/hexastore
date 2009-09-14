@@ -1,9 +1,8 @@
 #include "hexastore.h"
 #include "algebra/graphpattern.h"
+#include "algebra/bgp.h"
+#include "algebra/graphpattern.h"
 #include "test/tap.h"
-
-extern hx_bgp* parse_bgp_query ( void );
-extern hx_bgp* parse_bgp_query_string ( char* );
 
 void serialization_test ( void );
 
@@ -34,7 +33,7 @@ int main ( void ) {
 
 void serialization_test ( void ) {
 	{
-		hx_bgp* b	= parse_bgp_query_string( "{ <r1> <p1> \"l1\" . <r2> <p1> \"l2\" }" );
+		hx_bgp* b	= hx_bgp_parse_string( "{ <r1> <p1> \"l1\" . <r2> <p1> \"l2\" }" );
 		{
 			char* string;
 			hx_bgp_sse( b, &string, "\t", 0 );
@@ -45,7 +44,7 @@ void serialization_test ( void ) {
 	}
 
 	{
-		hx_bgp* b	= parse_bgp_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+		hx_bgp* b	= hx_bgp_parse_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
 		{
 			char* string;
 			hx_bgp_sse( b, &string, "  ", 0 );
@@ -56,7 +55,7 @@ void serialization_test ( void ) {
 	}
 
 	{
-		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+		hx_graphpattern* g	= hx_graphpattern_parse_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
 		{
 			char* string;
 			hx_graphpattern_sse( g, &string, "  ", 0 );
@@ -67,7 +66,7 @@ void serialization_test ( void ) {
 	}
 
 	{
-		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
+		hx_graphpattern* g	= hx_graphpattern_parse_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p foaf:name ?name }" );
 		{
 			char* string;
 			hx_graphpattern_sse( g, &string, "  ", 2 );
@@ -78,7 +77,7 @@ void serialization_test ( void ) {
 	}
 
 	{
-		hx_graphpattern* g	= parse_query_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p a foaf:Person ; foaf:name ?name . FILTER isBLANK(?p) }" );
+		hx_graphpattern* g	= hx_graphpattern_parse_string( "PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?p a foaf:Person ; foaf:name ?name . FILTER isBLANK(?p) }" );
 		{
 			char* string;
 			hx_graphpattern_sse( g, &string, "  ", 0 );

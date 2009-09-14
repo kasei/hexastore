@@ -6,7 +6,7 @@
 ### flex/bison stuff.
 
 CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 # -DDEBUG
-CFLAGS		= -arch i386 -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb $(CDEFINES)
+CFLAGS		= -I. -L. -I/usr/local/include -L/usr/local/lib -I/ext/local/include -L/ext/local/lib -std=gnu99 -pedantic -ggdb $(CDEFINES)
 CC			= gcc $(CFLAGS)
 
 LIBS	=	-ltokyocabinet -lpthread -lraptor

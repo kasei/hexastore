@@ -151,6 +151,10 @@ int hx_graphpattern_variables ( hx_graphpattern* pat, hx_node*** vars ) {
 			for (i = 1; i < pat->arity; i++) {
 				size2	= hx_graphpattern_variables( p[i], &set2 );
 				size3	= hx_node_uniq_set2( size1, set1, size2, set2, &set3, 1 );
+				for (j = 0; j < size2; j++) {
+					hx_free_node( set2[j] );
+				}
+				free(set2);
 				for (j = 0; j < size1; j++) {
 					hx_free_node( set1[j] );
 				}

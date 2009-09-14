@@ -489,8 +489,8 @@ void prune_plans_test2 ( hx_hexastore* hx ) {
 	hx_container_t* plans1	= hx_optimizer_access_plans( ctx, t1 );
 	hx_container_t* plans2	= hx_optimizer_access_plans( ctx, t2 );
 	hx_container_t* jplans	= hx_optimizer_join_plans( ctx, plans1, plans2, 0 );
-	for (i = 0; i < hx_container_size(plans1); i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
-	for (i = 0; i < hx_container_size(plans2); i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
+// 	for (i = 0; i < hx_container_size(plans1); i++) hx_free_optimizer_plan( hx_container_item( plans1, i ) );
+// 	for (i = 0; i < hx_container_size(plans2); i++) hx_free_optimizer_plan( hx_container_item( plans2, i ) );
 	
 	hx_container_t* pruned	= hx_optimizer_prune_plans( ctx, jplans );
 	int size	= hx_container_size( pruned );

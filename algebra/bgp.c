@@ -161,6 +161,8 @@ int hx_bgp_variables ( hx_bgp* b, hx_node*** v ) {
 	
 	if (v != NULL) {
 		*v	= uniq;
+	} else {
+		free(uniq);
 	}
 	return uniq_count;
 }

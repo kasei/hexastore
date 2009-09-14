@@ -1,6 +1,8 @@
 #include "hexastore.h"
 #include "algebra/graphpattern.h"
 #include "test/tap.h"
+#include "store/hexastore/hexastore.h"
+#include "engine/graphpattern.h"
 
 void _add_data ( hx_hexastore* hx );
 hx_bgp* _test_bgp1 ( void );
@@ -59,13 +61,13 @@ int main ( void ) {
 void eval_test1 ( void ) {
 	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
-	hx_hexastore* hx		= hx_new_hexastore( NULL );
+	hx_hexastore* hx			= hx_new_hexastore( NULL );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
-	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
+	hx_nodemap* map				= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
-	hx_bgp* b				= _test_bgp1();
-	hx_graphpattern* p		= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
+	hx_bgp* b						= _test_bgp1();
+	hx_graphpattern* p				= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, b );
 	hx_variablebindings_iter* iter	= hx_graphpattern_execute( ctx, p );
 	
 	int counter	= 0;
@@ -161,7 +163,7 @@ void serialization_test ( void ) {
 	
 	{
 		hx_graphpattern* b	= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
-		hx_graphpattern* p	= hx_new_graphpattern( HX_GRAPHPATTERN_GRAPH, hx_node_copy(v2), b );
+		hx_graphpattern* p	= hx_new_graphpattern( HX_GRAPHPATTERN_GRAPH, v2, b );
 		ok1( p != NULL );
 		
 		char* string;
@@ -293,8 +295,8 @@ void gp_varsub_test1 ( void ) {
 			hx_free_variablebindings(b);
 		}
 		
+		hx_free_hexastore(hx);
 		hx_free_graphpattern( p );
-		hx_free_nodemap( map );
 	}
 }
 

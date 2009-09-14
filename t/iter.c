@@ -2,6 +2,7 @@
 #include "hexastore.h"
 #include "misc/nodemap.h"
 #include "rdf/node.h"
+#include "store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void _add_data ( hx_hexastore* hx );

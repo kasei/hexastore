@@ -69,7 +69,7 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_execution_context* ctx
 				if (v == NULL) {
 					return 1;
 				} else {
-					*result	= v;
+					*result	= hx_node_copy(v);
 					return 0;
 				}
 			} else {
@@ -141,20 +141,29 @@ int hx_expr_eval ( hx_expr* e, hx_variablebindings* b, hx_execution_context* ctx
 					free(string);
 				}
 				
+				int retval	= 1;
 				switch (e->subtype) {
 					case HX_EXPR_OP_EQUAL:
-						return (hx_node_cmp(value1, value2) == 0)
-							? _true( result )
-							: _false( result );
+						retval	= (hx_node_cmp(value1, value2) == 0)
+								? _true( result )
+								: _false( result );
+						break;
 					case HX_EXPR_OP_NEQUAL:
-						return (hx_node_cmp(value1, value2) != 0)
-							? _true( result )
-							: _false( result );
+						retval	= (hx_node_cmp(value1, value2) != 0)
+								? _true( result )
+								: _false( result );
+						break;
 					default:
 						break;
 				};
-				fprintf( stderr, "*** eval for expr subtype %d not implemented yet\n", e->subtype );
-				return 1;
+				
+				hx_free_node(value1);
+				hx_free_node(value2);
+				
+				if (retval != 0) {
+					fprintf( stderr, "*** eval for expr subtype %d not implemented yet\n", e->subtype );
+				}
+				return retval;
 			} else {
 				fprintf( stderr, "*** eval for expr subtype %d not implemented yet\n", e->subtype );
 				return 1;

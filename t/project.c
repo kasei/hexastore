@@ -4,6 +4,7 @@
 #include "rdf/node.h"
 #include "engine/project.h"
 #include "test/tap.h"
+#include "store/hexastore/hexastore.h"
 
 void _add_data ( hx_hexastore* hx );
 void _debug_node ( char* h, hx_node* node );
@@ -83,8 +84,10 @@ void project_test1 ( void ) {
 			ok1( hx_node_cmp( node, p2 ) != 0 );
 			ok1( hx_node_cmp( node, p1 ) == 0 );
 		}
-	
+		
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
+		hx_variablebindings_iter_current( iter, &b );
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -95,7 +98,9 @@ void project_test1 ( void ) {
 			ok1( hx_node_cmp( node, p1 ) == 0 );
 		}
 		
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
+		hx_variablebindings_iter_current( iter, &b );
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -108,7 +113,9 @@ void project_test1 ( void ) {
 			ok1( hx_node_cmp( node, p2 ) == 0 );
 		}
 		
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
+		hx_variablebindings_iter_current( iter, &b );
 		{
 			// expect that the iterator isn't finished
 			ok1( !hx_variablebindings_iter_finished( iter ) );
@@ -119,9 +126,10 @@ void project_test1 ( void ) {
 			ok1( hx_node_cmp( node, p2 ) == 0 );
 		}
 	
+		hx_free_variablebindings(b);
 		hx_variablebindings_iter_next( iter );
 		ok1( hx_variablebindings_iter_finished( iter ) );
-	
+		
 		hx_free_variablebindings_iter( iter );
 	}
 	

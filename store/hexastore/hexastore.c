@@ -325,18 +325,15 @@ hx_variablebindings_iter* hx_store_hexastore_get_statements_with_index (hx_store
 	info->size						= size;
 	
 	if (subj_name != NULL) {
-		info->subject					= (char*) malloc( strlen(subj_name) + 1 );
-		strcpy( info->subject, subj_name );
+		info->subject	= subj_name;
 	}
 	
 	if (pred_name != NULL) {
-		info->predicate					= (char*) malloc( strlen(pred_name) + 1 );
-		strcpy( info->predicate, pred_name );
+		info->predicate	= pred_name;
 	}
 	
 	if (obj_name != NULL) {
-		info->object					= (char*) malloc( strlen(obj_name) + 1 );
-		strcpy( info->object, obj_name );
+		info->object	= obj_name;
 	}
 	
 	info->iter						= iter;

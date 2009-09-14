@@ -24,12 +24,12 @@ hx_variablebindings_iter* hx_new_project_iter ( hx_variablebindings_iter* _iter,
 	info->columns	= (int*) calloc( size, sizeof( int ) );
 	int i;
 	for (i = 0; i < size; i++) {
-		int len	= strlen( names[i] );
+		int len	= strlen( names[i] ) + 1;
 		info->names[i]	= (char*) calloc( len, sizeof( char ) );
 		if (names[i] == NULL) {
 			fprintf( stderr, "*** hx_new_project_iter called with NULL project variable name\n" );
 		}
-		strcpy( info->names[i], names[i] );
+		memcpy( info->names[i], names[i], len );
 		info->columns[i]	= hx_variablebindings_column_index( info->iter, names[i] );
 	}
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );

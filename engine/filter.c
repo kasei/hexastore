@@ -147,7 +147,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 // 	fprintf( stderr, "getting next valid result in FILTER\n" );
 	while (!hx_variablebindings_iter_finished( iter )) {
 // 		fprintf( stderr, "- got result\n" );
-		hx_node* value;
+		hx_node* value	= NULL;
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
 		
@@ -162,6 +162,9 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int r		= hx_expr_eval( e, b, info->ctx, &value );
 		if (r != 0) {
 // 			fprintf( stderr, "type error in filter\n" );
+			if (value != NULL) {
+				hx_free_node(value);
+			}
 			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
@@ -170,6 +173,7 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		int ebv	= hx_node_ebv(value);
 		if (ebv == -1) {
 // 			fprintf( stderr, "type error in EBV\n" );
+			hx_free_node(value);
 			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
@@ -177,10 +181,13 @@ int _hx_filter_get_next_result ( _hx_filter_iter_vb_info* info ) {
 		
 		if (ebv == 0) {
 // 			fprintf( stderr, "false EBV in filter\n" );
+			hx_free_node(value);
 			hx_free_variablebindings(b);
 			hx_variablebindings_iter_next( iter );
 			continue;
 		}
+		
+		hx_free_node(value);
 		
 		if (info->current != NULL) {
 			hx_free_variablebindings(info->current);
