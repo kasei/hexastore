@@ -14,7 +14,7 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
@@ -84,7 +84,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( person );
 	hx_free_node( knows );
 	hx_free_node( name );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 	
 	return 0;

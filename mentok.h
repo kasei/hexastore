@@ -65,9 +65,9 @@ hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_i
 int hx_free_execution_context ( hx_execution_context* c );
 
 
-hx_model* hx_new_hexastore ( void* world );
-hx_model* hx_new_hexastore_with_store ( void* world, hx_store* store );
-int hx_free_hexastore ( hx_model* hx );
+hx_model* hx_new_model ( void* world );
+hx_model* hx_new_model_with_store ( void* world, hx_store* store );
+int hx_free_model ( hx_model* hx );
 
 int hx_add_triple( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
 

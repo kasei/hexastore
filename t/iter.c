@@ -33,7 +33,7 @@ int main ( void ) {
 }
 
 void test_small_iter ( void ) {
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
@@ -120,7 +120,7 @@ void test_small_iter ( void ) {
 	
 	
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
 hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {

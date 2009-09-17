@@ -90,7 +90,7 @@ void test_eval ( void ) {
 	{
 		// variable substitution expr
 		hx_node* value	= NULL;
-		hx_model* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* v		= hx_new_node_named_variable( -1, "x" );
@@ -121,7 +121,7 @@ void test_eval ( void ) {
 	{
 		// built-in function expr ISLITERAL(literal)
 		hx_node* value	= NULL;
-		hx_model* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* x		= hx_new_node_named_variable( -1, "x" );
@@ -156,7 +156,7 @@ void expr_varsub_test1 ( void ) {
 		hx_expr* v1	= hx_new_node_expr( hx_new_node_named_variable( -1, "v" ) );
 		hx_expr* e	= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, v1 );
 
-		hx_model* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		

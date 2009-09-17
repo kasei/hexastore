@@ -48,7 +48,7 @@ int main ( void ) {
 
 void materialize_iter_test ( void ) {
 	fprintf( stdout, "# materialize_iter_test\n" );
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
@@ -63,12 +63,12 @@ void materialize_iter_test ( void ) {
 	_test_iter_expected_values( iter, map );
 	
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
 void materialize_reset_test ( void ) {
 	fprintf( stdout, "# materialize_reset_test\n" );
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
@@ -89,7 +89,7 @@ void materialize_reset_test ( void ) {
 	ok1( counter == 8 );
 	
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
 void materialize_data_test ( void ) {

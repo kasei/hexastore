@@ -63,7 +63,7 @@ int main( int argc, char** argv ) {
 	hx_model* hx;
 	if (store_type == 'T') {
 		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
-		hx		= hx_new_hexastore_with_store( NULL, store );
+		hx		= hx_new_model_with_store( NULL, store );
 	} else {
 		FILE* f	= fopen( filename, "r" );
 		if (f == NULL) {
@@ -72,7 +72,7 @@ int main( int argc, char** argv ) {
 		}
 		
 		hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-		hx		= hx_new_hexastore_with_store( NULL, store );
+		hx		= hx_new_model_with_store( NULL, store );
 	}
 	
 	hx_bgp* b;
@@ -177,7 +177,7 @@ int main( int argc, char** argv ) {
 	}
 	
 	hx_free_bgp(b);
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	return 0;
 }
 

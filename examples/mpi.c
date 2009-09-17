@@ -81,7 +81,7 @@ int main ( int argc, char** argv ) {
 	}
 
 	hx_store* store			= hx_new_store_hexastore_with_indexes( NULL, "spo,pso,ops" );
-	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	
 	const char* data_filename	= argv[1];
 	const char* query_filename	= argv[2];
@@ -183,7 +183,7 @@ int main ( int argc, char** argv ) {
 		hx_free_nodemap( results_map );
 //		hx_free_bgp(b);
 		hx_free_graphpattern(g);
-		hx_free_hexastore( hx );
+		hx_free_model( hx );
 		hx_parallel_free_parallel_execution_context( ctx );
 	}
 	

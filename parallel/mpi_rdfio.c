@@ -38,7 +38,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_model
 	MPI_RDFIO_DEBUG("%i: Creating store if %p == %p.\n", rank, *store, NULL);
 
 	if(*store == NULL) {
-		*store = hx_new_hexastore(NULL);
+		*store = hx_new_model(NULL);
 		if(*store == NULL) {
 			fprintf(stderr, "%s:%u: Error; cannot allocate hexastore.\n", __FILE__, __LINE__);
 			return -1;

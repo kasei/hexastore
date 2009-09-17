@@ -45,7 +45,7 @@ int main ( void ) {
 
 void filter_test1 ( void ) {
 	fprintf( stdout, "# isliteral filter test\n" );
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
@@ -69,14 +69,14 @@ void filter_test1 ( void ) {
 	}
 	ok1( counter == 6 );
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 }
 
 void filter_test2 ( void ) {
 	hx_expr_debug	= 1;
 	fprintf( stdout, "# term equal filter test\n" );
-	hx_model* hx		= hx_new_hexastore( NULL );
+	hx_model* hx		= hx_new_model( NULL );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	
@@ -108,7 +108,7 @@ void filter_test2 ( void ) {
 	}
 	ok1( counter == 1 );
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 }
 

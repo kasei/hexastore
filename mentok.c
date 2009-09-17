@@ -53,21 +53,21 @@ int hx_free_execution_context ( hx_execution_context* c ) {
 	return 0;
 }
 
-hx_model* hx_new_hexastore ( void* world ) {
+hx_model* hx_new_model ( void* world ) {
 	hx_model* hx	= (hx_model*) calloc( 1, sizeof( hx_model )  );
 	hx->store			= hx_new_store_hexastore( world );
 	hx->next_var		= -1;
 	return hx;
 }
 
-hx_model* hx_new_hexastore_with_store ( void* world, hx_store* store ) {
+hx_model* hx_new_model_with_store ( void* world, hx_store* store ) {
 	hx_model* hx	= (hx_model*) calloc( 1, sizeof( hx_model )  );
 	hx->store			= store;
 	hx->next_var		= -1;
 	return hx;
 }
 
-int hx_free_hexastore ( hx_model* hx ) {
+int hx_free_model ( hx_model* hx ) {
 	hx_free_store( hx->store );
 	free( hx );
 	return 0;

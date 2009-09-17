@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
   }
 
   hx_store* store	= hx_store_hexastore_read( NULL, f, 0 );
-  server.db		= hx_new_hexastore_with_store( NULL, store );
+  server.db		= hx_new_model_with_store( NULL, store );
   
   if (server.db == NULL)
   {
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_free(&(server.drizzle));
-  hx_free_hexastore( server.db );
+  hx_free_model( server.db );
 
   return 0;
 }

@@ -31,7 +31,7 @@ int _strcmp (const void *a, const void *b) {
 int main ( void ) {
 	plan_tests(64);
 
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
 	
 	access_plans_test1( hx );
@@ -54,7 +54,7 @@ int main ( void ) {
 	
 	execute_bgp_test1( hx );
 	
-	hx_free_hexastore(hx);
+	hx_free_model(hx);
 	return exit_status();
 }
 

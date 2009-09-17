@@ -25,7 +25,7 @@ int main ( void ) {
 	unlink("/tmp/id2node.tcb");
 	unlink("/tmp/node2id.tcb");
 	hx_store* store		= hx_new_store_tokyocabinet( NULL, "/tmp" );
-	hx_model* hx	= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx	= hx_new_model_with_store( NULL, store );
 	_add_data( hx );
 	
 	hx_store_tokyocabinet* tc	= (hx_store_tokyocabinet*) store->ptr;
@@ -90,7 +90,7 @@ int main ( void ) {
 		ok1( total == 0 );
 	}
 	
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	return exit_status();
 }
 

@@ -73,10 +73,10 @@ int main (int argc, char** argv) {
 	hx_model* hx;
 	if (type == 'T') {
 		hx_store* store	= hx_new_store_tokyocabinet( NULL, output_location );
-		hx				= hx_new_hexastore_with_store( NULL, store );
+		hx				= hx_new_model_with_store( NULL, store );
 	} else {
 		hx_store* store	= hx_new_store_hexastore_with_indexes( NULL, index_string );
-		hx				= hx_new_hexastore_with_store( NULL, store );
+		hx				= hx_new_model_with_store( NULL, store );
 	}
 	
 	time_t st_time;
@@ -109,7 +109,7 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_free_parser( parser );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 
 	time_t finalize_time	= time(NULL);
 	double felapsed	= DIFFTIME(st_time, finalize_time);

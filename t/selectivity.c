@@ -13,7 +13,7 @@ void test_small_iter ( void );
 
 int main ( void ) {
 	plan_tests(10);
-	hx_model* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
 	
 	hx_node* x			= hx_new_named_variable( hx, "x" );
@@ -76,7 +76,7 @@ int main ( void ) {
 		ok1( total == 0 );
 	}
 	
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	return exit_status();
 }
 
