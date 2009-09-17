@@ -615,7 +615,7 @@ void _add_data ( hx_model* hx ) {
 <http://resultset2/>    rdf:type      rs:ResultSet . \
 ";
 	hx_parser* parser	= hx_new_parser();
-	hx_parser_parse_string_into_hexastore( parser, hx, rdf, "http://example.org/", "turtle" );
+	hx_parser_parse_string_into_model( parser, hx, rdf, "http://example.org/", "turtle" );
 	hx_free_parser(parser);
 }
 

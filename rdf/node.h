@@ -25,13 +25,6 @@ extern "C" {
 //	L	- Plain literal
 //	G	- Language-tagged literal
 //	D	- Datatyped literal
-
-// other hexastore magic characters:
-//	H - head
-//	V - vector
-//	X - hexastore
-//	I - index
-//	M - node map
 **/
 
 static const int HX_NODE_NONE	= 0;

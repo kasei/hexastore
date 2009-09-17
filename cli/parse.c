@@ -85,7 +85,7 @@ int main (int argc, char** argv) {
 	
 	st_time	= time(NULL);
 	hx_store_begin_bulk_load( hx->store );
-	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
+	uint64_t total	= hx_parser_parse_file_into_model( parser, hx, rdf_filename );
 	hx_store_end_bulk_load( hx->store );
 	time_t end_time	= time(NULL);
 	
