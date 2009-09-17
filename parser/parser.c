@@ -1,6 +1,5 @@
 #include "misc/util.h"
 #include "parser/parser.h"
-#include "store/hexastore/hexastore.h"
 
 typedef struct avl_table avl;
 
