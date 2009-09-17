@@ -157,7 +157,7 @@ int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* 
 		hx_triple* t	= p->data.access.triple;
 		uint64_t count;
 		if (hx) {
-			count	= hx_count_statements( hx, t->subject, t->predicate, t->object );
+			count	= hx_model_count_statements( hx, t->subject, t->predicate, t->object );
 		} else {
 			count	= 1;
 		}

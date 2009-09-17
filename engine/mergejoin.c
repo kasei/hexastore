@@ -456,7 +456,7 @@ hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* le
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values );
+	b	= hx_model_new_variablebindings( size, names, values );
 	free(names);
 	return b;
 }

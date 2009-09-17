@@ -61,20 +61,20 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	char* name;
 	char* string;
 	hx_variablebindings* b;
-// 	hx_node* v1		= hx_new_named_variable( hx );
-// 	hx_node* v2		= hx_new_named_variable( hx );
-// 	hx_node* v3		= hx_new_named_variable( hx );
-// 	hx_node* v4		= hx_new_named_variable( hx );
+// 	hx_node* v1		= hx_model_new_named_variable( hx );
+// 	hx_node* v2		= hx_model_new_named_variable( hx );
+// 	hx_node* v3		= hx_model_new_named_variable( hx );
+// 	hx_node* v4		= hx_model_new_named_variable( hx );
 	
 	{
-		hx_node* v1		= hx_new_named_variable( hx, "x" );
-		hx_node* v2		= hx_new_named_variable( hx, "y" );
+		hx_node* v1		= hx_model_new_named_variable( hx, "x" );
+		hx_node* v2		= hx_model_new_named_variable( hx, "y" );
 		
 		hx_triple* ta	= hx_new_triple( r1, p1, v1 );
-		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+		hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 		
 		hx_triple* tb	= hx_new_triple( r2, p1, v2 );
-		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -124,16 +124,16 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	}
 	
 	{
-		hx_node* v1		= hx_new_named_variable( hx, "a" );
-		hx_node* v2		= hx_new_named_variable( hx, "b" );
-		hx_node* v3		= hx_new_named_variable( hx, "c" );
-		hx_node* v4		= hx_new_named_variable( hx, "d" );
+		hx_node* v1		= hx_model_new_named_variable( hx, "a" );
+		hx_node* v2		= hx_model_new_named_variable( hx, "b" );
+		hx_node* v3		= hx_model_new_named_variable( hx, "c" );
+		hx_node* v4		= hx_model_new_named_variable( hx, "d" );
 		
 		hx_triple* ta	= hx_new_triple( v1, p1, v2 );
-		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+		hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 		
 		hx_triple* tb	= hx_new_triple( v3, p2, v4 );
-		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -210,15 +210,15 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	char* name;
 	char* string;
 	hx_variablebindings* b;
-	hx_node* v1		= hx_new_named_variable( hx, "from" );
-	hx_node* v2		= hx_new_named_variable( hx, "neighbor" );
-	hx_node* v3		= hx_new_named_variable( hx, "to" );
+	hx_node* v1		= hx_model_new_named_variable( hx, "from" );
+	hx_node* v2		= hx_model_new_named_variable( hx, "neighbor" );
+	hx_node* v3		= hx_model_new_named_variable( hx, "to" );
 	
 	hx_triple* ta	= hx_new_triple( v1, p1, v2 );
-	hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+	hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 	
 	hx_triple* tb	= hx_new_triple( v2, p1, v3 );
-	hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+	hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 	
 	hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -350,7 +350,7 @@ hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
 	hx_node* v2	= hx_new_node_named_variable( -2, "pred" );
 	hx_node* v3	= hx_new_node_named_variable( -3, "obj" );
 	hx_triple* t	= hx_new_triple( v1, v2, v3 );
-	hx_variablebindings_iter* iter	=  hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
+	hx_variablebindings_iter* iter	=  hx_model_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
 	hx_free_triple(t);
 	hx_free_node(v1);
 	hx_free_node(v2);
@@ -359,10 +359,10 @@ hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
 }
 
 void _add_data ( hx_model* hx ) {
-	hx_add_triple( hx, r1, p1, r2 );
-	hx_add_triple( hx, r2, p1, r1 );
-	hx_add_triple( hx, r2, p2, l2 );
-	hx_add_triple( hx, r1, p2, l1 );
+	hx_model_add_triple( hx, r1, p1, r2 );
+	hx_model_add_triple( hx, r2, p1, r1 );
+	hx_model_add_triple( hx, r2, p2, l2 );
+	hx_model_add_triple( hx, r1, p2, l1 );
 }
 
 void _debug_node ( char* h, hx_node* node ) {

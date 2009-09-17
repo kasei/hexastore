@@ -191,7 +191,7 @@ void bgp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= p1_id;
-			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings ( 1, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
@@ -206,7 +206,7 @@ void bgp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= p2_id;
-			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings ( 1, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
@@ -237,7 +237,7 @@ void bgp_varsub_test2 ( void ) {
 			hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 			nodes[0]				= p2_id;
 			nodes[1]				= p1_id;
-			hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings( 2, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;

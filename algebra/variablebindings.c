@@ -2,7 +2,7 @@
 
 /* nodes must not be stack-allocated; it must be heap-allocated, and control for freeing
    that memory is now handed off to the variablebindings code (hx_free_variablebindings) */
-hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes ) {
+hx_variablebindings* hx_model_new_variablebindings ( int size, char** names, hx_node_id* nodes ) {
 	hx_variablebindings* b	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	b->size			= size;
 	b->names		= (char**) calloc( size, sizeof( char* ) );
@@ -33,7 +33,7 @@ hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 	return c;
 }
 
-hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes ) {
+hx_variablebindings_nodes* hx_model_new_variablebindings_nodes ( int size, char** names, hx_node** nodes ) {
 	hx_variablebindings_nodes* b	= (hx_variablebindings_nodes*) calloc( 1, sizeof( hx_variablebindings_nodes ) );
 	b->size			= size;
 	b->names		= (char**) calloc( size, sizeof( char* ) );
@@ -439,7 +439,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values );
+	b	= hx_model_new_variablebindings( size, names, values );
 	free(names);
 	return b;
 }
@@ -481,7 +481,7 @@ hx_variablebindings* hx_variablebindings_thaw ( char* ptr, int len, hx_nodemap* 
 		p				+= node_len + 1;
 	}
 	
-	hx_variablebindings* b	= hx_new_variablebindings( size, names, nodes );
+	hx_variablebindings* b	= hx_model_new_variablebindings( size, names, nodes );
 	for (i = 0; i < size; i++) {
 		free(names[i]);
 	}
@@ -566,7 +566,7 @@ hx_variablebindings* hx_variablebindings_thaw_noadd ( char* ptr, int len, hx_nod
 	}
 	free( noadd_columns );
 	
-	hx_variablebindings* b	= hx_new_variablebindings( size, names, nodes );
+	hx_variablebindings* b	= hx_model_new_variablebindings( size, names, nodes );
 	for (i = 0; i < size; i++) {
 		free(names[i]);
 	}

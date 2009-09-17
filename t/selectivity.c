@@ -16,9 +16,9 @@ int main ( void ) {
 	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
 	
-	hx_node* x			= hx_new_named_variable( hx, "x" );
-	hx_node* y			= hx_new_named_variable( hx, "y" );
-	hx_node* z			= hx_new_named_variable( hx, "z" );
+	hx_node* x			= hx_model_new_named_variable( hx, "x" );
+	hx_node* y			= hx_model_new_named_variable( hx, "y" );
+	hx_node* z			= hx_model_new_named_variable( hx, "z" );
 	hx_node* binding	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding" );
 	hx_node* variable	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable" );
 	hx_node* resvar		= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable" );
@@ -27,52 +27,52 @@ int main ( void ) {
 	hx_node* sl			= hx_new_node_literal( "s" );
 
 	{	// ALL TRIPLES
-		uint64_t total	= hx_triples_count( hx );
+		uint64_t total	= hx_model_triples_count( hx );
 		ok1( total == 31 );
 	}
 	
 	{	// fff
-		uint64_t total	= hx_count_statements( hx, x, y, z );
+		uint64_t total	= hx_model_count_statements( hx, x, y, z );
 		ok1( total == 31 );
 	}
 	
 	{	// fbf
-		uint64_t total	= hx_count_statements( hx, x, binding, z );
+		uint64_t total	= hx_model_count_statements( hx, x, binding, z );
 		ok1( total == 8 );
 	}
 	
 	{	// bff
-		uint64_t total	= hx_count_statements( hx, rs, x, y );
+		uint64_t total	= hx_model_count_statements( hx, rs, x, y );
 		ok1( total == 7 );
 	}
 	
 	{	// ffb
-		uint64_t total	= hx_count_statements( hx, x, y, sl );
+		uint64_t total	= hx_model_count_statements( hx, x, y, sl );
 		ok1( total == 3 );
 	}
 	
 	{	// fbb
-		uint64_t total	= hx_count_statements( hx, x, variable, sl );
+		uint64_t total	= hx_model_count_statements( hx, x, variable, sl );
 		ok1( total == 2 );
 	}
 	
 	{	// bfb
-		uint64_t total	= hx_count_statements( hx, rs, x, rstype );
+		uint64_t total	= hx_model_count_statements( hx, rs, x, rstype );
 		ok1( total == 1 );
 	}
 
 	{	// bbf
-		uint64_t total	= hx_count_statements( hx, rs, resvar, y );
+		uint64_t total	= hx_model_count_statements( hx, rs, resvar, y );
 		ok1( total == 4 );
 	}
 	
 	{	// bbb
-		uint64_t total	= hx_count_statements( hx, rs, resvar, sl );
+		uint64_t total	= hx_model_count_statements( hx, rs, resvar, sl );
 		ok1( total == 1 );
 	}
 	
 	{	// bbb
-		uint64_t total	= hx_count_statements( hx, rs, resvar, rstype );
+		uint64_t total	= hx_model_count_statements( hx, rs, resvar, rstype );
 		ok1( total == 0 );
 	}
 	

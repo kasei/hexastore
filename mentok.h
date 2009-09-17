@@ -26,9 +26,6 @@ extern "C" {
 #include "misc/nodemap.h"
 #include "misc/util.h"
 #include "engine/variablebindings_iter.h"
-#include "store/hexastore/head.h"
-#include "store/hexastore/terminal.h"
-#include "store/hexastore/vector.h"
 #include "store/store.h"
 
 typedef enum {
@@ -69,19 +66,18 @@ hx_model* hx_new_model ( void* world );
 hx_model* hx_new_model_with_store ( void* world, hx_store* store );
 int hx_free_model ( hx_model* hx );
 
-int hx_add_triple( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
+int hx_model_add_triple( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
 
-int hx_remove_triple( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
-int hx_debug ( hx_model* hx );
+int hx_model_remove_triple( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
+int hx_model_debug ( hx_model* hx );
 
-uint64_t hx_triples_count( hx_model* hx );
-uint64_t hx_count_statements( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
+uint64_t hx_model_triples_count( hx_model* hx );
+uint64_t hx_model_count_statements( hx_model* hx, hx_node* s, hx_node* p, hx_node* o );
 
-hx_node* hx_new_variable ( hx_model* hx );
-hx_node* hx_new_named_variable ( hx_model* hx, char* name );
-hx_container_t* hx_get_indexes ( hx_model* hx );
+hx_node* hx_model_new_variable ( hx_model* hx );
+hx_node* hx_model_new_named_variable ( hx_model* hx, char* name );
 
-hx_variablebindings_iter* hx_new_variablebindings_iter_for_triple ( hx_model* hx, hx_triple* t, hx_node_position_t sort_position );
+hx_variablebindings_iter* hx_model_new_variablebindings_iter_for_triple ( hx_model* hx, hx_triple* t, hx_node_position_t sort_position );
 
 #ifdef __cplusplus
 }

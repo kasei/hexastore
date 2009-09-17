@@ -411,7 +411,7 @@ int _hx_store_tokyocabinet_index_iter_vb_current ( void* data, void* results ) {
 		for (int i = 0; i < info->size; i++) {
 			values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
 		}
-		info->current	= hx_new_variablebindings( info->size, info->names, values );
+		info->current	= hx_model_new_variablebindings( info->size, info->names, values );
 	}
 	*bindings	= info->current;
 	return 0;

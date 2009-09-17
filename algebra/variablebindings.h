@@ -33,8 +33,8 @@ typedef struct {
 	hx_node** nodes;
 } hx_variablebindings_nodes;
 
-hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
-hx_variablebindings_nodes* hx_new_variablebindings_nodes ( int size, char** names, hx_node** nodes );
+hx_variablebindings* hx_model_new_variablebindings ( int size, char** names, hx_node_id* nodes );
+hx_variablebindings_nodes* hx_model_new_variablebindings_nodes ( int size, char** names, hx_node** nodes );
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings_nodes ( hx_variablebindings_nodes* b );

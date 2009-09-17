@@ -320,7 +320,7 @@ int hx_bgp_reorder ( hx_bgp* b, hx_model* hx ) {
 	for (i = 0; i < size; i++) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
-		s[i].cost		= hx_count_statements( hx, t->subject, t->predicate, t->object );
+		s[i].cost		= hx_model_count_statements( hx, t->subject, t->predicate, t->object );
 		if (s[i].cost == 0) {
 			fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
 			// there are no triples for this pattern, so no sense in continuing

@@ -69,7 +69,7 @@ int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_model
 		char *nodestr = iterator_next(iter);
 		nodes[nodecnt++] = hx_node_parse(nodestr);
 		if(nodecnt == 3) {
-			hx_add_triple(*store, nodes[0], nodes[1], nodes[2]);
+			hx_model_add_triple(*store, nodes[0], nodes[1], nodes[2]);
 			hx_free_node(nodes[0]);
 			hx_free_node(nodes[1]);
 			hx_free_node(nodes[2]);

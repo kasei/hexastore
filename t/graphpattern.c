@@ -284,7 +284,7 @@ void gp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= l4_id;
-			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings( 1, names, nodes );
 			
 			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, hx->store );
 			char* string;
@@ -321,11 +321,11 @@ hx_bgp* _test_bgp3 ( void ) {
 }
 
 void _add_data ( hx_model* hx ) {
-	hx_add_triple( hx, r2, p2, r1 );
-	hx_add_triple( hx, r1, p1, l1 );
-	hx_add_triple( hx, r1, p2, l2 );
-	hx_add_triple( hx, r1, p2, l5 );
-	hx_add_triple( hx, r1, p1, l6 );
-	hx_add_triple( hx, r1, p1, l4 );
-	hx_add_triple( hx, r1, p1, l3 );
+	hx_model_add_triple( hx, r2, p2, r1 );
+	hx_model_add_triple( hx, r1, p1, l1 );
+	hx_model_add_triple( hx, r1, p2, l2 );
+	hx_model_add_triple( hx, r1, p2, l5 );
+	hx_model_add_triple( hx, r1, p1, l6 );
+	hx_model_add_triple( hx, r1, p1, l4 );
+	hx_model_add_triple( hx, r1, p1, l3 );
 }

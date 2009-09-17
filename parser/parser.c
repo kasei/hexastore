@@ -126,7 +126,7 @@ int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 	if (parser->count > 0) {
 		int i;
 		for (i = 0; i < parser->count; i++) {
-			hx_add_triple( parser->hx, parser->triples[i].subject, parser->triples[i].predicate, parser->triples[i].object );
+			hx_model_add_triple( parser->hx, parser->triples[i].subject, parser->triples[i].predicate, parser->triples[i].object );
 			hx_free_node( parser->triples[i].subject );
 			hx_free_node( parser->triples[i].predicate );
 			hx_free_node( parser->triples[i].object );

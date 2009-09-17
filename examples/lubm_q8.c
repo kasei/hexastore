@@ -37,9 +37,9 @@ int main ( int argc, char** argv ) {
 	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	hx_node* x			= hx_new_named_variable( hx, "x" );
-	hx_node* y			= hx_new_named_variable( hx, "y" );
-	hx_node* z			= hx_new_named_variable( hx, "z" );
+	hx_node* x			= hx_model_new_named_variable( hx, "x" );
+	hx_node* y			= hx_model_new_named_variable( hx, "y" );
+	hx_node* z			= hx_model_new_named_variable( hx, "z" );
 	hx_node* type			= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 	hx_node* subOrgOf		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#subOrganizationOf");
 	hx_node* univ			= hx_new_node_resource("http://www.University0.edu");

@@ -5,7 +5,7 @@
 // #define DEBUG_INDEX_SELECTION
 
 
-// void* _hx_add_triple_threaded (void* arg);
+// void* _hx_model_add_triple_threaded (void* arg);
 // int _hx_iter_vb_finished ( void* iter );
 // int _hx_iter_vb_current ( void* iter, void* results );
 // int _hx_iter_vb_next ( void* iter );	
@@ -73,51 +73,32 @@ int hx_free_model ( hx_model* hx ) {
 	return 0;
 }
 
-hx_container_t* hx_get_indexes ( hx_model* hx ) {
-	if (hx->indexes == NULL) {
-		hx->indexes	= hx_new_container( 'I', 6 );
-// 		if (hx->spo)
-// 			hx_container_push_item( hx->indexes, hx->spo );
-// 		if (hx->sop)
-// 			hx_container_push_item( hx->indexes, hx->sop );
-// 		if (hx->pso)
-// 			hx_container_push_item( hx->indexes, hx->pso );
-// 		if (hx->pos)
-// 			hx_container_push_item( hx->indexes, hx->pos );
-// 		if (hx->osp)
-// 			hx_container_push_item( hx->indexes, hx->osp );
-// 		if (hx->ops)
-// 			hx_container_push_item( hx->indexes, hx->ops );
-	}
-	return hx->indexes;
-}
-
-int hx_add_triple( hx_model* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
+int hx_model_add_triple( hx_model* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
 	hx_triple* t	= hx_new_triple( sn, pn, on );
 	int r	= hx_store_add_triple( hx->store, t );
 	hx_free_triple( t );
 	return r;
 }
 
-int hx_remove_triple( hx_model* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
+int hx_model_remove_triple( hx_model* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
 	hx_triple* t	= hx_new_triple( sn, pn, on );
 	int r	= hx_store_remove_triple( hx->store, t );
 	hx_free_triple( t );
 	return r;
 }
 
-uint64_t hx_count_statements( hx_model* hx, hx_node* s, hx_node* p, hx_node* o ) {
+uint64_t hx_model_count_statements( hx_model* hx, hx_node* s, hx_node* p, hx_node* o ) {
 	hx_triple* t	= hx_new_triple( s, p, o );
 	uint64_t count	= hx_store_count( hx->store, t );
 	hx_free_triple( t );
 	return count;
 }
 
-uint64_t hx_triples_count ( hx_model* hx ) {
+uint64_t hx_model_triples_count ( hx_model* hx ) {
 	return hx_store_size( hx->store );
 }
 
-hx_variablebindings_iter* hx_new_variablebindings_iter_for_triple ( hx_model* hx, hx_triple* t, hx_node_position_t sort_position ) {
+hx_variablebindings_iter* hx_model_new_variablebindings_iter_for_triple ( hx_model* hx, hx_triple* t, hx_node_position_t sort_position ) {
 	hx_node* sort_node	= hx_triple_node( t, sort_position );
 	if (!hx_node_is_variable(sort_node)) {
 		sort_node	= NULL;
@@ -125,24 +106,24 @@ hx_variablebindings_iter* hx_new_variablebindings_iter_for_triple ( hx_model* hx
 	return hx_store_get_statements( hx->store, t, sort_node );
 }
 
-hx_node* hx_new_variable ( hx_model* hx ) {
+hx_node* hx_model_new_variable ( hx_model* hx ) {
 	int v	= hx->next_var--;
 	hx_node* n	= hx_new_node_variable( v );
 	return n;
 }
 
-hx_node* hx_new_named_variable ( hx_model* hx, char* name ) {
+hx_node* hx_model_new_named_variable ( hx_model* hx, char* name ) {
 	int v	= hx->next_var--;
 	hx_node* n	= hx_new_node_named_variable( v, name );
 	return n;
 }
 
-int hx_debug ( hx_model* hx ) {
-	hx_node* s		= hx_new_named_variable( hx, "subj" );
-	hx_node* p		= hx_new_named_variable( hx, "pred" );
-	hx_node* o		= hx_new_named_variable( hx, "obj" );
+int hx_model_debug ( hx_model* hx ) {
+	hx_node* s		= hx_model_new_named_variable( hx, "subj" );
+	hx_node* p		= hx_model_new_named_variable( hx, "pred" );
+	hx_node* o		= hx_model_new_named_variable( hx, "obj" );
 	hx_triple* t	= hx_new_triple( s, p, o );
-	hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+	hx_variablebindings_iter* iter	= hx_model_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
 	int counter	= 0;
 	fprintf( stderr, "--------------------\n" );
 	while (!hx_variablebindings_iter_finished( iter )) {

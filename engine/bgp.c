@@ -19,7 +19,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_execution_context* ctx, hx_bgp* b 
 		sort	= HX_SUBJECT;
 	}
 	
-	hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t0, sort );
+	hx_variablebindings_iter* iter	= hx_model_new_variablebindings_iter_for_triple( hx, t0, sort );
 	
 	if (size > 1) {
 		int i;
@@ -27,7 +27,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_execution_context* ctx, hx_bgp* b 
 			char *sname, *pname, *oname;
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
-			hx_variablebindings_iter* interm	= hx_new_variablebindings_iter_for_triple( hx, t, jsort );
+			hx_variablebindings_iter* interm	= hx_model_new_variablebindings_iter_for_triple( hx, t, jsort );
 			
 //			iter	= hx_new_nestedloopjoin_iter( interm, iter );			
 //			iter	= hx_new_hashjoin_iter( interm, iter );

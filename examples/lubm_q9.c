@@ -51,9 +51,9 @@ int main ( int argc, char** argv ) {
 	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	x			= hx_new_named_variable( hx, "x" );
-	y			= hx_new_named_variable( hx, "y" );
-	z			= hx_new_named_variable( hx, "z" );
+	x			= hx_model_new_named_variable( hx, "x" );
+	y			= hx_model_new_named_variable( hx, "y" );
+	z			= hx_model_new_named_variable( hx, "z" );
 	type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 	faculty		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Faculty");
 	advisor		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#advisor");

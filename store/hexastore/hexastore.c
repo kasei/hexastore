@@ -161,12 +161,12 @@ uint64_t hx_store_hexastore_count (hx_store* store, hx_triple* triple) {
 		case 2:
 			head	= hx_store_hexastore_index_head( index );
 			if (head == NULL) {
-// 				fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+// 				fprintf( stderr, "*** Did not find the head pointer in hx_model_count_statements with %d vars\n", vars );
 				return (uint64_t) 0;
 			}
 			vector	= hx_head_get_vector( head, index_ordered_id[0] );
 			if (vector == NULL) {
-//				fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+//				fprintf( stderr, "*** Did not find the vector pointer in hx_model_count_statements with %d vars\n", vars );
 				return (uint64_t) 0;
 			}
 			size	= hx_vector_triples_count( vector );
@@ -175,17 +175,17 @@ uint64_t hx_store_hexastore_count (hx_store* store, hx_triple* triple) {
 		case 1:
 			head	= hx_store_hexastore_index_head( index );
 			if (head == NULL) {
-//				fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+//				fprintf( stderr, "*** Did not find the head pointer in hx_model_count_statements with %d vars\n", vars );
 				return (uint64_t) 0;
 			}
 			vector	= hx_head_get_vector( head, index_ordered_id[0] );
 			if (vector == NULL) {
-//				fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+//				fprintf( stderr, "*** Did not find the vector pointer in hx_model_count_statements with %d vars\n", vars );
 				return (uint64_t) 0;
 			}
 			terminal	= hx_vector_get_terminal( vector, index_ordered_id[1] );
 			if (terminal == NULL) {
-//				fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
+//				fprintf( stderr, "*** Did not find the terminal pointer in hx_model_count_statements with %d vars\n", vars );
 				return (uint64_t) 0;
 			}
 			size	= (uint64_t) hx_terminal_size( terminal );
@@ -528,7 +528,7 @@ int _hx_store_hexastore_iter_vb_current ( void* data, void* results ) {
 		for (i = 0; i < info->size; i++) {
 			values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
 		}
-		info->current	= hx_new_variablebindings( info->size, info->names, values );
+		info->current	= hx_model_new_variablebindings( info->size, info->names, values );
 	}
 	*bindings	= hx_copy_variablebindings( info->current );
 	return 0;

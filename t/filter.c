@@ -50,7 +50,7 @@ void filter_test1 ( void ) {
 	_add_data( hx );
 	
 	hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
-	hx_node* x						= hx_new_named_variable( hx, "obj" );
+	hx_node* x						= hx_model_new_named_variable( hx, "obj" );
 	hx_expr* x_e					= hx_new_node_expr( x );
 	hx_expr* e						= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
@@ -81,7 +81,7 @@ void filter_test2 ( void ) {
 	_add_data( hx );
 	
 	hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
-	hx_node* v						= hx_new_named_variable( hx, "obj" );
+	hx_node* v						= hx_model_new_named_variable( hx, "obj" );
 	hx_expr* v_e					= hx_new_node_expr( v );
 	hx_expr* lit_e					= hx_new_node_expr( r1 );
 	hx_expr* e						= hx_new_builtin_expr2( HX_EXPR_OP_EQUAL, v_e, lit_e );
@@ -113,13 +113,13 @@ void filter_test2 ( void ) {
 }
 
 void _add_data ( hx_model* hx ) {
-	hx_add_triple( hx, r2, p1, r1 );
-	hx_add_triple( hx, r1, p1, l2 );
-	hx_add_triple( hx, r1, p1, l1 );
-	hx_add_triple( hx, r1, p1, l5 );
-	hx_add_triple( hx, r1, p1, l6 );
-	hx_add_triple( hx, r1, p1, l4 );
-	hx_add_triple( hx, r1, p1, l3 );
+	hx_model_add_triple( hx, r2, p1, r1 );
+	hx_model_add_triple( hx, r1, p1, l2 );
+	hx_model_add_triple( hx, r1, p1, l1 );
+	hx_model_add_triple( hx, r1, p1, l5 );
+	hx_model_add_triple( hx, r1, p1, l6 );
+	hx_model_add_triple( hx, r1, p1, l4 );
+	hx_model_add_triple( hx, r1, p1, l3 );
 }
 
 hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
@@ -127,7 +127,7 @@ hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
 	hx_node* v2	= hx_new_node_named_variable( -2, "pred" );
 	hx_node* v3	= hx_new_node_named_variable( -3, "obj" );
 	hx_triple* t	= hx_new_triple( v1, v2, v3 );
-	hx_variablebindings_iter* iter	=  hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
+	hx_variablebindings_iter* iter	=  hx_model_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
 	hx_free_triple(t);
 	hx_free_node(v1);
 	hx_free_node(v2);

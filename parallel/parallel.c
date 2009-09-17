@@ -814,7 +814,7 @@ int hx_parallel_get_nodes(hx_parallel_execution_context* ctx, hx_variablebinding
 			}
                 }
 
-		(*varbinds)[cnt] = hx_new_variablebindings_nodes(size, names, nodes);
+		(*varbinds)[cnt] = hx_model_new_variablebindings_nodes(size, names, nodes);
 		if((*varbinds)[cnt] == NULL) {
 			fprintf(stderr, "%s:%d: Error; cannot instantiate variablebindings_nodes.\n", __FILE__, __LINE__);
 			return -1;
@@ -1094,7 +1094,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	hx_nodemap* triples_map				= hx_store_hexastore_get_nodemap( hx->store );
 	hx_nodemap* lhs_map					= triples_map;
 	hx_triple* t0						= hx_bgp_triple( b, 0 );
-	hx_variablebindings_iter* lhs		= hx_new_variablebindings_iter_for_triple( hx, t0, HX_OBJECT );
+	hx_variablebindings_iter* lhs		= hx_model_new_variablebindings_iter_for_triple( hx, t0, HX_OBJECT );
 	
 	for (j = 1; j < triple_count; j++) {
 		hx_triple* t	= hx_bgp_triple( b, j );
@@ -1111,7 +1111,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 		
 		char** columns						= NULL;
 // 		fprintf(stderr, "%i: _hx_parallel_variablebinding_iter_for_triple\n", myrank);
-		hx_variablebindings_iter* rhs		= hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
+		hx_variablebindings_iter* rhs		= hx_model_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
 // 		fprintf(stderr, "%i: _hx_parallel_variablebinding_iter_shared_columns2\n", myrank);
 		int shared_count					= _hx_parallel_variablebindings_iter_shared_columns( t, node_names, variable_names, maxiv, lhs, &columns );
 // 		fprintf( stderr, "%d: columns = %p\n", myrank, (void*) columns );
@@ -1194,7 +1194,7 @@ int hx_bgp_reorder_mpi ( hx_bgp* b, hx_model* hx ) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
 		fprintf( stderr, "rank %d triple %d getting cost\n", myrank, i );
-		send_cost[i]	= (double) hx_count_statements( hx, t->subject, t->predicate, t->object );
+		send_cost[i]	= (double) hx_model_count_statements( hx, t->subject, t->predicate, t->object );
 		fprintf( stderr, "rank %d triple %d has cost %f\n", myrank, i, send_cost[i] );
 	}
 	
