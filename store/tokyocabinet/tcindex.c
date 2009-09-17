@@ -1,6 +1,6 @@
 #include "tcindex.h"
 
-int _hx_check_next_triple (hx_store_tokyocabinet_index_iter* iter);
+int _hx_store_tokyocabinet_check_next_triple (hx_store_tokyocabinet_index_iter* iter);
 int _hx_store_tokyocabinet_index_iter_vb_finished ( void* iter );
 int _hx_store_tokyocabinet_index_iter_vb_current ( void* iter, void* results );
 int _hx_store_tokyocabinet_index_iter_vb_next ( void* iter );	
@@ -263,7 +263,7 @@ int hx_store_tokyocabinet_index_iter_current ( hx_store_tokyocabinet_index_iter*
 		return 1;
 	}
 	
-	_hx_check_next_triple( iter );
+	_hx_store_tokyocabinet_check_next_triple( iter );
 	
 	hx_node_id triple_ordered[3];
 	hx_store_tokyocabinet_index* index	= iter->index;
@@ -277,7 +277,7 @@ int hx_store_tokyocabinet_index_iter_current ( hx_store_tokyocabinet_index_iter*
 	return 0;
 }
 
-int _hx_check_next_triple (hx_store_tokyocabinet_index_iter* iter) {
+int _hx_store_tokyocabinet_check_next_triple (hx_store_tokyocabinet_index_iter* iter) {
 	int size;
 	hx_node_id* current	= tcbdbcurkey(iter->cursor, &size);
 	if (iter->node_mask_a > 0 && current[0] != iter->node_mask_a) {
@@ -312,7 +312,7 @@ int _hx_check_next_triple (hx_store_tokyocabinet_index_iter* iter) {
 
 int hx_store_tokyocabinet_index_iter_next ( hx_store_tokyocabinet_index_iter* iter ) {
 	if (tcbdbcurnext( iter->cursor )) {
-		_hx_check_next_triple( iter );
+		_hx_store_tokyocabinet_check_next_triple( iter );
 		return 0;
 	} else {
 		iter->finished	= 1;
