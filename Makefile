@@ -26,20 +26,38 @@ OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
 OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 # INSTDIR			= /Users/samofool/data/prog/git/hexastore
-INSTDIR				= /usr/local/lib
+INSTDIR				= /usr/local
 
 default: parse print optimize tests examples parse_query
 
 all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
 
 install: libmentok.dylib $(PUBLIC_HEADERS)
-	cp libmentok.dylib /usr/local/lib/
+	mkdir -p $(INSTDIR)/include/mentok
+	mkdir -p $(INSTDIR)/include/mentok/algebra
+	mkdir -p $(INSTDIR)/include/mentok/engine
+	mkdir -p $(INSTDIR)/include/mentok/rdf
+	mkdir -p $(INSTDIR)/include/mentok/misc
+	mkdir -p $(INSTDIR)/include/mentok/parser
+	mkdir -p $(INSTDIR)/include/mentok/store
+	mkdir -p $(INSTDIR)/include/mentok/store/hexastore
+	mkdir -p $(INSTDIR)/include/mentok/store/tokyocabinet
+	cp mentok/algebra/*.h $(INSTDIR)/include/mentok/algebra/
+	cp mentok/engine/*.h $(INSTDIR)/include/mentok/engine/
+	cp mentok/rdf/*.h $(INSTDIR)/include/mentok/rdf/
+	cp mentok/parser/*.h $(INSTDIR)/include/mentok/parser/
+	cp mentok/store/store.h $(INSTDIR)/include/mentok/store/
+	cp mentok/misc/*.h $(INSTDIR)/include/mentok/misc/
+	cp mentok/store/hexastore/*.h $(INSTDIR)/include/mentok/store/hexastore/
+	cp mentok/store/tokyocabinet/*.h $(INSTDIR)/include/mentok/store/tokyocabinet/
+	cp mentok/*.h $(INSTDIR)/include/mentok/
+	cp libmentok.dylib $(INSTDIR)/lib/
 
 
 ###
 
 libmentok.dylib: $(OBJECTS)
-	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
+	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
 
 ###
 
