@@ -18,8 +18,8 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
-#include "hexastore.h"
+#include "mentok_types.h"
+#include "mentok.h"
 #include "engine/variablebindings_iter.h"
 #include "engine/variablebindings_iter_sorting.h"
 #include "rdf/triple.h"

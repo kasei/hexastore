@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 
 typedef struct {
 	hx_node_id key;

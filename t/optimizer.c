@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "misc/nodemap.h"
 #include "rdf/node.h"
 #include "parser/parser.h"

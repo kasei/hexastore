@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "misc/nodemap.h"
 #include "engine/hashjoin.h"
 #include "engine/mergejoin.h"

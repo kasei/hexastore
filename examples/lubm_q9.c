@@ -10,7 +10,7 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/variablebindings.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"

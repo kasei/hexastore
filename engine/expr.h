@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/expr.h"
 #include "store/store.h"
 

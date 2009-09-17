@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "rdf/triple.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"

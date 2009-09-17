@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "algebra/variablebindings.h"
 #include "rdf/node.h"
 
@@ -71,7 +71,7 @@ typedef struct {
 	void* operands;
 } hx_expr;
 
-/* #include "hexastore.h" */
+/* #include "mentok.h" */
 #include "misc/nodemap.h"
 
 hx_expr* hx_new_node_expr ( hx_node* n );

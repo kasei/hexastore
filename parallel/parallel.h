@@ -17,7 +17,7 @@ extern "C" {
 #include <unistd.h>
 #include <mpi.h>
 
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/bgp.h"
 #include "algebra/variablebindings.h"
 #include "rdf/triple.h"

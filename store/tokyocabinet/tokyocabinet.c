@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "store/tokyocabinet/tokyocabinet.h"
 
 hx_node_id _hx_store_tokyocabinet_get_node_id ( hx_store_tokyocabinet* hx, hx_node* node );

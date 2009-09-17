@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "algebra/variablebindings.h"
 #include "engine/variablebindings_iter.h"
 #include "engine/variablebindings_iter_sorting.h"

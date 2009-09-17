@@ -20,7 +20,7 @@ ENGINE_OBJECTS		= engine/expr.o engine/variablebindings_iter.o engine/variablebi
 ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
 PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
 OPT_OBJECTS			= optimizer/optimizer.o optimizer/plan.o
-OBJECTS				= hexastore.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
+OBJECTS				= mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 default: parse print optimize tests examples parse_query
 
@@ -47,94 +47,94 @@ parse_query: cli/parse_query.c $(OBJECTS)
 dumpmap: cli/dumpmap.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o dumpmap cli/dumpmap.c $(OBJECTS)
 
-hexastore.o: hexastore.c hexastore.h store/hexastore/index.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h hexastore_types.h algebra/variablebindings.h misc/nodemap.h
-	$(CC) $(INC) -c hexastore.c
+mentok.o: mentok.c mentok.h store/hexastore/index.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h mentok_types.h algebra/variablebindings.h misc/nodemap.h
+	$(CC) $(INC) -c mentok.c
 
-store/hexastore/index.o: store/hexastore/index.c store/hexastore/index.h store/hexastore/terminal.h store/hexastore/vector.h store/hexastore/head.h hexastore_types.h
+store/hexastore/index.o: store/hexastore/index.c store/hexastore/index.h store/hexastore/terminal.h store/hexastore/vector.h store/hexastore/head.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/index.o store/hexastore/index.c
 
 store/store.o: store/store.c store/store.h
 	$(CC) $(INC) -c -o store/store.o store/store.c
 
-store/tokyocabinet/tokyocabinet.o: store/tokyocabinet/tokyocabinet.c store/tokyocabinet/tokyocabinet.h hexastore_types.h
+store/tokyocabinet/tokyocabinet.o: store/tokyocabinet/tokyocabinet.c store/tokyocabinet/tokyocabinet.h mentok_types.h
 	$(CC) $(INC) -c -o store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tokyocabinet.c
 
-store/tokyocabinet/tcindex.o: store/tokyocabinet/tcindex.c store/tokyocabinet/tcindex.h hexastore_types.h
+store/tokyocabinet/tcindex.o: store/tokyocabinet/tcindex.c store/tokyocabinet/tcindex.h mentok_types.h
 	$(CC) $(INC) -c -o store/tokyocabinet/tcindex.o store/tokyocabinet/tcindex.c
 
-store/hexastore/hexastore.o: store/hexastore/hexastore.c store/hexastore/hexastore.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h hexastore_types.h
+store/hexastore/hexastore.o: store/hexastore/hexastore.c store/hexastore/hexastore.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/hexastore.o store/hexastore/hexastore.c
 
-store/hexastore/terminal.o: store/hexastore/terminal.c store/hexastore/terminal.h hexastore_types.h
+store/hexastore/terminal.o: store/hexastore/terminal.c store/hexastore/terminal.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/terminal.o store/hexastore/terminal.c
 
-store/hexastore/vector.o: store/hexastore/vector.c store/hexastore/vector.h store/hexastore/terminal.h hexastore_types.h
+store/hexastore/vector.o: store/hexastore/vector.c store/hexastore/vector.h store/hexastore/terminal.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/vector.o store/hexastore/vector.c
 
-store/hexastore/head.o: store/hexastore/head.c store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h hexastore_types.h
+store/hexastore/head.o: store/hexastore/head.c store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/head.o store/hexastore/head.c
 
-rdf/node.o: rdf/node.c rdf/node.h hexastore_types.h
+rdf/node.o: rdf/node.c rdf/node.h mentok_types.h
 	$(CC) $(INC) -c -o rdf/node.o rdf/node.c
 	
-misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h hexastore_types.h
+misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h mentok_types.h
 	$(CC) $(INC) -c -o misc/nodemap.o misc/nodemap.c
 
-misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h hexastore_types.h
+misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h mentok_types.h
 	$(CC) $(INC) -c -o misc/idmap.o misc/idmap.c
 
-engine/bgp.o: engine/bgp.c engine/bgp.h hexastore_types.h
+engine/bgp.o: engine/bgp.c engine/bgp.h mentok_types.h
 	$(CC) $(INC) -c -o engine/bgp.o engine/bgp.c
 
-engine/expr.o: engine/expr.c engine/expr.h hexastore_types.h
+engine/expr.o: engine/expr.c engine/expr.h mentok_types.h
 	$(CC) $(INC) -c -o engine/expr.o engine/expr.c
 
-engine/graphpattern.o: engine/graphpattern.c engine/graphpattern.h hexastore_types.h
+engine/graphpattern.o: engine/graphpattern.c engine/graphpattern.h mentok_types.h
 	$(CC) $(INC) -c -o engine/graphpattern.o engine/graphpattern.c
 
-engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h hexastore_types.h algebra/variablebindings.h
+engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h mentok_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/mergejoin.o engine/mergejoin.c
 
-engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h hexastore_types.h algebra/variablebindings.h
+engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h mentok_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/nestedloopjoin.o engine/nestedloopjoin.c
 
-engine/hashjoin.o: engine/hashjoin.c engine/hashjoin.h hexastore_types.h algebra/variablebindings.h
+engine/hashjoin.o: engine/hashjoin.c engine/hashjoin.h mentok_types.h algebra/variablebindings.h
 	$(CC) $(INC) -c -o engine/hashjoin.o engine/hashjoin.c
 
-algebra/variablebindings.o: algebra/variablebindings.c algebra/variablebindings.h hexastore_types.h rdf/node.h misc/nodemap.h
+algebra/variablebindings.o: algebra/variablebindings.c algebra/variablebindings.h mentok_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o algebra/variablebindings.o algebra/variablebindings.c
 
-engine/variablebindings_iter.o: engine/variablebindings_iter.c engine/variablebindings_iter.h hexastore_types.h rdf/node.h misc/nodemap.h
+engine/variablebindings_iter.o: engine/variablebindings_iter.c engine/variablebindings_iter.h mentok_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/variablebindings_iter.o engine/variablebindings_iter.c
 
-engine/variablebindings_iter_sorting.o: engine/variablebindings_iter_sorting.c engine/variablebindings_iter_sorting.h hexastore_types.h rdf/node.h misc/nodemap.h
+engine/variablebindings_iter_sorting.o: engine/variablebindings_iter_sorting.c engine/variablebindings_iter_sorting.h mentok_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/variablebindings_iter_sorting.o engine/variablebindings_iter_sorting.c
 
-engine/materialize.o: engine/materialize.c engine/materialize.h hexastore_types.h rdf/node.h misc/nodemap.h
+engine/materialize.o: engine/materialize.c engine/materialize.h mentok_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/materialize.o engine/materialize.c
 
-engine/filter.o: engine/filter.c engine/filter.h hexastore_types.h rdf/node.h misc/nodemap.h
+engine/filter.o: engine/filter.c engine/filter.h mentok_types.h rdf/node.h misc/nodemap.h
 	$(CC) $(INC) -c -o engine/filter.o engine/filter.c
 
-rdf/triple.o: rdf/triple.c rdf/triple.h hexastore_types.h
+rdf/triple.o: rdf/triple.c rdf/triple.h mentok_types.h
 	$(CC) $(INC) -c -o rdf/triple.o rdf/triple.c
 
-store/hexastore/btree.o: store/hexastore/btree.c store/hexastore/btree.h hexastore_types.h
+store/hexastore/btree.o: store/hexastore/btree.c store/hexastore/btree.h mentok_types.h
 	$(CC) $(INC) -c -o store/hexastore/btree.o store/hexastore/btree.c
 
-parser/parser.o: parser/parser.c parser/parser.h hexastore_types.h
+parser/parser.o: parser/parser.c parser/parser.h mentok_types.h
 	$(CC) $(INC) -c -o parser/parser.o parser/parser.c
 
-algebra/bgp.o: algebra/bgp.c algebra/bgp.h hexastore_types.h
+algebra/bgp.o: algebra/bgp.c algebra/bgp.h mentok_types.h
 	$(CC) $(INC) -c -o algebra/bgp.o algebra/bgp.c
 
-algebra/expr.o: algebra/expr.c algebra/expr.h hexastore_types.h
+algebra/expr.o: algebra/expr.c algebra/expr.h mentok_types.h
 	$(CC) $(INC) -c -o algebra/expr.o algebra/expr.c
 
-algebra/graphpattern.o: algebra/graphpattern.c algebra/graphpattern.h hexastore_types.h
+algebra/graphpattern.o: algebra/graphpattern.c algebra/graphpattern.h mentok_types.h
 	$(CC) $(INC) -c -o algebra/graphpattern.o algebra/graphpattern.c
 
-engine/project.o: engine/project.c engine/project.h hexastore_types.h
+engine/project.o: engine/project.c engine/project.h mentok_types.h
 	$(CC) $(INC) -c -o engine/project.o engine/project.c
 
 misc/util.o: misc/util.c misc/util.h
@@ -269,7 +269,7 @@ examples/knows: examples/knows.c $(OBJECTS)
 
 ########
 
-misc/avl.o: misc/avl.c misc/avl.h hexastore_types.h
+misc/avl.o: misc/avl.c misc/avl.h mentok_types.h
 	$(CC) $(INC) -c -o misc/avl.o misc/avl.c
 
 test/tap.o: test/tap.c test/tap.h

@@ -7,7 +7,7 @@
 // }
 
 #include <stdio.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "engine/mergejoin.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"

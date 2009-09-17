@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "store/hexastore/terminal.h"
 
 #define VECTOR_TREE_BRANCHING_SIZE				28

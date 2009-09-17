@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "store/hexastore/hexastore.h"
 #include "algebra/expr.h"
 #include "engine/expr.h"

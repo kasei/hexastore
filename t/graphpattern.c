@@ -1,4 +1,4 @@
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/graphpattern.h"
 #include "test/tap.h"
 #include "store/hexastore/hexastore.h"

@@ -41,7 +41,7 @@
 #include <libdrizzle/drizzle_server.h>
 
 /* HEXASTORE STUFF */
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/bgp.h"
 #include "store/store.h"
 extern hx_bgp* parse_bgp_query_string ( char* );

@@ -1,5 +1,5 @@
 #include "store/hexastore/hexastore.h"
-#include "hexastore.h"
+#include "mentok.h"
 
 hx_node_id _hx_store_hexastore_get_node_id ( hx_store_hexastore* hx, hx_node* node );
 int _hx_store_hexastore_get_ordered_index( hx_store_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, hx_node_position_t order_position, hx_store_hexastore_index** index, hx_node** nodes, int* var_count );

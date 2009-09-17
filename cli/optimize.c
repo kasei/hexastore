@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "misc/nodemap.h"
 #include "store/hexastore/hexastore.h"
 

@@ -17,7 +17,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "algebra/variablebindings.h"
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "misc/util.h"
 #include "rdf/node.h"
 #include "algebra/expr.h"

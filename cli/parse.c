@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <raptor.h>
 #include <inttypes.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "rdf/node.h"
 #include "parser/parser.h"
 #include "store/hexastore/hexastore.h"

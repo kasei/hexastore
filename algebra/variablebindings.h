@@ -16,7 +16,7 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "misc/nodemap.h"
 #include "misc/util.h"
 #include "rdf/node.h"

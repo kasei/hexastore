@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "algebra/variablebindings.h"
 #include "misc/nodemap.h"
 #include "rdf/node.h"

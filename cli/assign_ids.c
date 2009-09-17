@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "hexastore.h"
+#include "mentok.h"
 #include "rdf/node.h"
 
 typedef struct {

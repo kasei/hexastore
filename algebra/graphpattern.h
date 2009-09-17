@@ -17,8 +17,8 @@ extern "C" {
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
-#include "hexastore.h"
+#include "mentok_types.h"
+#include "mentok.h"
 #include "algebra/expr.h"
 #include "algebra/bgp.h"
 #include "algebra/variablebindings.h"

@@ -7,7 +7,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <string.h>
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "misc/avl.h"
 #include "rdf/node.h"
 

@@ -20,7 +20,7 @@ extern "C" {
 #include <pthread.h>
 #endif
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "rdf/triple.h"
 #include "algebra/variablebindings.h"
 #include "misc/nodemap.h"

@@ -36,7 +36,7 @@ typedef struct {
 
 typedef uint64_t hx_hash_function ( const char* s );
 
-#include "hexastore_types.h"
+#include "mentok_types.h"
 
 char* hx_copy_string ( const char* string );
 

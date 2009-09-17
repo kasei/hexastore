@@ -18,8 +18,8 @@ extern "C" {
 #include <unistd.h>
 #include <raptor.h>
 
-#include "hexastore_types.h"
-#include "hexastore.h"
+#include "mentok_types.h"
+#include "mentok.h"
 #include "rdf/node.h"
 
 static int TRIPLES_BATCH_SIZE	= 5000;

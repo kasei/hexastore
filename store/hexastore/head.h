@@ -17,7 +17,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "store/hexastore/btree.h"
-#include "hexastore_types.h"
+#include "mentok_types.h"
 #include "store/hexastore/vector.h"
 
 #define HEAD_TREE_BRANCHING_SIZE				252

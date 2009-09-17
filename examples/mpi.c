@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <dirent.h>
-#include "hexastore.h"
+#include "mentok.h"
 #include "rdf/node.h"
 #include "algebra/bgp.h"
 #include "algebra/graphpattern.h"
