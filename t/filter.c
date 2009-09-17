@@ -1,7 +1,7 @@
-#include "mentok.h"
-#include "store/hexastore/hexastore.h"
-#include "engine/filter.h"
-#include "algebra/expr.h"
+#include "mentok/mentok.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/engine/filter.h"
+#include "mentok/algebra/expr.h"
 #include "test/tap.h"
 
 void _add_data ( hx_model* hx );

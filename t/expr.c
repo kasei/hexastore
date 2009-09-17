@@ -1,9 +1,9 @@
 #include <unistd.h>
-#include "mentok.h"
-#include "store/hexastore/hexastore.h"
-#include "algebra/expr.h"
-#include "engine/expr.h"
-#include "misc/nodemap.h"
+#include "mentok/mentok.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/algebra/expr.h"
+#include "mentok/engine/expr.h"
+#include "mentok/misc/nodemap.h"
 #include "test/tap.h"
 
 void test_serialization ( void );

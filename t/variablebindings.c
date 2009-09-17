@@ -1,8 +1,8 @@
 #include <unistd.h>
-#include "mentok.h"
-#include "algebra/variablebindings.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
 #include "test/tap.h"
 
 void _add_data ( hx_model* hx );

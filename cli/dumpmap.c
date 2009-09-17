@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mentok.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
-#include "engine/mergejoin.h"
-#include "misc/avl.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/misc/avl.h"
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage:\n" );

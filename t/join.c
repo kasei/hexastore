@@ -1,14 +1,14 @@
 #include <unistd.h>
-#include "mentok.h"
-#include "misc/nodemap.h"
-#include "engine/hashjoin.h"
-#include "engine/mergejoin.h"
-#include "engine/nestedloopjoin.h"
-#include "rdf/node.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/engine/hashjoin.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/engine/nestedloopjoin.h"
+#include "mentok/rdf/node.h"
 #include "test/tap.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 void _add_data ( hx_model* hx );
 void _debug_node ( char* h, hx_node* node );

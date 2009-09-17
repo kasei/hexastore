@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "mentok.h"
-#include "rdf/triple.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "engine/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/triple.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];

@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <dirent.h>
-#include "mentok.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "algebra/graphpattern.h"
-#include "engine/mergejoin.h"
-#include "engine/materialize.h"
-#include "parallel/parallel.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/algebra/graphpattern.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/engine/materialize.h"
+#include "mentok/parallel/parallel.h"
+#include "mentok/store/hexastore/hexastore.h"
 
-#include "misc/timing_choices.h"
+#include "mentok/misc/timing_choices.h"
 #ifndef TIMING_CPU_FREQUENCY
 #define TIMING_CPU_FREQUENCY 2600000000.0
 #endif
 #define TIMING_USE TIMING_RDTSC
-#include "misc/timing.h"
+#include "mentok/misc/timing.h"
 
 int DEBUG_NODE	= -1;
 

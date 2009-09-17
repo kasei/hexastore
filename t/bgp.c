@@ -1,6 +1,6 @@
-#include "mentok.h"
-#include "algebra/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void bgp1_test ( void );

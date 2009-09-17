@@ -1,11 +1,11 @@
-#include "parser/SPARQLParser.h"
+#include "mentok/parser/SPARQLParser.h"
 #include <time.h>
-#include "algebra/bgp.h"
-#include "algebra/graphpattern.h"
-#include "engine/bgp.h"
-#include "engine/graphpattern.h"
-#include "store/hexastore/hexastore.h"
-#include "store/tokyocabinet/tokyocabinet.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/algebra/graphpattern.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/engine/graphpattern.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/store/tokyocabinet/tokyocabinet.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 

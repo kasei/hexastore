@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "store/hexastore/head.h"
+#include "mentok/store/hexastore/head.h"
 #include "test/tap.h"
 
 void head_test ( void );

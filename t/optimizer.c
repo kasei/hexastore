@@ -1,12 +1,12 @@
 #include <stdlib.h>
-#include "mentok.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
-#include "parser/parser.h"
-#include "optimizer/optimizer.h"
-#include "optimizer/plan.h"
-#include "algebra/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
+#include "mentok/parser/parser.h"
+#include "mentok/optimizer/optimizer.h"
+#include "mentok/optimizer/plan.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void _add_data ( hx_model* hx );

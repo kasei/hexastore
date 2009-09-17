@@ -1,5 +1,5 @@
-#include "mentok.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void spo_test1 ( void );

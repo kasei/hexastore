@@ -10,14 +10,14 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "mentok.h"
-#include "algebra/variablebindings.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/store.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/store.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 double bench ( hx_model* hx, hx_bgp* b );

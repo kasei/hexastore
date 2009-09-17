@@ -14,16 +14,16 @@ CC			= gcc $(CFLAGS)
 
 LIBS	=	-ltokyocabinet -lpthread -lraptor
 
-HEXASTORE_OBJECTS	= store/hexastore/hexastore.o store/hexastore/index.o store/hexastore/terminal.o store/hexastore/vector.o store/hexastore/head.o store/hexastore/btree.o
-TCSTORE_OBJECTS		= store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tcindex.o
-STORE_OBJECTS		= store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
-MISC_OBJECTS		= misc/avl.o misc/nodemap.o misc/util.o misc/idmap.o
-RDF_OBJECTS			= rdf/node.o rdf/triple.o
-ENGINE_OBJECTS		= engine/expr.o engine/variablebindings_iter.o engine/variablebindings_iter_sorting.o engine/nestedloopjoin.o engine/mergejoin.o engine/materialize.o engine/filter.o engine/project.o engine/hashjoin.o engine/bgp.o engine/graphpattern.o
-ALGEBRA_OBJECTS		= algebra/variablebindings.o algebra/bgp.o algebra/expr.o algebra/graphpattern.o
-PARSER_OBJECTS		= parser/SPARQLParser.o parser/SPARQLScanner.o parser/parser.o
-OPT_OBJECTS			= optimizer/optimizer.o optimizer/plan.o
-OBJECTS				= mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
+HEXASTORE_OBJECTS	= mentok/store/hexastore/hexastore.o mentok/store/hexastore/index.o mentok/store/hexastore/terminal.o mentok/store/hexastore/vector.o mentok/store/hexastore/head.o mentok/store/hexastore/btree.o
+TCSTORE_OBJECTS		= mentok/store/tokyocabinet/tokyocabinet.o mentok/store/tokyocabinet/tcindex.o
+STORE_OBJECTS		= mentok/store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
+MISC_OBJECTS		= mentok/misc/avl.o mentok/misc/nodemap.o mentok/misc/util.o mentok/misc/idmap.o
+RDF_OBJECTS			= mentok/rdf/node.o mentok/rdf/triple.o
+ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o
+ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok/algebra/expr.o mentok/algebra/graphpattern.o
+PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
+OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
+OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 
 # INSTDIR			= /Users/samofool/data/prog/git/hexastore
 INSTDIR				= /usr/local/lib
@@ -66,125 +66,125 @@ dumpmap: cli/dumpmap.c libmentok.dylib
 
 ###
 
-mentok.o: mentok.c mentok.h store/hexastore/index.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h mentok_types.h algebra/variablebindings.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c mentok.c
+mentok/mentok.o: mentok/mentok.c mentok/mentok.h mentok/store/hexastore/index.h mentok/store/hexastore/head.h mentok/store/hexastore/vector.h mentok/store/hexastore/terminal.h mentok/mentok_types.h mentok/algebra/variablebindings.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/mentok.o mentok/mentok.c
 
-store/hexastore/index.o: store/hexastore/index.c store/hexastore/index.h store/hexastore/terminal.h store/hexastore/vector.h store/hexastore/head.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/index.o store/hexastore/index.c
+mentok/store/hexastore/index.o: mentok/store/hexastore/index.c mentok/store/hexastore/index.h mentok/store/hexastore/terminal.h mentok/store/hexastore/vector.h mentok/store/hexastore/head.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/index.o mentok/store/hexastore/index.c
 
-store/store.o: store/store.c store/store.h
-	$(CC) $(OBJFLAGS) -c -o store/store.o store/store.c
+mentok/store/store.o: mentok/store/store.c mentok/store/store.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/store.o mentok/store/store.c
 
-store/tokyocabinet/tokyocabinet.o: store/tokyocabinet/tokyocabinet.c store/tokyocabinet/tokyocabinet.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/tokyocabinet/tokyocabinet.o store/tokyocabinet/tokyocabinet.c
+mentok/store/tokyocabinet/tokyocabinet.o: mentok/store/tokyocabinet/tokyocabinet.c mentok/store/tokyocabinet/tokyocabinet.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/tokyocabinet/tokyocabinet.o mentok/store/tokyocabinet/tokyocabinet.c
 
-store/tokyocabinet/tcindex.o: store/tokyocabinet/tcindex.c store/tokyocabinet/tcindex.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/tokyocabinet/tcindex.o store/tokyocabinet/tcindex.c
+mentok/store/tokyocabinet/tcindex.o: mentok/store/tokyocabinet/tcindex.c mentok/store/tokyocabinet/tcindex.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/tokyocabinet/tcindex.o mentok/store/tokyocabinet/tcindex.c
 
-store/hexastore/hexastore.o: store/hexastore/hexastore.c store/hexastore/hexastore.h store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/hexastore.o store/hexastore/hexastore.c
+mentok/store/hexastore/hexastore.o: mentok/store/hexastore/hexastore.c mentok/store/hexastore/hexastore.h mentok/store/hexastore/head.h mentok/store/hexastore/vector.h mentok/store/hexastore/terminal.h mentok/store/hexastore/btree.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/hexastore.o mentok/store/hexastore/hexastore.c
 
-store/hexastore/terminal.o: store/hexastore/terminal.c store/hexastore/terminal.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/terminal.o store/hexastore/terminal.c
+mentok/store/hexastore/terminal.o: mentok/store/hexastore/terminal.c mentok/store/hexastore/terminal.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/terminal.o mentok/store/hexastore/terminal.c
 
-store/hexastore/vector.o: store/hexastore/vector.c store/hexastore/vector.h store/hexastore/terminal.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/vector.o store/hexastore/vector.c
+mentok/store/hexastore/vector.o: mentok/store/hexastore/vector.c mentok/store/hexastore/vector.h mentok/store/hexastore/terminal.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/vector.o mentok/store/hexastore/vector.c
 
-store/hexastore/head.o: store/hexastore/head.c store/hexastore/head.h store/hexastore/vector.h store/hexastore/terminal.h store/hexastore/btree.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/head.o store/hexastore/head.c
+mentok/store/hexastore/head.o: mentok/store/hexastore/head.c mentok/store/hexastore/head.h mentok/store/hexastore/vector.h mentok/store/hexastore/terminal.h mentok/store/hexastore/btree.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/head.o mentok/store/hexastore/head.c
 
-rdf/node.o: rdf/node.c rdf/node.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o rdf/node.o rdf/node.c
+mentok/rdf/node.o: mentok/rdf/node.c mentok/rdf/node.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/rdf/node.o mentok/rdf/node.c
 	
-misc/nodemap.o: misc/nodemap.c misc/nodemap.h misc/avl.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o misc/nodemap.o misc/nodemap.c
+mentok/misc/nodemap.o: mentok/misc/nodemap.c mentok/misc/nodemap.h mentok/misc/avl.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/misc/nodemap.o mentok/misc/nodemap.c
 
-misc/idmap.o: misc/idmap.c misc/idmap.h misc/avl.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o misc/idmap.o misc/idmap.c
+mentok/misc/idmap.o: mentok/misc/idmap.c mentok/misc/idmap.h mentok/misc/avl.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/misc/idmap.o mentok/misc/idmap.c
 
-engine/bgp.o: engine/bgp.c engine/bgp.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o engine/bgp.o engine/bgp.c
+mentok/engine/bgp.o: mentok/engine/bgp.c mentok/engine/bgp.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/bgp.o mentok/engine/bgp.c
 
-engine/expr.o: engine/expr.c engine/expr.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o engine/expr.o engine/expr.c
+mentok/engine/expr.o: mentok/engine/expr.c mentok/engine/expr.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/expr.o mentok/engine/expr.c
 
-engine/graphpattern.o: engine/graphpattern.c engine/graphpattern.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o engine/graphpattern.o engine/graphpattern.c
+mentok/engine/graphpattern.o: mentok/engine/graphpattern.c mentok/engine/graphpattern.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/graphpattern.o mentok/engine/graphpattern.c
 
-engine/mergejoin.o: engine/mergejoin.c engine/mergejoin.h mentok_types.h algebra/variablebindings.h
-	$(CC) $(OBJFLAGS) -c -o engine/mergejoin.o engine/mergejoin.c
+mentok/engine/mergejoin.o: mentok/engine/mergejoin.c mentok/engine/mergejoin.h mentok/mentok_types.h mentok/algebra/variablebindings.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/mergejoin.o mentok/engine/mergejoin.c
 
-engine/nestedloopjoin.o: engine/nestedloopjoin.c engine/nestedloopjoin.h mentok_types.h algebra/variablebindings.h
-	$(CC) $(OBJFLAGS) -c -o engine/nestedloopjoin.o engine/nestedloopjoin.c
+mentok/engine/nestedloopjoin.o: mentok/engine/nestedloopjoin.c mentok/engine/nestedloopjoin.h mentok/mentok_types.h mentok/algebra/variablebindings.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/nestedloopjoin.o mentok/engine/nestedloopjoin.c
 
-engine/hashjoin.o: engine/hashjoin.c engine/hashjoin.h mentok_types.h algebra/variablebindings.h
-	$(CC) $(OBJFLAGS) -c -o engine/hashjoin.o engine/hashjoin.c
+mentok/engine/hashjoin.o: mentok/engine/hashjoin.c mentok/engine/hashjoin.h mentok/mentok_types.h mentok/algebra/variablebindings.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/hashjoin.o mentok/engine/hashjoin.c
 
-algebra/variablebindings.o: algebra/variablebindings.c algebra/variablebindings.h mentok_types.h rdf/node.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c -o algebra/variablebindings.o algebra/variablebindings.c
+mentok/algebra/variablebindings.o: mentok/algebra/variablebindings.c mentok/algebra/variablebindings.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/algebra/variablebindings.o mentok/algebra/variablebindings.c
 
-engine/variablebindings_iter.o: engine/variablebindings_iter.c engine/variablebindings_iter.h mentok_types.h rdf/node.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c -o engine/variablebindings_iter.o engine/variablebindings_iter.c
+mentok/engine/variablebindings_iter.o: mentok/engine/variablebindings_iter.c mentok/engine/variablebindings_iter.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter.c
 
-engine/variablebindings_iter_sorting.o: engine/variablebindings_iter_sorting.c engine/variablebindings_iter_sorting.h mentok_types.h rdf/node.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c -o engine/variablebindings_iter_sorting.o engine/variablebindings_iter_sorting.c
+mentok/engine/variablebindings_iter_sorting.o: mentok/engine/variablebindings_iter_sorting.c mentok/engine/variablebindings_iter_sorting.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/variablebindings_iter_sorting.o mentok/engine/variablebindings_iter_sorting.c
 
-engine/materialize.o: engine/materialize.c engine/materialize.h mentok_types.h rdf/node.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c -o engine/materialize.o engine/materialize.c
+mentok/engine/materialize.o: mentok/engine/materialize.c mentok/engine/materialize.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/materialize.o mentok/engine/materialize.c
 
-engine/filter.o: engine/filter.c engine/filter.h mentok_types.h rdf/node.h misc/nodemap.h
-	$(CC) $(OBJFLAGS) -c -o engine/filter.o engine/filter.c
+mentok/engine/filter.o: mentok/engine/filter.c mentok/engine/filter.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/filter.o mentok/engine/filter.c
 
-rdf/triple.o: rdf/triple.c rdf/triple.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o rdf/triple.o rdf/triple.c
+mentok/rdf/triple.o: mentok/rdf/triple.c mentok/rdf/triple.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/rdf/triple.o mentok/rdf/triple.c
 
-store/hexastore/btree.o: store/hexastore/btree.c store/hexastore/btree.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o store/hexastore/btree.o store/hexastore/btree.c
+mentok/store/hexastore/btree.o: mentok/store/hexastore/btree.c mentok/store/hexastore/btree.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/btree.o mentok/store/hexastore/btree.c
 
-parser/parser.o: parser/parser.c parser/parser.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o parser/parser.o parser/parser.c
+mentok/parser/parser.o: mentok/parser/parser.c mentok/parser/parser.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/parser/parser.o mentok/parser/parser.c
 
-algebra/bgp.o: algebra/bgp.c algebra/bgp.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o algebra/bgp.o algebra/bgp.c
+mentok/algebra/bgp.o: mentok/algebra/bgp.c mentok/algebra/bgp.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/algebra/bgp.o mentok/algebra/bgp.c
 
-algebra/expr.o: algebra/expr.c algebra/expr.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o algebra/expr.o algebra/expr.c
+mentok/algebra/expr.o: mentok/algebra/expr.c mentok/algebra/expr.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/algebra/expr.o mentok/algebra/expr.c
 
-algebra/graphpattern.o: algebra/graphpattern.c algebra/graphpattern.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o algebra/graphpattern.o algebra/graphpattern.c
+mentok/algebra/graphpattern.o: mentok/algebra/graphpattern.c mentok/algebra/graphpattern.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/algebra/graphpattern.o mentok/algebra/graphpattern.c
 
-engine/project.o: engine/project.c engine/project.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o engine/project.o engine/project.c
+mentok/engine/project.o: mentok/engine/project.c mentok/engine/project.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/project.o mentok/engine/project.c
 
-misc/util.o: misc/util.c misc/util.h
-	$(CC) $(OBJFLAGS) -c -o misc/util.o misc/util.c
+mentok/misc/util.o: mentok/misc/util.c mentok/misc/util.h
+	$(CC) $(OBJFLAGS) -c -o mentok/misc/util.o mentok/misc/util.c
 
-misc/avl.o: misc/avl.c misc/avl.h mentok_types.h
-	$(CC) $(OBJFLAGS) -c -o misc/avl.o misc/avl.c
+mentok/misc/avl.o: mentok/misc/avl.c mentok/misc/avl.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/misc/avl.o mentok/misc/avl.c
 
-optimizer/optimizer.o: optimizer/optimizer.c optimizer/optimizer.h
-	$(CC) $(OBJFLAGS) -c -o optimizer/optimizer.o optimizer/optimizer.c
+mentok/optimizer/optimizer.o: mentok/optimizer/optimizer.c mentok/optimizer/optimizer.h
+	$(CC) $(OBJFLAGS) -c -o mentok/optimizer/optimizer.o mentok/optimizer/optimizer.c
 
-optimizer/plan.o: optimizer/plan.c optimizer/plan.h
-	$(CC) $(OBJFLAGS) -c -o optimizer/plan.o optimizer/plan.c
+mentok/optimizer/plan.o: mentok/optimizer/plan.c mentok/optimizer/plan.h
+	$(CC) $(OBJFLAGS) -c -o mentok/optimizer/plan.o mentok/optimizer/plan.c
 
 ########
 
 # SPARQLParser.c:
 # SPARQLParser.h: SPARQLParser.yy
-sparql: parser/SPARQLParser.yy parser/SPARQLScanner.ll
-	bison -o parser/SPARQLParser.c parser/SPARQLParser.yy
-	flex -o parser/SPARQLScanner.c parser/SPARQLScanner.ll
+sparql: mentok/parser/SPARQLParser.yy mentok/parser/SPARQLScanner.ll
+	bison -o mentok/parser/SPARQLParser.c mentok/parser/SPARQLParser.yy
+	flex -o mentok/parser/SPARQLScanner.c mentok/parser/SPARQLScanner.ll
 
-parser/SPARQLScanner.h: parser/SPARQLScanner.c parser/SPARQLScanner.ll
+mentok/parser/SPARQLScanner.h: mentok/parser/SPARQLScanner.c mentok/parser/SPARQLScanner.ll
 
-parser/SPARQLScanner.c: parser/SPARQLScanner.ll
+mentok/parser/SPARQLScanner.c: mentok/parser/SPARQLScanner.ll
 
-parser/SPARQLParser.o: parser/SPARQLParser.yy parser/SPARQLScanner.ll parser/SPARQLParser.h parser/SPARQLScanner.h
-	$(CC) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o parser/SPARQLParser.o parser/SPARQLParser.c
+mentok/parser/SPARQLParser.o: mentok/parser/SPARQLParser.yy mentok/parser/SPARQLScanner.ll mentok/parser/SPARQLParser.h mentok/parser/SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o mentok/parser/SPARQLParser.o mentok/parser/SPARQLParser.c
 
-parser/SPARQLScanner.o: parser/SPARQLScanner.c parser/SPARQLParser.h parser/SPARQLScanner.h
-	$(CC) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o parser/SPARQLScanner.o parser/SPARQLScanner.c
+mentok/parser/SPARQLScanner.o: mentok/parser/SPARQLScanner.c mentok/parser/SPARQLParser.h mentok/parser/SPARQLScanner.h
+	$(CC) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o mentok/parser/SPARQLScanner.o mentok/parser/SPARQLScanner.c
 
 ########
 
@@ -195,28 +195,28 @@ examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench exam
 # mpi: examples/mpi
 
 ########
-t/node.t: test/tap.o t/node.c rdf/node.h libmentok.dylib test/tap.o
+t/node.t: test/tap.o t/node.c mentok/rdf/node.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/node.t t/node.c test/tap.o
 
-t/expr.t: test/tap.o t/expr.c algebra/expr.h libmentok.dylib test/tap.o
+t/expr.t: test/tap.o t/expr.c mentok/algebra/expr.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/expr.t t/expr.c test/tap.o
 
-t/nodemap.t: test/tap.o t/nodemap.c misc/nodemap.h libmentok.dylib test/tap.o
+t/nodemap.t: test/tap.o t/nodemap.c mentok/misc/nodemap.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/nodemap.t t/nodemap.c test/tap.o
 
-t/index.t: test/tap.o t/index.c store/hexastore/index.h libmentok.dylib test/tap.o
+t/index.t: test/tap.o t/index.c mentok/store/hexastore/index.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/index.t t/index.c test/tap.o
 
-t/terminal.t: test/tap.o t/terminal.c store/hexastore/terminal.h libmentok.dylib test/tap.o
+t/terminal.t: test/tap.o t/terminal.c mentok/store/hexastore/terminal.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/terminal.t t/terminal.c test/tap.o
 
-t/vector.t: test/tap.o t/vector.c store/hexastore/vector.h libmentok.dylib test/tap.o
+t/vector.t: test/tap.o t/vector.c mentok/store/hexastore/vector.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/vector.t t/vector.c test/tap.o
 
-t/head.t: test/tap.o t/head.c store/hexastore/head.h libmentok.dylib test/tap.o
+t/head.t: test/tap.o t/head.c mentok/store/hexastore/head.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/head.t t/head.c test/tap.o
 
-t/btree.t: test/tap.o t/btree.c store/hexastore/btree.h libmentok.dylib test/tap.o
+t/btree.t: test/tap.o t/btree.c mentok/store/hexastore/btree.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/btree.t t/btree.c test/tap.o
 
 t/join.t: test/tap.o t/join.c libmentok.dylib test/tap.o
@@ -258,13 +258,13 @@ t/hash.t: test/tap.o t/hash.c libmentok.dylib test/tap.o
 t/optimizer.t: test/tap.o t/optimizer.c libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/optimizer.t t/optimizer.c test/tap.o
 
-t/store-hexastore.t: test/tap.o t/store-hexastore.c store/hexastore/hexastore.h libmentok.dylib test/tap.o
+t/store-hexastore.t: test/tap.o t/store-hexastore.c mentok/store/hexastore/hexastore.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/store-hexastore.t t/store-hexastore.c test/tap.o
 
-t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c store/tokyocabinet/tokyocabinet.h libmentok.dylib test/tap.o
+t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c mentok/store/tokyocabinet/tokyocabinet.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/store-tokyocabinet.t t/store-tokyocabinet.c test/tap.o
 
-t/tokyocabinet.t: test/tap.o t/tokyocabinet.c store/hexastore/hexastore.h libmentok.dylib test/tap.o
+t/tokyocabinet.t: test/tap.o t/tokyocabinet.c mentok/store/hexastore/hexastore.h libmentok.dylib test/tap.o
 	$(CC) -lmentok -o t/tokyocabinet.t t/tokyocabinet.c test/tap.o
 
 ########
@@ -290,11 +290,12 @@ test/tap.o: test/tap.c test/tap.h
 	$(CC) $(OBJFLAGS) -c -o test/tap.o test/tap.c
 
 distclean:
-	rm -f SPARQL parser/SPARQLParser.o parser/SPARQLScanner.o parser/SPARQLParser.c parser/SPARQLScanner.c parser/SPARQLParser.h
+	rm -f SPARQL mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/SPARQLParser.c mentok/parser/SPARQLScanner.c mentok/parser/SPARQLParser.h
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
-	rm -f *.o */*.o */*/*.o
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f stack.h position.h location.h
@@ -303,7 +304,8 @@ clean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
-	rm -f *.o */*.o */*/*.o
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f stack.h position.h location.h

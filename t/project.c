@@ -1,10 +1,10 @@
 #include <unistd.h>
-#include "mentok.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
-#include "engine/project.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
+#include "mentok/engine/project.h"
 #include "test/tap.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 void _add_data ( hx_model* hx );
 void _debug_node ( char* h, hx_node* node );

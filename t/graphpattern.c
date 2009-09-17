@@ -1,8 +1,8 @@
-#include "mentok.h"
-#include "algebra/graphpattern.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/graphpattern.h"
 #include "test/tap.h"
-#include "store/hexastore/hexastore.h"
-#include "engine/graphpattern.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/engine/graphpattern.h"
 
 void _add_data ( hx_model* hx );
 hx_bgp* _test_bgp1 ( void );

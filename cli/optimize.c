@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mentok.h"
-#include "misc/nodemap.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id );
 void help (int argc, char** argv) {

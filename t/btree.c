@@ -1,8 +1,8 @@
 #include <unistd.h>
-#include "store/hexastore/btree.h"
+#include "mentok/store/hexastore/btree.h"
 #include "test/tap.h"
 
-#include "store/hexastore/btree_internal.h"
+#include "mentok/store/hexastore/btree_internal.h"
 
 static uint32_t branching_size	= 126;
 

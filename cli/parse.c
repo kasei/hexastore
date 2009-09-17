@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <raptor.h>
 #include <inttypes.h>
-#include "mentok.h"
-#include "rdf/node.h"
-#include "parser/parser.h"
-#include "store/hexastore/hexastore.h"
-#include "store/tokyocabinet/tokyocabinet.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/node.h"
+#include "mentok/parser/parser.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/store/tokyocabinet/tokyocabinet.h"
 
 // #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 #define DIFFTIME(a,b) (b-a)

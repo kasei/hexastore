@@ -10,14 +10,14 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "mentok.h"
-#include "algebra/variablebindings.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/store.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/store.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
 	t->subject		= s;
