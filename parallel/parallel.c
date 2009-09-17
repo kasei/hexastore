@@ -58,7 +58,7 @@ void _hx_parallel_trans_message_counts ( int* num_sends, int* num_recvs ) {
 }
 
 
-hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_hexastore* hx, const char* path, char* job_id ) {
+hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_model* hx, const char* path, char* job_id ) {
 	int myrank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	
@@ -89,7 +89,7 @@ int hx_parallel_free_parallel_execution_context ( hx_parallel_execution_context*
 	return 0;
 }
 
-int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_hexastore* destination ) {
+int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_model* destination ) {
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -1057,7 +1057,7 @@ int _hx_parallel_variablebindings_iter_shared_columns( hx_triple* t, char** node
 
 hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_bgp* b, hx_nodemap** results_map ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	hx_hexastore* hx	= ctx->hx;
+	hx_model* hx	= ctx->hx;
 	int triple_count	= hx_bgp_size(b);
 	int node_count		= triple_count * 3;
 	// create node_names[] that maps node positions in the BGP (blocks of 3 nodes per triple) to the name of the variable node in that position (NULL if not a variable)
@@ -1177,7 +1177,7 @@ hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_cont
 	return results;
 }
 
-int hx_bgp_reorder_mpi ( hx_bgp* b, hx_hexastore* hx ) {
+int hx_bgp_reorder_mpi ( hx_bgp* b, hx_model* hx ) {
 	int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	int size	= hx_bgp_size( b );
 	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );

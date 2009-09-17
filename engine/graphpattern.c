@@ -5,7 +5,7 @@
 #include "engine/nestedloopjoin.h"
 
 hx_variablebindings_iter* hx_graphpattern_execute ( hx_execution_context* ctx, hx_graphpattern* pat ) {
-	hx_hexastore* hx	= ctx->hx;
+	hx_model* hx	= ctx->hx;
 	int i;
 	void** vp;
 	hx_expr* e;

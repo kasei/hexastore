@@ -60,7 +60,7 @@ int main( int argc, char** argv ) {
 	
 	char* filename	= argv[ argi++ ];
 	
-	hx_hexastore* hx;
+	hx_model* hx;
 	if (store_type == 'T') {
 		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
 		hx		= hx_new_hexastore_with_store( NULL, store );

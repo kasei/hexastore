@@ -9,20 +9,20 @@
 #include "store/hexastore/hexastore.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 
-void access_plans_test1 ( hx_hexastore* hx );
-void access_plans_test2 ( hx_hexastore* hx );
-void access_plans_test3 ( hx_hexastore* hx );
-void join_plans_test1 ( hx_hexastore* hx );
-void sorting_test1 ( hx_hexastore* hx );
-void access_cost_test1 ( hx_hexastore* hx );
-void join_cost_test1 ( hx_hexastore* hx );
-void prune_plans_test1 ( hx_hexastore* hx );
-void prune_plans_test2 ( hx_hexastore* hx );
-void optimize_bgp_test1 ( hx_hexastore* hx );
-void optimize_bgp_test2 ( hx_hexastore* hx );
-void execute_bgp_test1 ( hx_hexastore* hx );
+void access_plans_test1 ( hx_model* hx );
+void access_plans_test2 ( hx_model* hx );
+void access_plans_test3 ( hx_model* hx );
+void join_plans_test1 ( hx_model* hx );
+void sorting_test1 ( hx_model* hx );
+void access_cost_test1 ( hx_model* hx );
+void join_cost_test1 ( hx_model* hx );
+void prune_plans_test1 ( hx_model* hx );
+void prune_plans_test2 ( hx_model* hx );
+void optimize_bgp_test1 ( hx_model* hx );
+void optimize_bgp_test2 ( hx_model* hx );
+void execute_bgp_test1 ( hx_model* hx );
 
 int _strcmp (const void *a, const void *b) {
 	return strcmp( *((const char**) a), *((const char**) b) );
@@ -31,7 +31,7 @@ int _strcmp (const void *a, const void *b) {
 int main ( void ) {
 	plan_tests(64);
 
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	
 	access_plans_test1( hx );
@@ -58,7 +58,7 @@ int main ( void ) {
 	return exit_status();
 }
 
-void access_plans_test1 ( hx_hexastore* hx ) {
+void access_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -124,7 +124,7 @@ void access_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_plans_test2 ( hx_hexastore* hx ) {
+void access_plans_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -167,7 +167,7 @@ void access_plans_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_plans_test3 ( hx_hexastore* hx ) {
+void access_plans_test3 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test3\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -198,7 +198,7 @@ void access_plans_test3 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void join_plans_test1 ( hx_hexastore* hx ) {
+void join_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# join_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -250,7 +250,7 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void sorting_test1 ( hx_hexastore* hx ) {
+void sorting_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# sorting_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -305,7 +305,7 @@ void sorting_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_cost_test1 ( hx_hexastore* hx ) {
+void access_cost_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# access_cost_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -369,7 +369,7 @@ void access_cost_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void join_cost_test1 ( hx_hexastore* hx ) {
+void join_cost_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# join_cost_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -436,7 +436,7 @@ void join_cost_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void prune_plans_test1 ( hx_hexastore* hx ) {
+void prune_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# prune_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -469,7 +469,7 @@ void prune_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void prune_plans_test2 ( hx_hexastore* hx ) {
+void prune_plans_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# prune_plans_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -519,7 +519,7 @@ void prune_plans_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void optimize_bgp_test1 ( hx_hexastore* hx ) {
+void optimize_bgp_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# optimize_bgp_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -537,7 +537,7 @@ void optimize_bgp_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void optimize_bgp_test2 ( hx_hexastore* hx ) {
+void optimize_bgp_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# optimize_bgp_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -555,7 +555,7 @@ void optimize_bgp_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void execute_bgp_test1 ( hx_hexastore* hx ) {
+void execute_bgp_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# execute_bgp_test1\n" );
 	hx_nodemap* map	= hx_store_hexastore_get_nodemap(hx->store);
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -575,7 +575,7 @@ void execute_bgp_test1 ( hx_hexastore* hx ) {
 	ok1( counter == 4 );
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \

@@ -8,7 +8,7 @@ hx_variablebindings_iter* hx_bgp_execute2 ( hx_execution_context* ctx, hx_bgp* b
 }
 
 hx_variablebindings_iter* hx_bgp_execute ( hx_execution_context* ctx, hx_bgp* b ) {
-	hx_hexastore* hx	= ctx->hx;
+	hx_model* hx	= ctx->hx;
 	int size	= hx_bgp_size( b );
 	
 	hx_triple* t0	= hx_bgp_triple( b, 0 );

@@ -37,7 +37,7 @@ int main (int argc, char** argv) {
 	
 	fprintf( stderr, "reading hexastore from file...\n" );
 	hx_store* store			= hx_store_hexastore_read( NULL, inf, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
 	fprintf( stderr, "reading nodemap from file...\n" );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
@@ -51,7 +51,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "creating new hexastore...\n" );
 	
 	hx_store* sstore	= hx_new_store_hexastore_with_nodemap( NULL, smap );
-	hx_hexastore* shx	= hx_new_hexastore_with_store( NULL, sstore );
+	hx_model* shx	= hx_new_hexastore_with_store( NULL, sstore );
 	
 	hx_node* sn		= hx_new_named_variable(hx, "s");
 	hx_node* pn		= hx_new_named_variable(hx, "p");

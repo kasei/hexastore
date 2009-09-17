@@ -313,7 +313,7 @@ int hx_bgp_debug ( hx_bgp* b ) {
 	}
 }
 
-int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
+int hx_bgp_reorder ( hx_bgp* b, hx_model* hx ) {
 	int size	= hx_bgp_size( b );
 	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );
 	int i;

@@ -179,7 +179,7 @@ void bgp_vars_test2 ( void ) {
 
 void bgp_varsub_test1 ( void ) {
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_hexastore( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
@@ -224,7 +224,7 @@ void bgp_varsub_test1 ( void ) {
 
 void bgp_varsub_test2 ( void ) {
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_hexastore( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );

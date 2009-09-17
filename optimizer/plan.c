@@ -151,7 +151,7 @@ int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_ite
 }
 
 int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p, int64_t* accumulator, int level ) {
-	hx_hexastore* hx	= ctx->hx;
+	hx_model* hx	= ctx->hx;
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t	= p->data.access.triple;
@@ -236,7 +236,7 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 }
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
-	hx_hexastore* hx	= ctx->hx;
+	hx_model* hx	= ctx->hx;
 	
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t		= plan->data.access.triple;

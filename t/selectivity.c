@@ -5,15 +5,15 @@
 #include "parser/parser.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 void _debug_node ( char* h, hx_node* node );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 void test_small_iter ( void );
 
 int main ( void ) {
 	plan_tests(10);
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_hexastore( NULL );
 	_add_data( hx );
 	
 	hx_node* x			= hx_new_named_variable( hx, "x" );
@@ -80,7 +80,7 @@ int main ( void ) {
 	return exit_status();
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \

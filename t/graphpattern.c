@@ -4,7 +4,7 @@
 #include "store/hexastore/hexastore.h"
 #include "engine/graphpattern.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 hx_bgp* _test_bgp1 ( void );
 hx_bgp* _test_bgp2 ( void );
 hx_bgp* _test_bgp3 ( void );
@@ -61,7 +61,7 @@ int main ( void ) {
 void eval_test1 ( void ) {
 	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
-	hx_hexastore* hx			= hx_new_hexastore( NULL );
+	hx_model* hx			= hx_new_hexastore( NULL );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	hx_nodemap* map				= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
@@ -99,7 +99,7 @@ void eval_test1 ( void ) {
 void eval_test2 ( void ) {
 	fprintf( stdout, "# eval test 2\n" );
 	hx_expr_debug	= 1;
-	hx_hexastore* hx		= hx_new_hexastore( NULL );
+	hx_model* hx		= hx_new_hexastore( NULL );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
@@ -272,7 +272,7 @@ void variable_test2 ( void ) {
 void gp_varsub_test1 ( void ) {
 	fprintf( stdout, "# variable substitution test\n" );
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_hexastore( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id l4_id		= hx_nodemap_add_node( map, l4 );
 		
@@ -320,7 +320,7 @@ hx_bgp* _test_bgp3 ( void ) {
 	return b;
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	hx_add_triple( hx, r2, p2, r1 );
 	hx_add_triple( hx, r1, p1, l1 );
 	hx_add_triple( hx, r1, p2, l2 );

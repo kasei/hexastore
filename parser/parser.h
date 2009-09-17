@@ -30,7 +30,7 @@ typedef struct {
 	struct timeval tv;
 	int count;
 	uint64_t total;
-	hx_hexastore* hx;
+	hx_model* hx;
 	hx_triple* triples;
 	hx_parser_logger logger;
 	struct avl_table* bnode_map;
@@ -40,8 +40,8 @@ typedef struct {
 hx_parser* hx_new_parser ( void );
 int hx_parser_set_logger( hx_parser* p, hx_parser_logger l, void* thunk );
 
-uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
-int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* string, const char* base, char* parser_name );
+uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_model* hx, const char* filename );
+int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_model* hx, const char* string, const char* base, char* parser_name );
 int hx_free_parser ( hx_parser* p );
 
 #ifdef __cplusplus

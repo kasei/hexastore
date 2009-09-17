@@ -70,7 +70,7 @@ int main (int argc, char** argv) {
 		index_string	= "spo,sop,pso,pos,osp,ops";
 	}
 	
-	hx_hexastore* hx;
+	hx_model* hx;
 	if (type == 'T') {
 		hx_store* store	= hx_new_store_tokyocabinet( NULL, output_location );
 		hx				= hx_new_hexastore_with_store( NULL, store );

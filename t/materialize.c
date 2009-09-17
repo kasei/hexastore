@@ -6,9 +6,9 @@
 #include "store/hexastore/hexastore.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* map );
 
 hx_node* p1;
@@ -48,7 +48,7 @@ int main ( void ) {
 
 void materialize_iter_test ( void ) {
 	fprintf( stdout, "# materialize_iter_test\n" );
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
@@ -68,7 +68,7 @@ void materialize_iter_test ( void ) {
 
 void materialize_reset_test ( void ) {
 	fprintf( stdout, "# materialize_reset_test\n" );
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_hexastore( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
@@ -233,7 +233,7 @@ void _test_iter_expected_values ( hx_variablebindings_iter* iter, hx_nodemap* ma
 	ok1( hx_variablebindings_iter_finished( iter ) );
 }
 
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
 	hx_node* v1	= hx_new_node_named_variable( -1, "subj" );
 	hx_node* v2	= hx_new_node_named_variable( -2, "pred" );
 	hx_node* v3	= hx_new_node_named_variable( -3, "obj" );
@@ -255,7 +255,7 @@ hx_variablebindings* _new_vb ( int size, char** names, hx_node_id* _nodes ) {
 	return hx_new_variablebindings ( size, names, nodes );
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	hx_add_triple( hx, r1, p1, r2 );
 	hx_add_triple( hx, r2, p1, r1 );
 	hx_add_triple( hx, r2, p2, l2 );

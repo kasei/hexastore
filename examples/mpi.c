@@ -18,7 +18,7 @@
 
 int DEBUG_NODE	= -1;
 
-hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, const char* filename );
+hx_model* distribute_triples_from_file ( hx_model* hx, const char* filename );
 
 int directory_exists ( const char* dir ) {
 	int exists	= 0;
@@ -81,7 +81,7 @@ int main ( int argc, char** argv ) {
 	}
 
 	hx_store* store			= hx_new_store_hexastore_with_indexes( NULL, "spo,pso,ops" );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
 	
 	const char* data_filename	= argv[1];
 	const char* query_filename	= argv[2];

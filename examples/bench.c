@@ -18,7 +18,7 @@
 #include "store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b );
+double bench ( hx_model* hx, hx_bgp* b );
 
 static int verbose		= 0;
 
@@ -33,7 +33,7 @@ static hx_node* degFrom;
 static hx_node* gradstudent;
 static hx_node* member;
 
-double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
+double average ( hx_model* hx, hx_bgp* b, int count ) {
 	double total	= 0.0;
 	int i;
 	for (i = 0; i < count; i++) {
@@ -42,7 +42,7 @@ double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
 	return (total / (double) count);
 }
 
-double bench ( hx_hexastore* hx, hx_bgp* b ) {
+double bench ( hx_model* hx, hx_bgp* b ) {
 	clock_t st_time	= clock();
 	
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -135,7 +135,7 @@ int main ( int argc, char** argv ) {
 	
 
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
 	if (verbose) {
 		fprintf( stderr, "Finished loading hexastore...\n" );
 	}

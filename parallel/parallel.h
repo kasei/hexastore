@@ -34,11 +34,11 @@ typedef enum {
 
 typedef struct {
 	void* world;
-	hx_hexastore* hx;
+	hx_model* hx;
 	int64_t nestedloopjoin_penalty;
 	int64_t hashjoin_penalty;
 	int64_t unsorted_mergejoin_penalty;
-	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_hexastore*, void* thunk );
+	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_model*, void* thunk );
 	hx_node* (*lookup_node)( void*, hx_node_id );
 	void* bgp_exec_func_thunk;
 	
@@ -50,13 +50,13 @@ typedef struct {
 	hx_nodemap** local_nodemap;
 } hx_parallel_execution_context;
 
-hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_hexastore* hx, const char* path, char* job_id );
+hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, hx_model* hx, const char* path, char* job_id );
 int hx_parallel_free_parallel_execution_context ( hx_parallel_execution_context* ctx );
-int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_hexastore* destination );
+int hx_parallel_distribute_triples_from_file ( hx_parallel_execution_context* ctx, const char* file, hx_model* destination );
 hx_node_id* hx_parallel_lookup_node_ids ( hx_parallel_execution_context* ctx, int count, hx_node** n );
 hx_variablebindings_iter* hx_parallel_distribute_variablebindings ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, int shared_columns, char** shared_names, hx_nodemap* source, hx_nodemap* destination, hx_join_side side );
 int hx_parallel_collect_variablebindings ( int rank, hx_variablebindings_iter* iter );
-hx_variablebindings_iter* hx_parallel_new_rendezvousjoin_bgp ( hx_hexastore* hx, hx_bgp* b );
+hx_variablebindings_iter* hx_parallel_new_rendezvousjoin_bgp ( hx_model* hx, hx_bgp* b );
 char** hx_parallel_broadcast_variables(hx_parallel_execution_context* ctx, hx_node **nodes, size_t len, int* maxiv);
 hx_variablebindings_iter* hx_parallel_rendezvousjoin( hx_parallel_execution_context* ctx, hx_bgp* b, hx_nodemap** results_map );
 
@@ -70,7 +70,7 @@ hx_node_id hx_nodemap_add_node_mpi ( hx_nodemap* m, hx_node* n );
 int hx_parallel_nodemap_get_process_id ( hx_node_id id );
 
 int hx_parallel_get_nodes ( hx_parallel_execution_context* ctx, hx_variablebindings_iter* iter, hx_variablebindings_nodes*** varbinds );
-int hx_bgp_reorder_mpi ( hx_bgp* b, hx_hexastore* hx );
+int hx_bgp_reorder_mpi ( hx_bgp* b, hx_model* hx );
 
 #ifdef __cplusplus
 }

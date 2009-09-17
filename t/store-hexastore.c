@@ -201,7 +201,7 @@ void orderings_test1 ( void ) {
 void orderings_test2 ( void ) {
 	fprintf( stdout, "# orderings_test2\n" );
 	hx_store* store	= hx_new_store_hexastore_with_indexes( NULL, "pso,pos" );
-	hx_hexastore* hx	= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx	= hx_new_hexastore_with_store( NULL, store );
 	
 	hx_node* s		= hx_new_node_resource("s");
 	hx_node* s2		= hx_new_node_resource("s2");

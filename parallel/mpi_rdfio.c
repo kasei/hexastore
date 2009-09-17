@@ -26,7 +26,7 @@ hx_node* _mpi_rdfio_to_hx_node_p(char* ntnode);
 // #define MPI_RDFIO_DEBUG(s, ...) fprintf(stderr, "%s:%u: "s"", __FILE__, __LINE__, __VA_ARGS__)
 #define MPI_RDFIO_DEBUG(s, ...)
 
-int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_hexastore **store, MPI_Comm comm) {
+int mpi_rdfio_readnt(char *filename, char *mapfilename, size_t bufsize, hx_model **store, MPI_Comm comm) {
 	MPI_File file;
 	MPI_Offset filesize;
 	MPI_Info info;

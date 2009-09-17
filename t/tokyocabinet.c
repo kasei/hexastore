@@ -6,9 +6,9 @@
 #include "store/tokyocabinet/tokyocabinet.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 void _debug_node ( char* h, hx_node* node );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 void test_small_iter ( void );
 
@@ -25,7 +25,7 @@ int main ( void ) {
 	unlink("/tmp/id2node.tcb");
 	unlink("/tmp/node2id.tcb");
 	hx_store* store		= hx_new_store_tokyocabinet( NULL, "/tmp" );
-	hx_hexastore* hx	= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx	= hx_new_hexastore_with_store( NULL, store );
 	_add_data( hx );
 	
 	hx_store_tokyocabinet* tc	= (hx_store_tokyocabinet*) store->ptr;
@@ -94,7 +94,7 @@ int main ( void ) {
 	return exit_status();
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \

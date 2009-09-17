@@ -5,8 +5,8 @@
 #include "rdf/node.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+void _add_data ( hx_model* hx );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 hx_node* p1;
 hx_node* p2;

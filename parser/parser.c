@@ -51,7 +51,7 @@ int hx_parser_set_logger( hx_parser* p, hx_parser_logger l, void* thunk ) {
 	return 0;
 }
 
-uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* filename ) {
+uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_model* hx, const char* filename ) {
 	raptor_init();
 	unsigned char* uri_string	= raptor_uri_filename_to_uri_string( filename );
 	raptor_uri* uri				= raptor_new_uri(uri_string);
@@ -81,7 +81,7 @@ uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* 
 	return parser->total;
 }
 
-int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* string, const char* base, char* parser_name ) {
+int hx_parser_parse_string_into_hexastore ( hx_parser* parser, hx_model* hx, const char* string, const char* base, char* parser_name ) {
 	raptor_init();
 	raptor_parser* rdf_parser	= raptor_new_parser( parser_name );
 	raptor_uri* base_uri		= raptor_new_uri((const unsigned char*) base);

@@ -20,7 +20,7 @@
 #include "store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b );
+double bench ( hx_model* hx, hx_bgp* b );
 
 static hx_node* x;
 static hx_node* y;
@@ -48,7 +48,7 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_hexastore_with_store( NULL, store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
 	x			= hx_new_named_variable( hx, "x" );

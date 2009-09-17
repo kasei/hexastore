@@ -29,11 +29,11 @@ int _varmap_id2name_cmp ( const void* a, const void* b, void* param ) {
 	return (_a->id - _b->id);
 }
 
-hx_node* node_for_string ( char* string, hx_hexastore* hx );
-hx_node_id node_id_for_string ( char* string, hx_hexastore* hx );
-hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t* varmap );
-void print_triple ( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count );
-void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int count );
+hx_node* node_for_string ( char* string, hx_model* hx );
+hx_node_id node_id_for_string ( char* string, hx_model* hx );
+hx_node* node_for_string_with_varmap ( char* string, hx_model* hx, varmap_t* varmap );
+void print_triple ( hx_model* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count );
+void print_variablebindings ( hx_model* hx, hx_variablebindings* b, int count );
 char* variable_name ( varmap_t* varmap, int id );
 
 void help (int argc, char** argv) {
@@ -83,7 +83,7 @@ int main (int argc, char** argv) {
 		arg		= argv[i++];
 	
 	
-	hx_hexastore* hx;
+	hx_model* hx;
 	if (store_type == 'T') {
 		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
 		hx		= hx_new_hexastore_with_store( NULL, store );
@@ -349,7 +349,7 @@ int main (int argc, char** argv) {
 	return 0;
 }
 
-void print_triple ( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
+void print_triple ( hx_model* hx, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
 // 	fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
 	hx_node* sn	= hx_store_get_node( hx->store, s );
 	hx_node* pn	= hx_store_get_node( hx->store, p );
@@ -367,7 +367,7 @@ void print_triple ( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, 
 	free( so );
 }
 
-void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int count ) {
+void print_variablebindings ( hx_model* hx, hx_variablebindings* b, int count ) {
 	char* string;
 	hx_store_variablebindings_string( hx->store, b, &string );
 	if (count > 0) {
@@ -377,7 +377,7 @@ void print_variablebindings ( hx_hexastore* hx, hx_variablebindings* b, int coun
 	free( string );
 }
 
-hx_node_id node_id_for_string ( char* string, hx_hexastore* hx ) {
+hx_node_id node_id_for_string ( char* string, hx_model* hx ) {
 	static int var_id	= -100;
 	hx_node_id id;
 	hx_node* node;
@@ -398,7 +398,7 @@ hx_node_id node_id_for_string ( char* string, hx_hexastore* hx ) {
 	return id;
 }
 
-hx_node* node_for_string ( char* string, hx_hexastore* hx ) {
+hx_node* node_for_string ( char* string, hx_model* hx ) {
 	if (strcmp( string, "-" ) == 0) {
 		return hx_new_variable( hx );
 	} else if (strcmp( string, "0" ) == 0) {
@@ -410,7 +410,7 @@ hx_node* node_for_string ( char* string, hx_hexastore* hx ) {
 	}
 }
 
-hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t* varmap ) {
+hx_node* node_for_string_with_varmap ( char* string, hx_model* hx, varmap_t* varmap ) {
 	if (strcmp( string, "-" ) == 0) {
 		return hx_new_variable( hx );
 	} else if (string[0] == '?') {

@@ -69,7 +69,7 @@ typedef struct
   drizzle_con_st con;
   drizzle_result_st result;
   drizzle_column_st column;
-  hx_hexastore* db;
+  hx_model* db;
   bool send_columns;
   uint8_t verbose;
   uint64_t rows;

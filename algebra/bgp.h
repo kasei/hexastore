@@ -46,7 +46,7 @@ int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int siz
 int hx_bgp_size ( hx_bgp* b );
 int hx_bgp_variables ( hx_bgp* b, hx_node*** vars );
 hx_triple* hx_bgp_triple ( hx_bgp* b, int index );
-int hx_bgp_reorder ( hx_bgp* , hx_hexastore* );
+int hx_bgp_reorder ( hx_bgp* , hx_model* );
 
 hx_bgp* hx_bgp_substitute_variables ( hx_bgp* orig, hx_variablebindings* b, hx_store* store );
 
