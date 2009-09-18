@@ -35,8 +35,12 @@ hx_nodemap* hx_new_nodemap( void ) {
 }
 
 int hx_free_nodemap ( hx_nodemap* m ) {
-	avl_destroy( m->id2node, NULL );
-	avl_destroy( m->node2id, _hx_free_node_item );
+	if (m->id2node != NULL) {
+		avl_destroy( m->id2node, NULL );
+	}
+	if (m->node2id != NULL) {
+		avl_destroy( m->node2id, _hx_free_node_item );
+	}
 	free( m );
 	return 0;
 }
