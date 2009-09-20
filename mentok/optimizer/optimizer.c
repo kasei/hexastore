@@ -145,7 +145,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	
 	for (i = 2; i <= bgpsize; i++) {
 // 		fprintf( stderr, "---------------------------------------------------------------------\n" );
-// 		fprintf( stderr, "*** GENERATING OPTIMAL PLANS OF SIZE %d (max %d)\n", i, bgpsize );
+// 		fprintf( stderr, "*** GENERATING OPTIMAL PLANS OF SIZE %d (out of %d)\n", i, bgpsize );
 		hx_container_t* si	= _hx_optimizer_plan_subsets_of_size( ctx, bgpsize, i );
 		int sisize			= hx_container_size(si);
 		hx_container_t* oi	= _hx_optimizer_plan_subsets( ctx, i );
@@ -247,8 +247,8 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 			free(s_key);
 		}
 		
-		for (i = 0; i < oisize; i++) {
-			hx_container_t* oindexes	= hx_container_item( oi, i );
+		for (j = 0; j < oisize; j++) {
+			hx_container_t* oindexes	= hx_container_item( oi, j );
 			hx_free_container(oindexes);
 		}
 		hx_free_container( oi );

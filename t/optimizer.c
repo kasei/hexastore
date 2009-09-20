@@ -22,6 +22,7 @@ void prune_plans_test1 ( hx_model* hx );
 void prune_plans_test2 ( hx_model* hx );
 void optimize_bgp_test1 ( hx_model* hx );
 void optimize_bgp_test2 ( hx_model* hx );
+void optimize_bgp_test3 ( hx_model* hx );
 void execute_bgp_test1 ( hx_model* hx );
 
 int _strcmp (const void *a, const void *b) {
@@ -29,7 +30,7 @@ int _strcmp (const void *a, const void *b) {
 }
 
 int main ( void ) {
-	plan_tests(64);
+	plan_tests(65);
 
 	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
@@ -51,6 +52,7 @@ int main ( void ) {
 	
 	optimize_bgp_test1( hx );
 	optimize_bgp_test2( hx );
+	optimize_bgp_test3( hx );
 	
 	execute_bgp_test1( hx );
 	
@@ -547,6 +549,35 @@ void optimize_bgp_test2 ( hx_model* hx ) {
 	char* string;
 	hx_optimizer_plan_string( plan, &string );
 	ok( strcmp(string, "merge-join(merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?z}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?y}))") == 0, "expected best 3-bgp plan" );
+// 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
+	free(string);
+	
+	hx_free_optimizer_plan(plan);
+	hx_free_bgp( b );
+	hx_free_execution_context(ctx);
+}
+
+void optimize_bgp_test3 ( hx_model* hx ) {
+	fprintf( stdout, "# optimize_bgp_test3\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_bgp* b	= hx_bgp_parse_string("PREFIX : <http://www.w3.org/2001/sw/DataAccess/tests/result-set#>\
+	{\
+		?x1 a :ResultSet ;\
+			:solution ?s1 .\
+		?s1 :binding ?b1 .\
+		?b1 :value ?value1 ;\
+			:variable ?variable1 .\
+		?x2 a :ResultSet ;\
+			:solution ?s2 .\
+		?s2 :binding ?b2 .\
+	}");
+//	hx_bgp_debug(b);
+	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
+	
+	char* string;
+	hx_optimizer_plan_string( plan, &string );
+	ok( strcmp(string, "hash-join(hash-join(hash-join(merge-join(PSO({?x2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s2}), POS({?x2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?s2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b2})), PSO({?s1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b1})), hash-join(hash-join(merge-join(PSO({?x1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s1}), POS({?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable> ?variable1})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#value> ?value1})))") == 0, "expected best 8-bgp plan" );
 // 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
 	
