@@ -12,7 +12,7 @@ CFLAGS		= -std=gnu99 -pedantic $(INCPATH) $(LIBPATH) -ggdb $(CDEFINES)
 OBJFLAGS	= -fPIC -shared
 CC			= gcc $(CFLAGS)
 
-LIBS	=	-ltokyocabinet -lpthread -lraptor
+LIBS		=	-ltokyocabinet -lpthread -lraptor
 
 HEXASTORE_OBJECTS	= mentok/store/hexastore/hexastore.o mentok/store/hexastore/index.o mentok/store/hexastore/terminal.o mentok/store/hexastore/vector.o mentok/store/hexastore/head.o mentok/store/hexastore/btree.o
 TCSTORE_OBJECTS		= mentok/store/tokyocabinet/tokyocabinet.o mentok/store/tokyocabinet/tcindex.o
@@ -24,63 +24,36 @@ ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
 OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
 OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
-
-# INSTDIR			= /Users/samofool/data/prog/git/hexastore
+LINKOBJS			= libmentok.dylib
+LINKOBJSFLAGS		= -lmentok
 INSTDIR				= /usr/local
+
+################################################################################
 
 default: parse print optimize tests examples parse_query
 
 all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
 
-install: libmentok.dylib $(PUBLIC_HEADERS)
-	mkdir -p $(INSTDIR)/include/mentok
-	mkdir -p $(INSTDIR)/include/mentok/algebra
-	mkdir -p $(INSTDIR)/include/mentok/engine
-	mkdir -p $(INSTDIR)/include/mentok/rdf
-	mkdir -p $(INSTDIR)/include/mentok/misc
-	mkdir -p $(INSTDIR)/include/mentok/parser
-	mkdir -p $(INSTDIR)/include/mentok/store
-	mkdir -p $(INSTDIR)/include/mentok/store/hexastore
-	mkdir -p $(INSTDIR)/include/mentok/store/tokyocabinet
-	cp mentok/algebra/*.h $(INSTDIR)/include/mentok/algebra/
-	cp mentok/engine/*.h $(INSTDIR)/include/mentok/engine/
-	cp mentok/rdf/*.h $(INSTDIR)/include/mentok/rdf/
-	cp mentok/parser/*.h $(INSTDIR)/include/mentok/parser/
-	cp mentok/store/store.h $(INSTDIR)/include/mentok/store/
-	cp mentok/misc/*.h $(INSTDIR)/include/mentok/misc/
-	cp mentok/store/hexastore/*.h $(INSTDIR)/include/mentok/store/hexastore/
-	cp mentok/store/tokyocabinet/*.h $(INSTDIR)/include/mentok/store/tokyocabinet/
-	cp mentok/*.h $(INSTDIR)/include/mentok/
-	cp libmentok.dylib $(INSTDIR)/lib/
+server: cli/server.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -ldrizzle -o server cli/server.c
 
+assign_ids: cli/assign_ids.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -ltokyocabinet -o assign_ids cli/assign_ids.c
 
-###
+parse: cli/parse.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o parse cli/parse.c
 
-libmentok.dylib: $(OBJECTS)
-	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
+optimize: cli/optimize.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o optimize cli/optimize.c
 
-###
+print: cli/print.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o print cli/print.c
 
-server: cli/server.c libmentok.dylib
-	$(CC) -lmentok -ldrizzle -o server cli/server.c
+parse_query: cli/parse_query.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o parse_query cli/parse_query.c
 
-assign_ids: cli/assign_ids.c libmentok.dylib
-	$(CC) -lmentok -ltokyocabinet -o assign_ids cli/assign_ids.c
-
-parse: cli/parse.c libmentok.dylib
-	$(CC) -lmentok -o parse cli/parse.c
-
-optimize: cli/optimize.c libmentok.dylib
-	$(CC) -lmentok -o optimize cli/optimize.c
-
-print: cli/print.c libmentok.dylib
-	$(CC) -lmentok -o print cli/print.c
-
-parse_query: cli/parse_query.c libmentok.dylib
-	$(CC) -lmentok -o parse_query cli/parse_query.c
-
-dumpmap: cli/dumpmap.c libmentok.dylib
-	$(CC) -lmentok -o dumpmap cli/dumpmap.c
+dumpmap: cli/dumpmap.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o dumpmap cli/dumpmap.c
 
 ###
 
@@ -210,102 +183,102 @@ tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t 
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
-# mpi: examples/mpi
-
 ########
-t/node.t: test/tap.o t/node.c mentok/rdf/node.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/node.t t/node.c test/tap.o
+t/node.t: test/tap.o t/node.c mentok/rdf/node.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/node.t t/node.c test/tap.o
 
-t/expr.t: test/tap.o t/expr.c mentok/algebra/expr.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/expr.t t/expr.c test/tap.o
+t/expr.t: test/tap.o t/expr.c mentok/algebra/expr.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/expr.t t/expr.c test/tap.o
 
-t/nodemap.t: test/tap.o t/nodemap.c mentok/misc/nodemap.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/nodemap.t t/nodemap.c test/tap.o
+t/nodemap.t: test/tap.o t/nodemap.c mentok/misc/nodemap.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/nodemap.t t/nodemap.c test/tap.o
 
-t/index.t: test/tap.o t/index.c mentok/store/hexastore/index.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/index.t t/index.c test/tap.o
+t/index.t: test/tap.o t/index.c mentok/store/hexastore/index.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/index.t t/index.c test/tap.o
 
-t/terminal.t: test/tap.o t/terminal.c mentok/store/hexastore/terminal.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/terminal.t t/terminal.c test/tap.o
+t/terminal.t: test/tap.o t/terminal.c mentok/store/hexastore/terminal.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/terminal.t t/terminal.c test/tap.o
 
-t/vector.t: test/tap.o t/vector.c mentok/store/hexastore/vector.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/vector.t t/vector.c test/tap.o
+t/vector.t: test/tap.o t/vector.c mentok/store/hexastore/vector.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/vector.t t/vector.c test/tap.o
 
-t/head.t: test/tap.o t/head.c mentok/store/hexastore/head.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/head.t t/head.c test/tap.o
+t/head.t: test/tap.o t/head.c mentok/store/hexastore/head.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/head.t t/head.c test/tap.o
 
-t/btree.t: test/tap.o t/btree.c mentok/store/hexastore/btree.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/btree.t t/btree.c test/tap.o
+t/btree.t: test/tap.o t/btree.c mentok/store/hexastore/btree.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/btree.t t/btree.c test/tap.o
 
-t/join.t: test/tap.o t/join.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/join.t t/join.c test/tap.o
+t/join.t: test/tap.o t/join.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/join.t t/join.c test/tap.o
 
-t/iter.t: test/tap.o t/iter.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/iter.t t/iter.c test/tap.o
+t/iter.t: test/tap.o t/iter.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/iter.t t/iter.c test/tap.o
 
-t/bgp.t: test/tap.o t/bgp.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/bgp.t t/bgp.c test/tap.o
+t/bgp.t: test/tap.o t/bgp.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/bgp.t t/bgp.c test/tap.o
 
-t/filter.t: test/tap.o t/filter.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/filter.t t/filter.c test/tap.o
+t/filter.t: test/tap.o t/filter.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/filter.t t/filter.c test/tap.o
 
-t/materialize.t: test/tap.o t/materialize.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/materialize.t t/materialize.c test/tap.o
+t/materialize.t: test/tap.o t/materialize.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/materialize.t t/materialize.c test/tap.o
 
-t/selectivity.t: test/tap.o t/selectivity.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/selectivity.t t/selectivity.c test/tap.o
+t/selectivity.t: test/tap.o t/selectivity.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/selectivity.t t/selectivity.c test/tap.o
 
-t/graphpattern.t: test/tap.o t/graphpattern.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/graphpattern.t t/graphpattern.c test/tap.o
+t/graphpattern.t: test/tap.o t/graphpattern.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/graphpattern.t t/graphpattern.c test/tap.o
 
-t/parser.t: test/tap.o t/parser.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/parser.t t/parser.c test/tap.o
+t/parser.t: test/tap.o t/parser.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/parser.t t/parser.c test/tap.o
 
-t/variablebindings.t: test/tap.o t/variablebindings.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/variablebindings.t t/variablebindings.c test/tap.o
+t/variablebindings.t: test/tap.o t/variablebindings.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/variablebindings.t t/variablebindings.c test/tap.o
 
-t/project.t: test/tap.o t/project.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/project.t t/project.c test/tap.o
+t/project.t: test/tap.o t/project.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/project.t t/project.c test/tap.o
 
-t/triple.t: test/tap.o t/triple.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/triple.t t/triple.c test/tap.o
+t/triple.t: test/tap.o t/triple.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/triple.t t/triple.c test/tap.o
 
-t/hash.t: test/tap.o t/hash.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/hash.t t/hash.c test/tap.o
+t/hash.t: test/tap.o t/hash.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/hash.t t/hash.c test/tap.o
 
-t/optimizer.t: test/tap.o t/optimizer.c libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/optimizer.t t/optimizer.c test/tap.o
+t/optimizer.t: test/tap.o t/optimizer.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/optimizer.t t/optimizer.c test/tap.o
 
-t/store-hexastore.t: test/tap.o t/store-hexastore.c mentok/store/hexastore/hexastore.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/store-hexastore.t t/store-hexastore.c test/tap.o
+t/store-hexastore.t: test/tap.o t/store-hexastore.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/store-hexastore.t t/store-hexastore.c test/tap.o
 
-t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c mentok/store/tokyocabinet/tokyocabinet.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/store-tokyocabinet.t t/store-tokyocabinet.c test/tap.o
+t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c mentok/store/tokyocabinet/tokyocabinet.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/store-tokyocabinet.t t/store-tokyocabinet.c test/tap.o
 
-t/tokyocabinet.t: test/tap.o t/tokyocabinet.c mentok/store/hexastore/hexastore.h libmentok.dylib test/tap.o
-	$(CC) -lmentok -o t/tokyocabinet.t t/tokyocabinet.c test/tap.o
+t/tokyocabinet.t: test/tap.o t/tokyocabinet.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/tokyocabinet.t t/tokyocabinet.c test/tap.o
 
 ########
 
-examples/lubm_q4: examples/lubm_q4.c libmentok.dylib
-	$(CC) -lmentok -o examples/lubm_q4 examples/lubm_q4.c
+examples/lubm_q4: examples/lubm_q4.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o examples/lubm_q4 examples/lubm_q4.c
 
-examples/lubm_q8: examples/lubm_q8.c libmentok.dylib
-	$(CC) -lmentok -o examples/lubm_q8 examples/lubm_q8.c
+examples/lubm_q8: examples/lubm_q8.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o examples/lubm_q8 examples/lubm_q8.c
 
-examples/lubm_q9: examples/lubm_q9.c libmentok.dylib
-	$(CC) -lmentok -o examples/lubm_q9 examples/lubm_q9.c
+examples/lubm_q9: examples/lubm_q9.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o examples/lubm_q9 examples/lubm_q9.c
 
-examples/bench: examples/bench.c libmentok.dylib
-	$(CC) -lmentok -o examples/bench examples/bench.c
+examples/bench: examples/bench.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o examples/bench examples/bench.c
 
-examples/knows: examples/knows.c libmentok.dylib
-	$(CC) -lmentok -o examples/knows examples/knows.c
+examples/knows: examples/knows.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o examples/knows examples/knows.c
 
 ########
 
 test/tap.o: test/tap.c test/tap.h
 	$(CC) $(OBJFLAGS) -c -o test/tap.o test/tap.c
+
+########
 
 distclean:
 	rm -f SPARQL mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/SPARQLParser.c mentok/parser/SPARQLScanner.c mentok/parser/SPARQLParser.h
@@ -327,3 +300,30 @@ clean:
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
 	rm -f stack.h position.h location.h
+
+########
+
+install: libmentok.dylib $(PUBLIC_HEADERS)
+	mkdir -p $(INSTDIR)/include/mentok
+	mkdir -p $(INSTDIR)/include/mentok/algebra
+	mkdir -p $(INSTDIR)/include/mentok/engine
+	mkdir -p $(INSTDIR)/include/mentok/rdf
+	mkdir -p $(INSTDIR)/include/mentok/misc
+	mkdir -p $(INSTDIR)/include/mentok/parser
+	mkdir -p $(INSTDIR)/include/mentok/store
+	mkdir -p $(INSTDIR)/include/mentok/store/hexastore
+	mkdir -p $(INSTDIR)/include/mentok/store/tokyocabinet
+	cp mentok/algebra/*.h $(INSTDIR)/include/mentok/algebra/
+	cp mentok/engine/*.h $(INSTDIR)/include/mentok/engine/
+	cp mentok/rdf/*.h $(INSTDIR)/include/mentok/rdf/
+	cp mentok/parser/*.h $(INSTDIR)/include/mentok/parser/
+	cp mentok/store/store.h $(INSTDIR)/include/mentok/store/
+	cp mentok/misc/*.h $(INSTDIR)/include/mentok/misc/
+	cp mentok/store/hexastore/*.h $(INSTDIR)/include/mentok/store/hexastore/
+	cp mentok/store/tokyocabinet/*.h $(INSTDIR)/include/mentok/store/tokyocabinet/
+	cp mentok/*.h $(INSTDIR)/include/mentok/
+	cp libmentok.dylib $(INSTDIR)/lib/
+
+libmentok.dylib: $(OBJECTS)
+	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
+
