@@ -111,7 +111,8 @@ void _hx_optimizer_debug_plans ( hx_execution_context* ctx, char* message, hx_co
 	}
 	for (i = 0; i < psize; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 		char* string;
 		hx_optimizer_plan_string( plan, &string );
 		fprintf( stderr, "- (plan %d, cost %lld) %s\n", i, cost, string );
@@ -424,7 +425,8 @@ hx_container_t* hx_optimizer_prune_plans ( hx_execution_context* ctx, hx_contain
 		} else {
 			char* string;
 			hx_optimizer_plan_string( p, &string );
-			int64_t cost	= hx_optimizer_plan_cost( ctx, p );
+			hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, p );
+			int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 // 			fprintf( stderr, "%d: (cost %lld) %s\n", i, cost, string );
 			
 			int idx	= sortarray_size++;

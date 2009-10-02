@@ -6,6 +6,21 @@
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
+hx_optimizer_plan_cost_t* hx_new_optimizer_plan_cost ( int64_t cost ) {
+	hx_optimizer_plan_cost_t* c	= (hx_optimizer_plan_cost_t*) calloc( 1, sizeof(hx_optimizer_plan_cost_t) );
+	c->cost	= cost;
+	return c;
+}
+
+int hx_free_optimizer_plan_cost ( hx_optimizer_plan_cost_t* c ) {
+	free(c);
+	return 0;
+}
+
+int64_t hx_optimizer_plan_cost_value ( hx_execution_context* ctx, hx_optimizer_plan_cost_t* c ) {
+	return c->cost;
+}
+
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order ) {
 	int order_count			= hx_container_size( order );
 	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
@@ -191,10 +206,10 @@ int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* 
 	}
 }
 
-int64_t hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+hx_optimizer_plan_cost_t* hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
 	int64_t accumulator	= 0;
 	int64_t cost	= _hx_optimizer_plan_cost( ctx, p, &accumulator, 1 );
-	return (cost + accumulator);
+	return hx_new_optimizer_plan_cost( cost + accumulator );
 }
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p ) {

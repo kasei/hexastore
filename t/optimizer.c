@@ -331,7 +331,10 @@ void access_cost_test1 ( hx_model* hx ) {
 	
 	for (i = 0; i < size1; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans1, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
+
 // 		fprintf( stderr, "plan1 %d: %p\n", i, (void*) plan );
 // 		char* string;
 // 		hx_optimizer_plan_string( plan, &string );
@@ -345,7 +348,8 @@ void access_cost_test1 ( hx_model* hx ) {
 	
 	for (i = 0; i < size1; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans2, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 // 		fprintf( stderr, "plan2 %d: %p\n", i, (void*) plan );
 // 		char* string;
 // 		hx_optimizer_plan_string( plan, &string );
@@ -403,7 +407,8 @@ void join_cost_test1 ( hx_model* hx ) {
 	int size				= hx_container_size(jplans);
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( jplans, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 		char* string;
 		hx_optimizer_plan_string( plan, &string );
 // 		fprintf( stderr, "join plan %d cost %lld: %s\n", i, cost, string );
