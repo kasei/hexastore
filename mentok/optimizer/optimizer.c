@@ -13,6 +13,9 @@ int _hx_optimizer_cmp_plan_by_cost (const void *, const void *);
 hx_container_t* _hx_optimizer_plan_subsets_of_size ( hx_execution_context* ctx, int total, int size );
 hx_container_t* _hx_optimizer_plan_subsets ( hx_execution_context* ctx, int total );
 
+hx_optimizer_plan* hx_optimizer_optimize_plans_dp ( hx_execution_context* ctx, hx_hash_t* optPlans, int size );
+
+
 void _hx_optimizer_debug_key ( char* name, char* key, int size ) {
 	int i;
 	if (size < 10) {
@@ -142,11 +145,19 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	}
 // 	hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 	
-	
-	for (i = 2; i <= bgpsize; i++) {
+	return hx_optimizer_optimize_plans( ctx, optPlans, bgpsize );
+}
+
+hx_optimizer_plan* hx_optimizer_optimize_plans_dp ( hx_execution_context* ctx, hx_hash_t* optPlans, int size ) {
+	return hx_optimizer_optimize_plans( ctx, optPlans, size );
+}
+
+hx_optimizer_plan* hx_optimizer_optimize_plans ( hx_execution_context* ctx, hx_hash_t* optPlans, int size ) {
+	int i;
+	for (i = 2; i <= size; i++) {
 // 		fprintf( stderr, "---------------------------------------------------------------------\n" );
-// 		fprintf( stderr, "*** GENERATING OPTIMAL PLANS OF SIZE %d (out of %d)\n", i, bgpsize );
-		hx_container_t* si	= _hx_optimizer_plan_subsets_of_size( ctx, bgpsize, i );
+// 		fprintf( stderr, "*** GENERATING OPTIMAL PLANS OF SIZE %d (out of %d)\n", i, size );
+		hx_container_t* si	= _hx_optimizer_plan_subsets_of_size( ctx, size, i );
 		int sisize			= hx_container_size(si);
 		hx_container_t* oi	= _hx_optimizer_plan_subsets( ctx, i );
 		int oisize			= hx_container_size(oi);
@@ -159,7 +170,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 // 			fprintf( stderr, "--------------------------------------\n" );
 			hx_container_t* s	= hx_container_item( si, j );
 			int ssize		= hx_container_size(s);
-			char* s_key		= _hx_optimizer_new_opt_plan_access_key( bgpsize );
+			char* s_key		= _hx_optimizer_new_opt_plan_access_key( size );
 			
 			
 			int j;
@@ -169,9 +180,9 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 			}
 
 // 			fprintf( stderr, "S (%d subset of BGP) has triples", i );
-// 			_hx_optimizer_debug_key( "", s_key, bgpsize );
+// 			_hx_optimizer_debug_key( "", s_key, size );
 			
-			hx_container_t* optPlan	= hx_new_container( 'P', bgpsize );
+			hx_container_t* optPlan	= hx_new_container( 'P', size );
 			
 			int k;
 			// for each proper subset O of S
@@ -180,7 +191,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 				int oindexessize			= hx_container_size( oindexes );
 				int j;
 				
-				char* o_key		= _hx_optimizer_new_opt_plan_access_key( bgpsize );
+				char* o_key		= _hx_optimizer_new_opt_plan_access_key( size );
 // 				fprintf( stderr, "O (subset of S) has triples: ", i );
 				for (j = 0; j < oindexessize; j++) {
 					int idx	= (int) hx_container_item(oindexes,j);
@@ -191,16 +202,16 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 // 				fprintf( stderr, "\n" );
 
 // 				if (1) {
-// 					char* keystr	= _hx_optimizer_key_triples_list( o_key, bgpsize );
+// 					char* keystr	= _hx_optimizer_key_triples_list( o_key, size );
 // 					fprintf(stderr, "*** %s\n", keystr);
 // 					free(keystr);
 // 					hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 // 				}
 
-				hx_container_t* optPlanO	= hx_hash_get( optPlans, o_key, bgpsize );
+				hx_container_t* optPlanO	= hx_hash_get( optPlans, o_key, size );
 				int z;
 // 				fprintf( stderr, "LHS (%p size %d):\n", (void*) optPlanO, hx_container_size(optPlanO) );
-// 				for (z = 0; z < bgpsize; z++) {
+// 				for (z = 0; z < size; z++) {
 // 					if (o_key[z]) {
 // 						fprintf( stderr, "- includes triple (%d)\n", z );
 // 					}
@@ -208,16 +219,16 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 				
 				
 				// create a key for all the triples in S not in O (S-O).
-				char* s_not_o_key	= _hx_optimizer_new_opt_plan_access_key( bgpsize );
-				for (j = 0; j < bgpsize; j++) {
+				char* s_not_o_key	= _hx_optimizer_new_opt_plan_access_key( size );
+				for (j = 0; j < size; j++) {
 					if (s_key[j] && !(o_key[j])) {
 						_hx_optimizer_set_opt_plan_access_key( s_not_o_key, j );
 					}
 				}
-				hx_container_t* optPlanSO	= hx_hash_get( optPlans, s_not_o_key, bgpsize );
+				hx_container_t* optPlanSO	= hx_hash_get( optPlans, s_not_o_key, size );
 				
 // 				fprintf( stderr, "RHS (%p size %d):\n", (void*) optPlanSO, hx_container_size(optPlanSO) );
-// 				for (z = 0; z < bgpsize; z++) {
+// 				for (z = 0; z < size; z++) {
 // 					if (s_not_o_key[z]) {
 // 						fprintf( stderr, "- includes triple (%d)\n", z );
 // 					}
@@ -241,9 +252,9 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 			optPlan	= pruned;
 			
 			
-// 			_hx_optimizer_debug_key( "SETTING optPlans for subquery with triples", s_key, bgpsize );
+// 			_hx_optimizer_debug_key( "SETTING optPlans for subquery with triples", s_key, size );
 // 			_hx_optimizer_debug_plans( ctx, NULL, optPlan );
-			hx_hash_add( optPlans, s_key, bgpsize, optPlan );
+			hx_hash_add( optPlans, s_key, size, optPlan );
 			free(s_key);
 		}
 		
@@ -261,8 +272,8 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	
 	
 		
-	char* finalkey	= _hx_optimizer_final_opt_plan_access_key( bgpsize );
-	hx_container_t* final	= hx_hash_get( optPlans, finalkey, bgpsize );
+	char* finalkey	= _hx_optimizer_final_opt_plan_access_key( size );
+	hx_container_t* final	= hx_hash_get( optPlans, finalkey, size );
 	if (final == NULL) {
 		fprintf( stderr, "*** something went wrong in hx_optimizer_optimize_bgp - failed to generate full query plan\n" );
 		return NULL;

@@ -1,10 +1,6 @@
-TODO:
-
 [optimizer]
 
 Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
-
-optimizer/optimizer.c:hx_optimizer_optimize_bgp currently implements the dynamic programming algorithm for BGPs. It needs to be generalized and split up to handle a BGP-like structure comprised of several access plans, not triple patterns. This will allow the algorithm to be extended to the IDP algorithm, where several triple pattern access plans in the first optimizer pass are replaced with a single join plan in successive passes (we might call the first pass with access plans T1,T2,T3, and the second pass with J1,T2 with J1 standing in for the best found plan for T1,T3).
 
 ** the computation for interesting plans needs to take into account possible mergejoins later on in the query plan.
 

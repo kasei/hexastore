@@ -26,6 +26,7 @@ extern "C" {
 #include "mentok/optimizer/plan.h"
 #include "mentok/engine/variablebindings_iter_sorting.h"
 
+hx_optimizer_plan* hx_optimizer_optimize_plans ( hx_execution_context* ctx, hx_hash_t* optPlans, int size );
 hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp* b );
 
 // - accessPlans (get vb iter from a triple pattern, which index to use?)
