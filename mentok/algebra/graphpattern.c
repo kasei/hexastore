@@ -51,6 +51,14 @@ hx_graphpattern* hx_new_graphpattern ( hx_graphpattern_type_t type, ... ) {
 			vp[1]		= (void*) va_arg( argp, hx_graphpattern* );
 			pat->data	= vp;
 			break;
+		case HX_GRAPHPATTERN_SERVICE:
+			pat->arity	= 2;
+			vp			= calloc( 2, sizeof( void* ) );
+			n			= (void*) va_arg( argp, hx_node* );
+			vp[0]		= hx_node_copy( n );
+			vp[1]		= (void*) va_arg( argp, hx_graphpattern* );
+			pat->data	= vp;
+			break;
 		case HX_GRAPHPATTERN_FILTER:
 			pat->arity	= 2;
 			vp			= calloc( 2, sizeof( void* ) );
@@ -109,6 +117,7 @@ int hx_free_graphpattern ( hx_graphpattern* pat ) {
 			free( p );
 			break;
 		case HX_GRAPHPATTERN_GRAPH:
+		case HX_GRAPHPATTERN_SERVICE:
 			vp	= (void**) pat->data;
 			hx_free_node( (hx_node*) vp[0] );
 			hx_free_graphpattern( (hx_graphpattern*) vp[1] );
@@ -166,6 +175,13 @@ int hx_graphpattern_variables ( hx_graphpattern* pat, hx_node*** vars ) {
 				*vars	= set1;
 			}
 			return size1;
+		case HX_GRAPHPATTERN_SERVICE:
+			p		= (hx_graphpattern**) pat->data;
+			size1	= hx_graphpattern_variables( p[1], &set1 );
+			if (vars != NULL) {
+				*vars	= set1;
+			}
+			return size1;
 		case HX_GRAPHPATTERN_GRAPH:
 		default:
 			fprintf( stderr, "*** Unrecognized or unimplemented graph pattern type '%c' in hx_graphpattern_variables\n", pat->type );
@@ -188,7 +204,7 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 		free(indent1);
 		free(indent2);
 		return hx_bgp_sse( b, string, indent, level );
-	} else if (pat->type == HX_GRAPHPATTERN_GRAPH || pat->type == HX_GRAPHPATTERN_FILTER) {
+	} else if (pat->type == HX_GRAPHPATTERN_GRAPH || pat->type == HX_GRAPHPATTERN_FILTER || pat->type == HX_GRAPHPATTERN_SERVICE) {
 		void** vp	= pat->data;
 		int alloc	= 256 + 15 + (strlen(indent) * level);
 		char* str	= (char*) calloc( 1, alloc );
@@ -198,6 +214,12 @@ int hx_graphpattern_sse ( hx_graphpattern* pat, char** string, char* indent, int
 			hx_node_string( n, &ns );
 			snprintf( str, alloc, "(named-graph %s\n", ns );
 			free( ns );
+		} else if (pat->type == HX_GRAPHPATTERN_SERVICE) {
+			char* ss;
+			hx_node* n	= (hx_node*) vp[0];
+			hx_node_string( n, &ss );
+			snprintf( str, alloc, "(service %s\n", ss );
+			free( ss );
 		} else {
 			char* es;
 			hx_expr* e	= (hx_expr*) vp[0];

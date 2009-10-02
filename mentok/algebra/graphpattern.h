@@ -30,7 +30,8 @@ typedef enum {
 	HX_GRAPHPATTERN_OPTIONAL	= 'O',
 	HX_GRAPHPATTERN_UNION		= 'U',
 	HX_GRAPHPATTERN_GROUP		= 'G',
-	HX_GRAPHPATTERN_FILTER		= 'F'
+	HX_GRAPHPATTERN_FILTER		= 'F',
+	HX_GRAPHPATTERN_SERVICE		= 'S',
 } hx_graphpattern_type_t;
 
 typedef struct {

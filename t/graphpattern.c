@@ -18,7 +18,7 @@ void gp_varsub_test1 ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3, *l4, *l5, *l6, *v1, *v2, *v3;
 int main ( void ) {
-	plan_tests(33);
+	plan_tests(35);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -186,8 +186,17 @@ void serialization_test ( void ) {
 		hx_free_graphpattern( p );
 	}
 	
-	
-	
+	{
+		hx_graphpattern* b	= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
+		hx_graphpattern* p	= hx_new_graphpattern( HX_GRAPHPATTERN_SERVICE, r1, b );
+		ok1( p != NULL );
+		
+		char* string;
+		hx_graphpattern_sse( p, &string, "  ", 0 );
+		ok1( strcmp(string, "(service <r1>\n  (bgp\n    (triple ?y <p1> \"l1\")\n    (triple ?y <p2> ?x)\n  )\n)\n") == 0 );
+		free( string );
+		hx_free_graphpattern( p );
+	}
 }
 
 void variable_test1 ( void ) {
