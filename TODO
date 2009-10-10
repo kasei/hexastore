@@ -1,5 +1,12 @@
 [optimizer]
 
+*** Extend plan structs to accept filters. One way to do this is just to attach an optional hx_expr onto each plan node, just like each plan has a location slot to indicate remote execution. When the plan is executed, if the expr slot is non-NULL, hx_new_filter_iter can wrap the underlying plan's iterator.
+
+*** Implement a federated version of hx_optimizer_access_plans that returns appropriate union plans over all available remote sources for a triple pattern.
+
+*** Implement normalize, merge and re-order rewriting rules, and execute them in joinPlans().
+
+
 Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
 
 ** the computation for interesting plans needs to take into account possible mergejoins later on in the query plan.
