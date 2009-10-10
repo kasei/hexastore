@@ -6,6 +6,7 @@
 #include "mentok/engine/graphpattern.h"
 #include "mentok/store/hexastore/hexastore.h"
 #include "mentok/store/tokyocabinet/tokyocabinet.h"
+#include "mentok/optimizer/optimizer.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
@@ -22,6 +23,7 @@ void help (int argc, char** argv) {
 int main( int argc, char** argv ) {
 	int argi		= 1;
 	int dryrun		= 0;
+	int optimize	= 0;
 	
 	if (argc < 3) {
 		help( argc, argv );
@@ -53,6 +55,8 @@ int main( int argc, char** argv ) {
 		while (argi < argc && *(argv[argi]) == '-') {
 			if (strncmp(argv[argi], "-n", 2) == 0) {
 				dryrun	= 1;
+			} else if (strncmp(argv[argi], "-o",2) == 0) {
+				optimize	= 1;
 			}
 			argi++;
 		}
@@ -125,13 +129,22 @@ int main( int argc, char** argv ) {
 		fprintf( stdout, "%s\n", sse );
 		free( sse );
 	}
+
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	if (optimize) {
+		char* string;
+		hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
+		hx_optimizer_plan_string( ctx, plan, &string );
+		fprintf( stdout, "%s\n", string );
+		free(string);
+	}
+	
 	
 	if (!dryrun) {
 		clock_t st_time	= clock();
 		uint64_t count	= 0;
 		
 		hx_variablebindings_iter* iter;
-		hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 		if (g) {
 			iter	= hx_graphpattern_execute( ctx, g );
 		} else {
