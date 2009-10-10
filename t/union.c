@@ -61,10 +61,7 @@ void test_union (void) {
 		hx_triple* tb	= hx_new_triple( r2, v2, l2 );
 		hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
-		hx_container_t* iters	= hx_new_container( 'I', 2 );
-		hx_container_push_item( iters, iter_a );
-		hx_container_push_item( iters, iter_b );
-		hx_variablebindings_iter* iter	= hx_new_union_iter( iters, ctx );
+		hx_variablebindings_iter* iter	= hx_new_union_iter2( ctx, iter_a, iter_b );
 		ok1( iter != NULL );
 		
 		{

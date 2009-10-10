@@ -3,7 +3,7 @@
 int _hx_union_prime_results ( _hx_union_iter_vb_info* info );
 int _hx_union_get_next_result ( _hx_union_iter_vb_info* info );
 
-hx_variablebindings_iter* hx_new_union_iter ( hx_container_t* iters, hx_execution_context* ctx ) {
+hx_variablebindings_iter* hx_new_union_iter ( hx_execution_context* ctx, hx_container_t* iters ) {
 	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_union_iter\n" );
@@ -41,6 +41,13 @@ hx_variablebindings_iter* hx_new_union_iter ( hx_container_t* iters, hx_executio
 	
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return iter;
+}
+
+hx_variablebindings_iter* hx_new_union_iter2 ( hx_execution_context* ctx, hx_variablebindings_iter* i1, hx_variablebindings_iter* i2 ) {
+	hx_container_t* iters	= hx_new_container( 'I', 2 );
+	hx_container_push_item( iters, i1 );
+	hx_container_push_item( iters, i2 );
+	return hx_new_union_iter( ctx, iters );
 }
 
 int _hx_union_iter_vb_finished ( void* data ) {
