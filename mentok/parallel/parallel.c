@@ -78,6 +78,9 @@ hx_parallel_execution_context* hx_parallel_new_execution_context ( void* world, 
 	sprintf(outfile, out_template, path, job_id, myrank);
 	ctx->local_output_file	= outfile;
 	
+	ctx->optimizer_access_plans		= NULL;
+	ctx->optimizer_join_plans		= NULL;
+
 	return ctx;
 }
 

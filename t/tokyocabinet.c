@@ -11,10 +11,7 @@ void _debug_node ( char* h, hx_node* node );
 hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 void test_small_iter ( void );
-
-int main ( void ) {
-	plan_tests(10);
-	
+void clear_files ( void ) {
 	unlink("/tmp/spo.tcb");
 	unlink("/tmp/sop.tcb");
 	unlink("/tmp/osp.tcb");
@@ -24,6 +21,12 @@ int main ( void ) {
 	unlink("/tmp/counts.tcb");
 	unlink("/tmp/id2node.tcb");
 	unlink("/tmp/node2id.tcb");
+}
+
+int main ( void ) {
+	plan_tests(10);
+	
+	clear_files();
 	hx_store* store		= hx_new_store_tokyocabinet( NULL, "/tmp" );
 	hx_model* hx	= hx_new_model_with_store( NULL, store );
 	_add_data( hx );
@@ -91,6 +94,8 @@ int main ( void ) {
 	}
 	
 	hx_free_model( hx );
+	clear_files();
+	
 	return exit_status();
 }
 

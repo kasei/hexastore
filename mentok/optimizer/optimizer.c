@@ -137,7 +137,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	hx_hash_t* optPlans	= hx_new_hash( bgpsize * bgpsize );
 	for (i = 0; i < bgpsize; i++) {
 		hx_triple* t	= hx_bgp_triple( b, i );
-		hx_container_t* plans	= hx_optimizer_access_plans( ctx, t );
+		hx_container_t* plans	= ctx->optimizer_access_plans( ctx, t );
 		char* key				= _hx_optimizer_new_opt_plan_access_key_set( bgpsize, i );
 // 		_hx_optimizer_debug_plans( ctx, "Access plans (before pruning):", plans );
 		hx_container_t* pruned	= hx_optimizer_prune_plans( ctx, plans );
@@ -237,7 +237,7 @@ hx_optimizer_plan* hx_optimizer_optimize_plans ( hx_execution_context* ctx, hx_h
 				
 // 				hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 				
-				hx_container_t* joins		= hx_optimizer_join_plans( ctx, hx_copy_container(optPlanO), hx_copy_container(optPlanSO), 0 );
+				hx_container_t* joins		= ctx->optimizer_join_plans( ctx, hx_copy_container(optPlanO), hx_copy_container(optPlanSO), 0 );
 // 				fprintf( stderr, "got join plan %p\n", joins );
 				
 				int joins_size	= hx_container_size(joins);

@@ -40,6 +40,8 @@ typedef struct {
 	int64_t unsorted_mergejoin_penalty;
 	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_model*, void* thunk );
 	hx_node* (*lookup_node)( void*, hx_node_id );
+	hx_container_t* (*optimizer_access_plans) ( void* ctx, hx_triple* t );
+	hx_container_t* (*optimizer_join_plans) ( void* ctx, hx_container_t* lhs, hx_container_t* rhs, int leftjoin );
 	void* bgp_exec_func_thunk;
 	
 	int root;

@@ -1,6 +1,7 @@
 #include "mentok/mentok.h"
 #include "mentok/store/hexastore/hexastore.h"
 #include "mentok/engine/bgp.h"
+#include "mentok/optimizer/optimizer.h"
 
 // #define DEBUG_INDEX_SELECTION
 
@@ -32,6 +33,8 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->lookup_node					= hx_execution_context_lookup_node;
 	c->bgp_exec_func				= hx_bgp_execute2;
 	c->bgp_exec_func_thunk			= NULL;
+	c->optimizer_access_plans		= hx_optimizer_access_plans;
+	c->optimizer_join_plans			= hx_optimizer_join_plans;
 	return 0;
 }
 
