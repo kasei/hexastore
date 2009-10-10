@@ -32,9 +32,6 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_execution_context* ctx, h
 			iter2	= hx_graphpattern_execute( ctx, gp );
 			iter	= hx_new_filter_iter( iter2, e, ctx );
 			return iter;
-		case HX_GRAPHPATTERN_GRAPH:
-			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );
-			return NULL;
 		case HX_GRAPHPATTERN_OPTIONAL:
 			vp		= (void**) pat->data;
 			gp		= (hx_graphpattern*) vp[0];
@@ -44,7 +41,15 @@ hx_variablebindings_iter* hx_graphpattern_execute ( hx_execution_context* ctx, h
 			iter3	= hx_new_nestedloopjoin_iter2( iter, iter2, 1 );
 			return iter3;
 		case HX_GRAPHPATTERN_UNION:
-			fprintf( stderr, "*** Unimplemented graph pattern type '%c' in hx_graphpattern_execute\n", pat->type );
+			vp		= (void**) pat->data;
+			gp		= (hx_graphpattern*) vp[0];
+			iter	= hx_graphpattern_execute( ctx, gp );
+			gp2		= (hx_graphpattern*) vp[1];
+			iter2	= hx_graphpattern_execute( ctx, gp2 );
+			iter3	= hx_new_union_iter2( ctx, iter, iter2 );
+			return iter3;
+		case HX_GRAPHPATTERN_GRAPH:
+			fprintf( stderr, "*** GRAPH graph patterns are not implemented in hx_graphpattern_execute\n" );
 			return NULL;
 		default:
 			fprintf( stderr, "*** Unrecognized graph pattern type '%c' in hx_graphpattern_execute\n", pat->type );
@@ -73,8 +78,10 @@ hx_graphpattern* hx_graphpattern_substitute_variables ( hx_graphpattern* orig, h
 		case HX_GRAPHPATTERN_OPTIONAL:
 		case HX_GRAPHPATTERN_GROUP:
 		case HX_GRAPHPATTERN_GRAPH:
+			fprintf( stderr, "*** Unimplemented graph pattern type '%c' in hx_graphpattern_substitute_variables\n", orig->type );
+			return NULL;
 		default:
-			fprintf( stderr, "*** Unrecognized or unimplemented graph pattern type '%c' in hx_graphpattern_substitute_variables\n", orig->type );
+			fprintf( stderr, "*** Unrecognized graph pattern type '%c' in hx_graphpattern_substitute_variables\n", orig->type );
 			return NULL;
 	}
 }
