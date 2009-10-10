@@ -6,6 +6,22 @@
 // #define DEBUG_INDEX_SELECTION
 
 
+hx_remote_service* hx_new_remote_service ( char* name ) {
+	hx_remote_service* s	= (hx_remote_service*) calloc( 1, sizeof( hx_remote_service ) );
+	s->name	= hx_copy_string( name );
+	return s;
+}
+
+int hx_free_remote_service ( hx_remote_service* s ) {
+	free( s->name );
+	free(s);
+	return 0;
+}
+
+char* hx_remote_service_name ( hx_remote_service* s ) {
+	return s->name;
+}
+
 hx_execution_context* hx_new_execution_context ( void* world, hx_model* hx ) {
 	hx_execution_context* c	= (hx_execution_context*) calloc( 1, sizeof( hx_execution_context ) );
 	hx_execution_context_init( c, world, hx );
@@ -25,7 +41,12 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->optimizer_access_plans		= hx_optimizer_access_plans;
 	c->optimizer_join_plans			= hx_optimizer_join_plans;
 	c->remote_sources				= hx_new_container( 'S', 1 );
-	hx_container_push_item( c->remote_sources, "local" );
+	hx_execution_context_add_service( c, hx_new_remote_service("local") );
+	return 0;
+}
+
+int hx_execution_context_add_service ( hx_execution_context* c, hx_remote_service* s ) {
+	hx_container_push_item( c->remote_sources, s );
 	return 0;
 }
 
@@ -42,11 +63,9 @@ hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_i
 
 int hx_free_execution_context ( hx_execution_context* c ) {
 	int size	= hx_container_size( c->remote_sources );
-	if (size > 1) {
-		int i;
-		for (i = 1; i < size; i++) {
-			free( hx_container_item( c->remote_sources, i ) );
-		}
+	int i;
+	for (i = 1; i < size; i++) {
+		hx_free_remote_service( hx_container_item( c->remote_sources, i ) );
 	}
 	hx_free_container( c->remote_sources );
 	c->world	= NULL;

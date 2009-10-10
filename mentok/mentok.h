@@ -45,6 +45,10 @@ typedef struct {
 #include "mentok/algebra/bgp.h"
 
 typedef struct {
+	char* name;
+} hx_remote_service;
+
+typedef struct {
 	void* world;
 	hx_model* hx;
 	hx_container_t* remote_sources;
@@ -59,12 +63,16 @@ typedef struct {
 	void* bgp_exec_func_thunk;
 } hx_execution_context;
 
+hx_remote_service* hx_new_remote_service ( char* name );
+int hx_free_remote_service ( hx_remote_service* s );
+char* hx_remote_service_name ( hx_remote_service* s );
+
 hx_execution_context* hx_new_execution_context ( void* world, hx_model* hx );
 int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* hx );
 int hx_execution_context_set_bgp_exec_func ( hx_execution_context* ctx, hx_variablebindings_iter* (*)( void*, hx_model*, void* ), void* thunk );
 hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_id nodeid );
 int hx_free_execution_context ( hx_execution_context* c );
-
+int hx_execution_context_add_service ( hx_execution_context* c, hx_remote_service* s );
 
 hx_model* hx_new_model ( void* world );
 hx_model* hx_new_model_with_store ( void* world, hx_store* store );
