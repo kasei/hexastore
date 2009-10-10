@@ -339,26 +339,36 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
 	hx_model* hx	= ctx->hx;
+	hx_variablebindings_iter* iter	= NULL;
 	
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t		= plan->data.access.triple;
-		hx_variablebindings_iter* iter	= hx_store_get_statements_with_index (hx->store, t, plan->data.access.source);
-		return iter;
+		iter	= hx_store_get_statements_with_index (hx->store, t, plan->data.access.source);
 	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
 		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->data.join.lhs_plan );
 		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->data.join.rhs_plan );
-		hx_variablebindings_iter* iter;
 		if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_NESTEDLOOPJOIN) {
-			return hx_new_nestedloopjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
+			iter	= hx_new_nestedloopjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
 		} else if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_HASHJOIN) {
-			return hx_new_hashjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
+			iter	= hx_new_hashjoin_iter2( lhs, rhs, plan->data.join.leftjoin );
 		} else if (plan->data.join.join_type == HX_OPTIMIZER_PLAN_MERGEJOIN) {
-			return hx_new_mergejoin_iter( lhs, rhs );
+			iter	= hx_new_mergejoin_iter( lhs, rhs );
 		} else {
 			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_execute\n" );
 		}
+	} else if (plan->type == HX_OPTIMIZER_PLAN_UNION) {
+		int i;
+		hx_container_t* plans	= plan->data._union.plans;
+		int size	= hx_container_size( plans );
+		hx_container_t* iters	= hx_new_container( 'I', size );
+		for (i = 0; i < size; i++) {
+			hx_variablebindings_iter* iter	= hx_optimizer_plan_execute( ctx, hx_container_item(plans, i) );
+			hx_container_push_item( iters, iter );
+		}
+		iter	= hx_new_union_iter( ctx, iters );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_execute\n" );
-		return NULL;
 	}
+	
+	return iter;
 }
