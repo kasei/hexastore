@@ -341,6 +341,32 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 	return access_plans;
 }
 
+hx_container_t* hx_optimizer_access_plans_federated ( hx_execution_context* ctx, hx_triple* t ) {
+	fprintf( stderr, "*** FEDERATED ACCESS PLANS\n" );
+	
+	hx_container_t* sources	= ctx->remote_sources;
+	int ssize				= hx_container_size( sources );
+	hx_container_t* plans	= hx_optimizer_access_plans( ctx, t );
+	int psize				= hx_container_size( plans );
+	
+	int i,j;
+	hx_container_t* fedplans	= hx_new_container( 'A', psize );
+	for (j = 0; j < psize; j++) {
+		hx_optimizer_plan* p	= hx_container_item( plans, j );
+		hx_container_t* up		= hx_new_container( 'U', ssize );
+		for (i = 1; i < ssize; i++) {
+			hx_optimizer_plan* c	= hx_copy_optimizer_plan( p );
+			c->location				= i;
+			hx_container_push_item( up, c );
+		}
+		hx_container_push_item( fedplans, hx_new_optimizer_union_plan(up) );
+		hx_free_optimizer_plan( p );
+	}
+	hx_free_container(plans);
+	
+	return fedplans;
+}
+
 // - joinPlans (which join algorithm to use? is sorting required?)
 hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_container_t* lhs, hx_container_t* rhs, int leftjoin ) {
 	int i,j;

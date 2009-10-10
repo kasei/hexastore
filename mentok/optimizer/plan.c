@@ -68,10 +68,11 @@ hx_optimizer_plan* hx_new_optimizer_union_plan ( hx_container_t* plans ) {
 }
 
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
+	hx_optimizer_plan* copy;
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
-		return hx_new_optimizer_access_plan( p->data.access.store, p->data.access.source, p->data.access.triple, p->order );
+		copy	= hx_new_optimizer_access_plan( p->data.access.store, p->data.access.source, p->data.access.triple, p->order );
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
-		return hx_new_optimizer_join_plan( p->data.join.join_type, p->data.join.lhs_plan, p->data.join.rhs_plan, p->order, p->data.join.leftjoin );
+		copy	= hx_new_optimizer_join_plan( p->data.join.join_type, p->data.join.lhs_plan, p->data.join.rhs_plan, p->order, p->data.join.leftjoin );
 	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
 		int i;
 		hx_container_t* src		= p->data._union.plans;
@@ -80,11 +81,13 @@ hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
 		for (i = 0; i < size; i++) {
 			hx_container_push_item( plans, hx_copy_optimizer_plan(hx_container_item(src,i)) );
 		}
-		return hx_new_optimizer_union_plan( plans );
+		copy	= hx_new_optimizer_union_plan( plans );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
 		return NULL;
 	}
+	copy->location	= p->location;
+	return copy;
 }
 
 int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
@@ -132,7 +135,8 @@ int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, 
 	int len		= 0;
 	char* loc	= "";
 	if (p->location > 0) {
-		char* service	= hx_container_item( ctx->remote_sources, p->location );
+		hx_remote_service* s	= hx_container_item( ctx->remote_sources, p->location );
+		char* service	= hx_remote_service_name( s );
 		len		= strlen(service) + 3;
 		loc		= (char*) calloc( len, sizeof(char) );
 		snprintf( loc, len, "[%s]", service );

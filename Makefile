@@ -182,7 +182,7 @@ mentok/parser/SPARQLScanner.o: mentok/parser/SPARQLScanner.c mentok/parser/SPARQ
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t t/optimizer-federation.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -252,6 +252,9 @@ t/hash.t: test/tap.o t/hash.c $(LINKOBJS) test/tap.o
 
 t/optimizer.t: test/tap.o t/optimizer.c $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/optimizer.t t/optimizer.c test/tap.o
+
+t/optimizer-federation.t: test/tap.o t/optimizer-federation.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/optimizer-federation.t t/optimizer-federation.c test/tap.o
 
 t/store-hexastore.t: test/tap.o t/store-hexastore.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/store-hexastore.t t/store-hexastore.c test/tap.o
