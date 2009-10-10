@@ -31,7 +31,7 @@ ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o # mentok/parser/parser.o
 MPI_OBJECTS			= mentok/parallel/safealloc.o mentok/parallel/async_mpi.o mentok/parallel/async_des.o mentok/parallel/parallel.o mentok/parallel/mpi_file_iterator.o mentok/parallel/mpi_file_ntriples_iterator.o mentok/parallel/mpi_file_ntriples_node_iterator.o mentok/parallel/mpi_rdfio.o mentok/parallel/genmap/avl_tree_map.o mentok/parallel/genmap/iterator.o mentok/parallel/genmap/map.o
 OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
-OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) # $(OPT_OBJECTS)
+OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 LINKOBJS			= $(OBJECTS) $(MPI_OBJECTS)
 LINKOBJSFLAGS		= $(LINKOBJS)
 
