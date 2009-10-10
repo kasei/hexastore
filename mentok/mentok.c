@@ -30,6 +30,7 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->unsorted_mergejoin_penalty	= 2;
 	c->hashjoin_penalty				= 1;
 	c->nestedloopjoin_penalty		= 3;
+	c->remote_latency_cost			= 100;
 	c->lookup_node					= hx_execution_context_lookup_node;
 	c->bgp_exec_func				= hx_bgp_execute2;
 	c->bgp_exec_func_thunk			= NULL;

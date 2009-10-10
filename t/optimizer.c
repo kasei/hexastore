@@ -15,6 +15,7 @@ void access_plans_test1 ( hx_model* hx );
 void access_plans_test2 ( hx_model* hx );
 void access_plans_test3 ( hx_model* hx );
 void join_plans_test1 ( hx_model* hx );
+void union_plans_test1 ( hx_model* hx );
 void sorting_test1 ( hx_model* hx );
 void access_cost_test1 ( hx_model* hx );
 void join_cost_test1 ( hx_model* hx );
@@ -30,7 +31,7 @@ int _strcmp (const void *a, const void *b) {
 }
 
 int main ( void ) {
-	plan_tests(65);
+	plan_tests(68);
 
 	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
@@ -40,6 +41,8 @@ int main ( void ) {
 	access_plans_test3( hx );
 	
 	join_plans_test1( hx );
+	
+	union_plans_test1( hx );
 	
 	sorting_test1( hx );
 	sorting_test1( hx );
@@ -240,6 +243,55 @@ void join_plans_test1 ( hx_model* hx ) {
 		hx_free_optimizer_plan( plan );
 	}
 	hx_free_container( jplans );
+	
+	hx_free_triple( t1 );
+	hx_free_triple( t2 );
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(resultvar);
+	hx_free_node(resultset);
+	hx_free_node(type);
+
+	hx_free_execution_context(ctx);
+}
+
+void union_plans_test1 ( hx_model* hx ) {
+	fprintf( stdout, "# union_plans_test1\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_node* v1	= hx_new_node_named_variable( -1, "x" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "y" );
+	hx_node* type	= (hx_node*) hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	hx_node* resultset	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet");
+	hx_node* resultvar	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable");
+	hx_triple* t1	= hx_new_triple( v1, type, resultset );
+	hx_triple* t2	= hx_new_triple( v1, resultvar, v2 );
+	
+	int i;
+	hx_container_t* plans1	= hx_optimizer_access_plans( ctx, t1 );
+	hx_container_t* plans2	= hx_optimizer_access_plans( ctx, t2 );
+	int size1				= hx_container_size(plans1);
+	int size2				= hx_container_size(plans2);
+	ok1( size1 == 2 );
+	ok1( size2 == 2 );
+	
+	hx_optimizer_plan* p1	= hx_container_item(plans1, 0);
+	hx_optimizer_plan* p2	= hx_container_item(plans2, 0);
+	hx_container_t* c		= hx_new_container( 'P', 2 );
+	hx_container_push_item( c, p1 );
+	hx_container_push_item( c, p2 );
+	hx_optimizer_plan* u	= hx_new_optimizer_union_plan( c );
+	
+	char* string;
+	hx_optimizer_plan_string( u, &string );
+	ok( strcmp(string, "union(POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}), POS({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}))") == 0, "expected union join plan serialization" );
+	free(string);
+	
+	hx_free_optimizer_plan( u );
+	hx_free_optimizer_plan( hx_container_item(plans1,1) );
+	hx_free_optimizer_plan( hx_container_item(plans2,1) );
+	hx_free_container( plans1 );
+	hx_free_container( plans2 );
 	
 	hx_free_triple( t1 );
 	hx_free_triple( t2 );

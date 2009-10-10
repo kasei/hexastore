@@ -22,14 +22,15 @@ int64_t hx_optimizer_plan_cost_value ( hx_execution_context* ctx, hx_optimizer_p
 }
 
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order ) {
-	int order_count			= hx_container_size( order );
-	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
-	plan->type				= HX_OPTIMIZER_PLAN_INDEX;
+	int order_count				= hx_container_size( order );
+	hx_optimizer_plan* plan		= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
+	plan->type					= HX_OPTIMIZER_PLAN_INDEX;
 	plan->data.access.triple	= hx_copy_triple(t);
 	plan->data.access.source	= source;
 	plan->data.access.store		= store;
-	plan->order				= hx_new_container( 'S', order_count );
-	plan->string			= NULL;
+	plan->order					= hx_new_container( 'S', order_count );
+	plan->string				= NULL;
+	plan->location				= 0;
 	int i;
 	for (i = 0; i < order_count; i++) {
 		hx_variablebindings_iter_sorting* s	= hx_container_item( order, i );
@@ -39,14 +40,15 @@ hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source,
 }
 
 hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, hx_container_t* order, int leftjoin ) {
-	int order_count			= hx_container_size( order );
-	hx_optimizer_plan* plan	= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
-	plan->type			= HX_OPTIMIZER_PLAN_JOIN;
-	plan->data.join.join_type		= type;
-	plan->data.join.lhs_plan		= hx_copy_optimizer_plan(lhs);
-	plan->data.join.rhs_plan		= hx_copy_optimizer_plan(rhs);
-	plan->order			= hx_new_container( 'S', order_count );
-	plan->string		= NULL;
+	int order_count				= hx_container_size( order );
+	hx_optimizer_plan* plan		= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
+	plan->type					= HX_OPTIMIZER_PLAN_JOIN;
+	plan->data.join.join_type	= type;
+	plan->data.join.lhs_plan	= hx_copy_optimizer_plan(lhs);
+	plan->data.join.rhs_plan	= hx_copy_optimizer_plan(rhs);
+	plan->order					= hx_new_container( 'S', order_count );
+	plan->string				= NULL;
+	plan->location				= 0;
 	int i;
 	for (i = 0; i < order_count; i++) {
 		hx_variablebindings_iter_sorting* s	= hx_container_item( order, i );
@@ -55,11 +57,30 @@ hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type
 	return plan;
 }
 
+hx_optimizer_plan* hx_new_optimizer_union_plan ( hx_container_t* plans ) {
+	hx_optimizer_plan* plan		= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
+	plan->type					= HX_OPTIMIZER_PLAN_UNION;
+	plan->data._union.plans		= plans;
+	plan->order					= hx_new_container( 'S', 1 );	// unions have no predictable ordering (might have different variables, or execution might be parallelized)
+	plan->string				= NULL;
+	plan->location				= 0;
+	return plan;
+}
+
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* p ) {
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		return hx_new_optimizer_access_plan( p->data.access.store, p->data.access.source, p->data.access.triple, p->order );
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
 		return hx_new_optimizer_join_plan( p->data.join.join_type, p->data.join.lhs_plan, p->data.join.rhs_plan, p->order, p->data.join.leftjoin );
+	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
+		int i;
+		hx_container_t* src		= p->data._union.plans;
+		int size				= hx_container_size(src);
+		hx_container_t* plans	= hx_new_container( 'P', size );
+		for (i = 0; i < size; i++) {
+			hx_container_push_item( plans, hx_copy_optimizer_plan(hx_container_item(src,i)) );
+		}
+		return hx_new_optimizer_union_plan( plans );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
 		return NULL;
@@ -81,6 +102,14 @@ int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_free_triple( p->data.access.triple );
+	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
+		hx_container_t* plans	= p->data._union.plans;
+		int size	= hx_container_size(plans);
+		for (i = 0; i < size; i++) {
+			hx_optimizer_plan* subplan	= hx_container_item(plans,i);
+			hx_free_optimizer_plan(subplan);
+		}
+		hx_free_container(plans);
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
 		hx_free_optimizer_plan( p->data.join.lhs_plan );
 		hx_free_optimizer_plan( p->data.join.rhs_plan );
@@ -142,6 +171,34 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		snprintf( *string, len, "%s(%s, %s)", jname, lhs_string, rhs_string );
 		free(lhs_string);
 		free(rhs_string);
+	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
+		int i;
+		int length	= 0;
+		int size	= hx_container_size( p->data._union.plans );
+		char** strings	= (char**) calloc( size, sizeof(char*) );
+		for (i = 0; i < size; i++) {
+			hx_optimizer_plan* subplan	= hx_container_item(p->data._union.plans,i);
+			hx_optimizer_plan_string(subplan, &(strings[i]));
+			length	+= strlen(strings[i]) + 2;
+		}
+		
+		char* subplans	= (char*) calloc( length, sizeof(char) );
+		for (i = 0; i < size; i++) {
+			if (i > 0) {
+				strncat(subplans, ", ", 2);
+			}
+			strcat(subplans, strings[i]);
+		}
+		
+		int len	= length + 8;
+		*string	= (char*) calloc( len, sizeof(char) );
+		sprintf( *string, "union(%s)", subplans );
+		
+		free(subplans);
+		for (i = 0; i < size; i++) {
+			free(strings[i]);
+		}
+		free(strings);
 	} else {
 		*string	= NULL;
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_string\n" );
@@ -177,6 +234,17 @@ int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* 
 			count	= 1;
 		}
 		return (int64_t) count;
+	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
+		int i;
+		uint64_t cost	= 0;
+		hx_container_t* plans	= p->data._union.plans;
+		int size	= hx_container_size( plans );
+		for (i = 0; i < size; i++) {
+			// XXX we're estimating the cost of a union as a sum(), but if unions are parallelized, this might be better as max()
+			hx_optimizer_plan* subplan	= hx_container_item( plans, i );
+			cost	+= _hx_optimizer_plan_cost( ctx, subplan, accumulator, level+1 );
+		}
+		return (int64_t) cost;
 	} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
 		int64_t lhsc	= _hx_optimizer_plan_cost( ctx, p->data.join.lhs_plan, accumulator, level+1 );
 		int64_t rhsc	= _hx_optimizer_plan_cost( ctx, p->data.join.rhs_plan, accumulator, level+1 );
@@ -198,7 +266,13 @@ int64_t _hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* 
 		// The accumulator value is added to the total plan cost.
 		// By adding to it here, we increase the total cost of plans that have
 		// large expected intermediate results.
-		*accumulator	+= (cost*level);
+		if (p->location == 0) {
+			// execution is local, so take into account intermediate values
+			*accumulator	+= (cost*level);
+		} else {
+			// exectuion is remote, so take into account latency overhead
+			*accumulator	+= ctx->remote_latency_cost;
+		}
 		return cost;
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_free_optimizer_plan\n" );

@@ -29,7 +29,8 @@ extern "C" {
 typedef enum {
 	HX_OPTIMIZER_PLAN_INDEX	= 0,	// access to triple pattern matching via hx_store thunks
 	HX_OPTIMIZER_PLAN_JOIN	= 1,	// join of two hx_optimizer_plan*s
-	HX_OPTIMIZER_PLAN_LAST	= HX_OPTIMIZER_PLAN_JOIN
+	HX_OPTIMIZER_PLAN_UNION	= 2,	// union of two or more hx_optimizer_plan*s
+	HX_OPTIMIZER_PLAN_LAST	= HX_OPTIMIZER_PLAN_UNION
 } hx_optimizer_plan_type;
 
 typedef enum {
@@ -59,12 +60,18 @@ typedef struct {
 } _hx_optimizer_join_plan;
 
 typedef struct {
+	hx_container_t* plans;
+} _hx_optimizer_union_plan;
+
+typedef struct {
 	hx_optimizer_plan_type type;
+	int location;	// location for the plan to be executed (this integer should match up with some useful information in the execution context object, like a remote SPARQL endpoint URI).
 	char* string;
 	hx_container_t* order;
 	union {
 		_hx_optimizer_access_plan access;
 		_hx_optimizer_join_plan join;
+		_hx_optimizer_union_plan _union;
 	} data;
 } hx_optimizer_plan;
 
@@ -79,6 +86,7 @@ int hx_free_optimizer_plan_cost ( hx_optimizer_plan_cost_t* c );
 hx_optimizer_plan* hx_copy_optimizer_plan ( hx_optimizer_plan* plan );
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order );
 hx_optimizer_plan* hx_new_optimizer_join_plan ( hx_optimizer_plan_join_type type, hx_optimizer_plan* lhs, hx_optimizer_plan* rhs, hx_container_t* order, int leftjoin );
+hx_optimizer_plan* hx_new_optimizer_union_plan ( hx_container_t* plans );
 int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting );
 int hx_free_optimizer_plan ( hx_optimizer_plan* plan );
 
