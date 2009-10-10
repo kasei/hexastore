@@ -47,6 +47,7 @@ typedef struct {
 typedef struct {
 	void* world;
 	hx_model* hx;
+	hx_container_t* remote_sources;
 	int64_t remote_latency_cost;
 	int64_t nestedloopjoin_penalty;
 	int64_t hashjoin_penalty;

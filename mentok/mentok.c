@@ -6,18 +6,6 @@
 // #define DEBUG_INDEX_SELECTION
 
 
-// void* _hx_model_add_triple_threaded (void* arg);
-// int _hx_iter_vb_finished ( void* iter );
-// int _hx_iter_vb_current ( void* iter, void* results );
-// int _hx_iter_vb_next ( void* iter );	
-// int _hx_iter_vb_free ( void* iter );
-// int _hx_iter_vb_size ( void* iter );
-// int _hx_iter_vb_sorted_by (void* iter, int index );
-// int _hx_iter_debug ( void* info, char* header, int indent );
-
-char** _hx_iter_vb_names ( void* iter );
-
-
 hx_execution_context* hx_new_execution_context ( void* world, hx_model* hx ) {
 	hx_execution_context* c	= (hx_execution_context*) calloc( 1, sizeof( hx_execution_context ) );
 	hx_execution_context_init( c, world, hx );
@@ -36,6 +24,8 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->bgp_exec_func_thunk			= NULL;
 	c->optimizer_access_plans		= hx_optimizer_access_plans;
 	c->optimizer_join_plans			= hx_optimizer_join_plans;
+	c->remote_sources				= hx_new_container( 'S', 1 );
+	hx_container_push_item( c->remote_sources, "local" );
 	return 0;
 }
 
@@ -51,6 +41,14 @@ hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_i
 }
 
 int hx_free_execution_context ( hx_execution_context* c ) {
+	int size	= hx_container_size( c->remote_sources );
+	if (size > 1) {
+		int i;
+		for (i = 1; i < size; i++) {
+			free( hx_container_item( c->remote_sources, i ) );
+		}
+	}
+	hx_free_container( c->remote_sources );
 	c->world	= NULL;
 	c->hx		= NULL;
 	free( c );
