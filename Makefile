@@ -19,7 +19,7 @@ TCSTORE_OBJECTS		= mentok/store/tokyocabinet/tokyocabinet.o mentok/store/tokyoca
 STORE_OBJECTS		= mentok/store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
 MISC_OBJECTS		= mentok/misc/avl.o mentok/misc/nodemap.o mentok/misc/util.o mentok/misc/idmap.o
 RDF_OBJECTS			= mentok/rdf/node.o mentok/rdf/triple.o
-ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o
+ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o mentok/engine/union.o
 ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok/algebra/expr.o mentok/algebra/graphpattern.o
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
 OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
@@ -102,6 +102,9 @@ mentok/engine/expr.o: mentok/engine/expr.c mentok/engine/expr.h mentok/mentok_ty
 mentok/engine/graphpattern.o: mentok/engine/graphpattern.c mentok/engine/graphpattern.h mentok/mentok_types.h
 	$(CC) $(OBJFLAGS) -c -o mentok/engine/graphpattern.o mentok/engine/graphpattern.c
 
+mentok/engine/union.o: mentok/engine/union.c mentok/engine/union.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/union.o mentok/engine/union.c
+
 mentok/engine/mergejoin.o: mentok/engine/mergejoin.c mentok/engine/mergejoin.h mentok/mentok_types.h mentok/algebra/variablebindings.h
 	$(CC) $(OBJFLAGS) -c -o mentok/engine/mergejoin.o mentok/engine/mergejoin.c
 
@@ -179,7 +182,7 @@ mentok/parser/SPARQLScanner.o: mentok/parser/SPARQLScanner.c mentok/parser/SPARQ
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -210,6 +213,9 @@ t/btree.t: test/tap.o t/btree.c mentok/store/hexastore/btree.h $(LINKOBJS) test/
 
 t/join.t: test/tap.o t/join.c $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/join.t t/join.c test/tap.o
+
+t/union.t: test/tap.o t/union.c $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/union.t t/union.c test/tap.o
 
 t/iter.t: test/tap.o t/iter.c $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/iter.t t/iter.c test/tap.o
