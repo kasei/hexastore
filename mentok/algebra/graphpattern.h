@@ -46,6 +46,7 @@ hx_graphpattern* hx_graphpattern_parse_string ( const char* string );
 
 int hx_free_graphpattern ( hx_graphpattern* p );
 
+hx_graphpattern_type_t hx_graphpattern_type ( hx_graphpattern* p );
 int hx_graphpattern_variables ( hx_graphpattern* p, hx_node*** vars );
 int hx_graphpattern_sse ( hx_graphpattern* e, char** string, char* indent, int level );
 int hx_graphpattern_debug ( hx_graphpattern* p );

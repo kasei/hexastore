@@ -90,6 +90,10 @@ hx_graphpattern* hx_new_graphpattern_ptr ( hx_graphpattern_type_t type, int size
 	return pat;
 }
 
+hx_graphpattern_type_t hx_graphpattern_type ( hx_graphpattern* p ) {
+	return p->type;
+}
+
 hx_graphpattern* hx_graphpattern_parse_string ( const char* string ) {
 	return parse_query_string( (char*) string );
 }
