@@ -84,7 +84,7 @@ void access_plans_test1 ( hx_model* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 // 		{
 // 			char* string;
-// 			hx_optimizer_plan_string( plan, &string );
+// 			hx_optimizer_plan_string( ctx, plan, &string );
 // 			fprintf( stderr, "*** access_plans_test1 plan: %s\n", string );
 // 			free(string);
 // 		}
@@ -237,7 +237,7 @@ void join_plans_test1 ( hx_model* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( jplans, i );
 //		fprintf( stderr, "join plan %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		free(string);
 		hx_free_optimizer_plan( plan );
@@ -283,7 +283,7 @@ void union_plans_test1 ( hx_model* hx ) {
 	hx_optimizer_plan* u	= hx_new_optimizer_union_plan( c );
 	
 	char* string;
-	hx_optimizer_plan_string( u, &string );
+	hx_optimizer_plan_string( ctx, u, &string );
 	ok( strcmp(string, "union(POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}), POS({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}))") == 0, "expected union join plan serialization" );
 	free(string);
 	
@@ -322,7 +322,7 @@ void sorting_test1 ( hx_model* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 		{
 			char* string;
-			hx_optimizer_plan_string( plan, &string );
+			hx_optimizer_plan_string( ctx, plan, &string );
 			
 			hx_variablebindings_iter_sorting** sorting;
 			int count	= hx_optimizer_plan_sorting( plan, &sorting );
@@ -389,7 +389,7 @@ void access_cost_test1 ( hx_model* hx ) {
 
 // 		fprintf( stderr, "plan1 %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		fprintf( stderr, "- cost: %lld\n", cost );
 // 		free(string);
@@ -404,7 +404,7 @@ void access_cost_test1 ( hx_model* hx ) {
 		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 // 		fprintf( stderr, "plan2 %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		fprintf( stderr, "- cost: %lld\n", cost );
 // 		free(string);
@@ -462,7 +462,7 @@ void join_cost_test1 ( hx_model* hx ) {
 		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
 		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 		char* string;
-		hx_optimizer_plan_string( plan, &string );
+		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "join plan %d cost %lld: %s\n", i, cost, string );
 		
 		if (strncmp( string, "merge-join", 10 ) == 0) {
@@ -558,7 +558,7 @@ void prune_plans_test2 ( hx_model* hx ) {
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( pruned, i );
 		char* string;
-		hx_optimizer_plan_string( plan, &string );
+		hx_optimizer_plan_string( ctx, plan, &string );
 		
 		ok( strcmp(string, "merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}))") == 0, "expected pruned join plan" );
 		
@@ -586,7 +586,7 @@ void optimize_bgp_test1 ( hx_model* hx ) {
 	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
 	
 	char* string;
-	hx_optimizer_plan_string( plan, &string );
+	hx_optimizer_plan_string( ctx, plan, &string );
 	ok( strcmp(string, "merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}))") == 0, "expected best 2-bgp plan" );
 //	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
@@ -604,7 +604,7 @@ void optimize_bgp_test2 ( hx_model* hx ) {
 	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
 	
 	char* string;
-	hx_optimizer_plan_string( plan, &string );
+	hx_optimizer_plan_string( ctx, plan, &string );
 	ok( strcmp(string, "merge-join(merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?z}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?y}))") == 0, "expected best 3-bgp plan" );
 // 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
@@ -633,7 +633,7 @@ void optimize_bgp_test3 ( hx_model* hx ) {
 	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
 	
 	char* string;
-	hx_optimizer_plan_string( plan, &string );
+	hx_optimizer_plan_string( ctx, plan, &string );
 	ok( strcmp(string, "hash-join(hash-join(hash-join(merge-join(PSO({?x2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s2}), POS({?x2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?s2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b2})), PSO({?s1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b1})), hash-join(hash-join(merge-join(PSO({?x1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s1}), POS({?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable> ?variable1})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#value> ?value1})))") == 0, "expected best 8-bgp plan" );
 // 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);

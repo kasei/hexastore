@@ -122,11 +122,20 @@ int hx_free_optimizer_plan ( hx_optimizer_plan* p ) {
 	return 0;
 }
 
-int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
+int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, char** string ) {
 	if (p->string) {
 		*string	= calloc( strlen(p->string) + 1, sizeof(char) );
 		strcpy( *string, p->string );
 		return 0;
+	}
+	
+	int len		= 0;
+	char* loc	= "";
+	if (p->location > 0) {
+		char* service	= hx_container_item( ctx->remote_sources, p->location );
+		len		= strlen(service) + 3;
+		loc		= (char*) calloc( len, sizeof(char) );
+		snprintf( loc, len, "[%s]", service );
 	}
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
@@ -141,14 +150,14 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		void* i			= p->data.access.source;
 		char* iname		= hx_store_ordering_name( store, i );
 		
-		int len	= strlen(iname) + strlen(tstring) + 3;
+		len	+= strlen(iname) + strlen(tstring) + 3;
 		*string	= (char*) calloc( len, sizeof(char) );
 		if (*string == NULL) {
 			fprintf( stderr, "*** failed to allocate memory in hx_optimizer_plan_string\n" );
 			return 1;
 		}
 		
-		snprintf( *string, len, "%s(%s)", iname, tstring );
+		snprintf( *string, len, "%s%s(%s)", iname, loc, tstring );
 		
 		free(iname);
 		free(tstring);
@@ -158,17 +167,17 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		
 		hx_optimizer_plan* lhs	= p->data.join.lhs_plan;
 		hx_optimizer_plan* rhs	= p->data.join.rhs_plan;
-		hx_optimizer_plan_string( lhs, &lhs_string );
-		hx_optimizer_plan_string( rhs, &rhs_string );
+		hx_optimizer_plan_string( ctx, lhs, &lhs_string );
+		hx_optimizer_plan_string( ctx, rhs, &rhs_string );
 		
-		int len	= strlen(jname) + strlen(lhs_string) + strlen(rhs_string) + 5;
+		len	+= strlen(jname) + strlen(lhs_string) + strlen(rhs_string) + 5;
 		*string	= (char*) calloc( len, sizeof(char) );
 		if (*string == NULL) {
 			fprintf( stderr, "*** failed to allocate memory in hx_optimizer_plan_string\n" );
 			return 1;
 		}
 		
-		snprintf( *string, len, "%s(%s, %s)", jname, lhs_string, rhs_string );
+		snprintf( *string, len, "%s%s(%s, %s)", jname, loc, lhs_string, rhs_string );
 		free(lhs_string);
 		free(rhs_string);
 	} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
@@ -178,7 +187,7 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 		char** strings	= (char**) calloc( size, sizeof(char*) );
 		for (i = 0; i < size; i++) {
 			hx_optimizer_plan* subplan	= hx_container_item(p->data._union.plans,i);
-			hx_optimizer_plan_string(subplan, &(strings[i]));
+			hx_optimizer_plan_string( ctx, subplan, &(strings[i]) );
 			length	+= strlen(strings[i]) + 2;
 		}
 		
@@ -190,9 +199,9 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 			strcat(subplans, strings[i]);
 		}
 		
-		int len	= length + 8;
+		len	+= length + 8;
 		*string	= (char*) calloc( len, sizeof(char) );
-		sprintf( *string, "union(%s)", subplans );
+		sprintf( *string, "union%s(%s)", loc, subplans );
 		
 		free(subplans);
 		for (i = 0; i < size; i++) {
@@ -207,6 +216,10 @@ int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string ) {
 	
 	p->string	= calloc( strlen(*string) + 1, sizeof(char) );
 	strcpy( p->string, *string );
+	
+	if (strlen(loc) > 0) {
+		free(loc);
+	}
 	
 	return 0;
 }

@@ -92,7 +92,7 @@ int hx_free_optimizer_plan ( hx_optimizer_plan* plan );
 
 hx_optimizer_plan_cost_t* hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* plan );
 
-int hx_optimizer_plan_string ( hx_optimizer_plan* p, char** string );
+int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, char** string );
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
