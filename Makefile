@@ -22,7 +22,7 @@ RDF_OBJECTS			= mentok/rdf/node.o mentok/rdf/triple.o
 ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o mentok/engine/union.o
 ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok/algebra/expr.o mentok/algebra/graphpattern.o
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
-OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o
+OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o mentok/optimizer/optimizer-federated.o
 OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
 LINKOBJS			= libmentok.dylib
 LINKOBJSFLAGS		= -lmentok
@@ -158,6 +158,9 @@ mentok/misc/avl.o: mentok/misc/avl.c mentok/misc/avl.h mentok/mentok_types.h
 
 mentok/optimizer/optimizer.o: mentok/optimizer/optimizer.c mentok/optimizer/optimizer.h
 	$(CC) $(OBJFLAGS) -c -o mentok/optimizer/optimizer.o mentok/optimizer/optimizer.c
+
+mentok/optimizer/optimizer-federated.o: mentok/optimizer/optimizer-federated.c mentok/optimizer/optimizer-federated.h
+	$(CC) $(OBJFLAGS) -c -o mentok/optimizer/optimizer-federated.o mentok/optimizer/optimizer-federated.c
 
 mentok/optimizer/plan.o: mentok/optimizer/plan.c mentok/optimizer/plan.h
 	$(CC) $(OBJFLAGS) -c -o mentok/optimizer/plan.o mentok/optimizer/plan.c
