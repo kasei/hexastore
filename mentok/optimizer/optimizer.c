@@ -146,14 +146,31 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	}
 // 	hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
 	
-	return hx_optimizer_optimize_plans( ctx, optPlans, bgpsize );
+	return hx_optimizer_optimize_optplans( ctx, optPlans, bgpsize );
+}
+
+hx_optimizer_plan* hx_optimizer_optimize_plans ( hx_execution_context* ctx, hx_container_t* p ) {
+	int i;
+	int size	= hx_container_size( p );
+	hx_hash_t* optPlans	= hx_new_hash( size * size );
+	for (i = 0; i < size; i++) {
+		hx_optimizer_plan* t	= hx_container_item( p, i );
+		hx_container_t* plans	= hx_new_container( 'P', 1 );
+		hx_container_push_item( plans, t );
+		char* key				= _hx_optimizer_new_opt_plan_access_key_set( size, i );
+		hx_hash_add( optPlans, key, size, plans );
+		free(key);
+	}
+// 	hx_hash_debug( optPlans, _hx_optimizer_optplans_debug_cb );
+	hx_free_container( p );
+	return hx_optimizer_optimize_optplans( ctx, optPlans, size );
 }
 
 hx_optimizer_plan* hx_optimizer_optimize_plans_dp ( hx_execution_context* ctx, hx_hash_t* optPlans, int size ) {
-	return hx_optimizer_optimize_plans( ctx, optPlans, size );
+	return hx_optimizer_optimize_optplans( ctx, optPlans, size );
 }
 
-hx_optimizer_plan* hx_optimizer_optimize_plans ( hx_execution_context* ctx, hx_hash_t* optPlans, int size ) {
+hx_optimizer_plan* hx_optimizer_optimize_optplans ( hx_execution_context* ctx, hx_hash_t* optPlans, int size ) {
 	int i;
 	for (i = 2; i <= size; i++) {
 // 		fprintf( stderr, "---------------------------------------------------------------------\n" );
@@ -339,32 +356,6 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 	}
 	
 	return access_plans;
-}
-
-hx_container_t* hx_optimizer_access_plans_federated ( hx_execution_context* ctx, hx_triple* t ) {
-	fprintf( stderr, "*** FEDERATED ACCESS PLANS\n" );
-	
-	hx_container_t* sources	= ctx->remote_sources;
-	int ssize				= hx_container_size( sources );
-	hx_container_t* plans	= hx_optimizer_access_plans( ctx, t );
-	int psize				= hx_container_size( plans );
-	
-	int i,j;
-	hx_container_t* fedplans	= hx_new_container( 'A', psize );
-	for (j = 0; j < psize; j++) {
-		hx_optimizer_plan* p	= hx_container_item( plans, j );
-		hx_container_t* up		= hx_new_container( 'U', ssize );
-		for (i = 1; i < ssize; i++) {
-			hx_optimizer_plan* c	= hx_copy_optimizer_plan( p );
-			c->location				= i;
-			hx_container_push_item( up, c );
-		}
-		hx_container_push_item( fedplans, hx_new_optimizer_union_plan(up) );
-		hx_free_optimizer_plan( p );
-	}
-	hx_free_container(plans);
-	
-	return fedplans;
 }
 
 // - joinPlans (which join algorithm to use? is sorting required?)
