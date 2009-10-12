@@ -376,3 +376,84 @@ hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx,
 	
 	return iter;
 }
+
+int hx_optimizer_plan_visit ( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan_visitor* v, void* thunk ) {
+	int r	= v( ctx, plan, thunk );
+	if (r == 0) {
+		if (plan->type == HX_OPTIMIZER_PLAN_UNION) {
+			int i;
+			hx_container_t* plans	= plan->data._union.plans;
+			int size	= hx_container_size( plans );
+			for (i = 0; i < size; i++) {
+				hx_optimizer_plan_visit( ctx, hx_container_item(plans,i), v, thunk );
+			}
+		} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
+			hx_optimizer_plan_visit( ctx, plan->data.join.lhs_plan, v, thunk );
+			hx_optimizer_plan_visit( ctx, plan->data.join.rhs_plan, v, thunk );
+		}
+	}
+	return 0;
+}
+
+int hx_optimizer_plan_visit_postfix ( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan_visitor* v, void* thunk ) {
+	if (plan->type == HX_OPTIMIZER_PLAN_UNION) {
+		int i;
+		hx_container_t* plans	= plan->data._union.plans;
+		int size	= hx_container_size( plans );
+		for (i = 0; i < size; i++) {
+			hx_optimizer_plan_visit( ctx, hx_container_item(plans,i), v, thunk );
+		}
+	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
+		hx_optimizer_plan_visit( ctx, plan->data.join.lhs_plan, v, thunk );
+		hx_optimizer_plan_visit( ctx, plan->data.join.rhs_plan, v, thunk );
+	}
+	return v( ctx, plan, thunk );
+}
+
+int hx_optimizer_plan_rewrite ( hx_execution_context* ctx, hx_optimizer_plan** plan, hx_optimizer_plan_rewriter* v ) {
+	hx_optimizer_plan* new	= NULL;
+	int r	= v( ctx, *plan, &new );
+	if (new) {
+		*plan	= new;
+	}
+	
+	if (r == 0) {
+		if ((*plan)->type == HX_OPTIMIZER_PLAN_UNION) {
+			int i;
+			hx_container_t* plans	= (*plan)->data._union.plans;
+			int size	= hx_container_size( plans );
+			for (i = 0; i < size; i++) {
+				hx_optimizer_plan* p	= hx_container_item(plans,i);
+				hx_optimizer_plan* q	= p;
+				hx_optimizer_plan_rewrite( ctx, &q, v );
+				if (q != p) {
+					hx_container_set_item( plans, i, q );
+				}
+			}
+		} else if ((*plan)->type == HX_OPTIMIZER_PLAN_JOIN) {
+			hx_optimizer_plan *p, *q;
+			
+			p = q	= (*plan)->data.join.lhs_plan;
+			hx_optimizer_plan_rewrite( ctx, &q, v );
+			if (q != p) {
+				(*plan)->data.join.lhs_plan	= q;
+			}
+			
+			p = q	= (*plan)->data.join.rhs_plan;
+			hx_optimizer_plan_rewrite( ctx, &q, v );
+			if (q != p) {
+				(*plan)->data.join.rhs_plan	= q;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+int hx_optimizer_plan_debug( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
+	char* string;
+	hx_optimizer_plan_string( ctx, plan, &string );
+	fprintf( stderr, "%s\n", string );
+	free(string);
+	return 0;
+}

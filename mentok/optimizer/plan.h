@@ -79,6 +79,13 @@ typedef struct {
 	int64_t cost;
 } hx_optimizer_plan_cost_t;
 
+// a visitor function for all the sub-plans of a plan.
+// return value dictates whether the children of a particular plan will be visited:
+//	a return value of 0 indicates that the visitor function should be applied recursively to all sub-plans
+//	any other return value indicates that no recursion on the current node should occur
+typedef int hx_optimizer_plan_visitor( hx_execution_context* ctx, hx_optimizer_plan* plan, void* thunk );
+typedef int hx_optimizer_plan_rewriter( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan** thunk );
+
 hx_optimizer_plan_cost_t* hx_new_optimizer_plan_cost ( int64_t cost );
 int64_t hx_optimizer_plan_cost_value ( hx_execution_context* ctx, hx_optimizer_plan_cost_t* c );
 int hx_free_optimizer_plan_cost ( hx_optimizer_plan_cost_t* c );
@@ -96,6 +103,12 @@ int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, 
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
+int hx_optimizer_plan_visit ( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan_visitor* v, void* thunk );
+int hx_optimizer_plan_visit_postfix ( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan_visitor* v, void* thunk );
+
+int hx_optimizer_plan_rewrite ( hx_execution_context* ctx, hx_optimizer_plan** plan, hx_optimizer_plan_rewriter* v );
+
+int hx_optimizer_plan_debug( hx_execution_context* ctx, hx_optimizer_plan* plan );
 
 #ifdef __cplusplus
 }
