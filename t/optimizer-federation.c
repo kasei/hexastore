@@ -11,7 +11,6 @@
 
 void _add_data ( hx_model* hx );
 
-void federated_plans_test1 ( hx_model* hx );
 void federated_merge_test1 ( hx_model* hx );
 void federated_normalize_test1 ( hx_model* hx );
 
@@ -20,38 +19,15 @@ int _strcmp (const void *a, const void *b) {
 }
 
 int main ( void ) {
-	plan_tests(6);
+	plan_tests(5);
 
 	hx_model* hx	= hx_new_model( NULL );
 	
-	federated_plans_test1( hx );
 	federated_merge_test1( hx );
 	federated_normalize_test1( hx );
 	
 	hx_free_model(hx);
 	return exit_status();
-}
-
-void federated_plans_test1 ( hx_model* hx ) {
-	fprintf( stdout, "# federated_plans_test1\n" );
-	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
-	ctx->optimizer_access_plans	= hx_optimizer_federated_access_plans;
-//	ctx->optimizer_join_plans	= hx_optimizer_federated_join_plans;
-	hx_execution_context_add_service( ctx, hx_new_remote_service("http://A/sparql") );
-	hx_execution_context_add_service( ctx, hx_new_remote_service("http://B/sparql") );
-	
-	hx_bgp* b	= hx_bgp_parse_string("PREFIX foaf: <http://xmlns.com/foaf/0.1/> { ?x a foaf:Person ; foaf:name ?name . }");
-	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
-	
-	char* string;
-	hx_optimizer_plan_string( ctx, plan, &string );
-	ok( strcmp(string, "hash-join(union(PSO[http://A/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}), PSO[http://B/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name})), union(POS[http://A/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>}), POS[http://B/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})))") == 0, "expected best federated 2-bgp plan" );
-// 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
-	free(string);
-	
-	hx_free_optimizer_plan(plan);
-	hx_free_bgp( b );
-	hx_free_execution_context(ctx);
 }
 
 void federated_merge_test1 ( hx_model* hx ) {

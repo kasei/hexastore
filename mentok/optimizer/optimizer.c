@@ -15,6 +15,8 @@ hx_container_t* _hx_optimizer_plan_subsets ( hx_execution_context* ctx, int tota
 
 hx_optimizer_plan* hx_optimizer_optimize_plans_dp ( hx_execution_context* ctx, hx_hash_t* optPlans, int size );
 
+int _hx_optimizer_plan_normalize( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan** thunk );
+
 
 void _hx_optimizer_debug_key ( char* name, char* key, int size ) {
 	int i;
@@ -410,6 +412,24 @@ hx_container_t* hx_optimizer_join_plans ( hx_execution_context* ctx, hx_containe
 		}
 	}
 	
+	int size	= hx_container_size( join_plans );
+	for (i = 0; i < size; i++) {
+		hx_optimizer_plan* p	= hx_container_item( join_plans, i );
+		hx_optimizer_plan* q	= p;
+		
+// 		fprintf( stderr, "*** Trying to rewrite plan: (%p)\n", p );
+// 		hx_optimizer_plan_debug( ctx, p );
+		hx_optimizer_plan_rewrite( ctx, &q, _hx_optimizer_plan_normalize );
+		if (q != p) {
+			// the root of the QEP was re-written, so we need to stash it back in the container
+// 			fprintf( stderr, "*** rewritten to: (%p)\n", q );
+// 			hx_optimizer_plan_debug( ctx, q );
+// 			fprintf( stderr, "---------------\n" );
+			
+			hx_container_set_item( join_plans, i, q );
+		}
+	}
+	
 	hx_free_container( lhs );
 	hx_free_container( rhs );
 	
@@ -574,4 +594,59 @@ hx_container_t* _hx_optimizer_plan_subsets ( hx_execution_context* ctx, int tota
 	}
 	
 	return subsets;
+}
+
+int _hx_optimizer_plan_normalize( hx_execution_context* ctx, hx_optimizer_plan* plan, hx_optimizer_plan** thunk ) {
+	int i;
+	if (plan->type != HX_OPTIMIZER_PLAN_JOIN) return 1;
+	if (plan->data.join.leftjoin != 0) return 1;
+	if (plan->location != 0) return 1;
+	hx_optimizer_plan* lhs	= plan->data.join.lhs_plan;
+	hx_optimizer_plan* rhs	= plan->data.join.rhs_plan;
+	if (lhs->type == HX_OPTIMIZER_PLAN_UNION) {
+		if (lhs->location != 0) return 1;
+		hx_container_t* plans	= lhs->data._union.plans;
+		int size	= hx_container_size( plans );
+// 		fprintf( stderr, "LHS is a union with %d children\n", size );
+		hx_container_t* newplans	= hx_new_container( 'P', size );
+		for (i = 0; i < size; i++) {
+// 			hx_container_t* c			= hx_new_container('P',2);
+// 			hx_container_push_item( c, hx_container_item( plans, i ) );
+// 			hx_container_push_item( c, hx_copy_optimizer_plan( rhs ) );
+// 			hx_optimizer_plan* jplan	= hx_optimizer_optimize_plans( ctx, c );
+			
+			hx_optimizer_plan* p	= hx_container_item( plans, i );
+			hx_optimizer_plan* q	= hx_copy_optimizer_plan( rhs );
+			hx_container_t* order	= hx_new_container( 'O', 1 );
+			hx_optimizer_plan* jplan	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, p, q, order, 0 );
+			
+			hx_container_push_item( newplans, jplan );
+		}
+		hx_optimizer_plan* new	= hx_new_optimizer_union_plan( newplans );
+		*thunk	= new;
+		return 0;
+	} else if (rhs->type == HX_OPTIMIZER_PLAN_UNION) {
+		if (rhs->location != 0) return 1;
+		hx_container_t* plans	= rhs->data._union.plans;
+		int size	= hx_container_size( plans );
+// 		fprintf( stderr, "RHS is a union with %d children\n", size );
+		hx_container_t* newplans	= hx_new_container( 'P', size );
+		for (i = 0; i < size; i++) {
+// 			hx_container_t* c			= hx_new_container('P',2);
+// 			hx_container_push_item( c, hx_container_item( plans, i ) );
+// 			hx_container_push_item( c, hx_copy_optimizer_plan( lhs ) );
+// 			hx_optimizer_plan* jplan	= hx_optimizer_optimize_plans( ctx, c );
+
+			hx_optimizer_plan* q	= hx_container_item( plans, i );
+			hx_optimizer_plan* p	= hx_copy_optimizer_plan( lhs );
+			hx_container_t* order	= hx_new_container( 'O', 1 );
+			hx_optimizer_plan* jplan	= hx_new_optimizer_join_plan( HX_OPTIMIZER_PLAN_HASHJOIN, p, q, order, 0 );
+
+			hx_container_push_item( newplans, jplan );
+		}
+		hx_optimizer_plan* new	= hx_new_optimizer_union_plan( newplans );
+		*thunk	= new;
+		return 0;
+	}
+	return 1;
 }
