@@ -1,3 +1,8 @@
+[parallel]
+
+Fix duplicates. With parallel loading, duplicated triples will lead to mistakenly duplicated results (which should never happen with just BGPs without projection). This can be fixed by passing intermediate results in a parallel hash join along with a flag set when the intermediate results are coming directly from a triple pattern (as opposed to a join operation). If the intermediate results are from a triple pattern, they should be uniqued after distribution and before the join operation.
+
+
 [optimizer]
 
 *** Implement normalize, merge and re-order rewriting rules, and execute them in joinPlans().
