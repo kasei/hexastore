@@ -16,7 +16,8 @@ LIBS		=	-ltokyocabinet -lpthread -lraptor
 
 HEXASTORE_OBJECTS	= mentok/store/hexastore/hexastore.o mentok/store/hexastore/index.o mentok/store/hexastore/terminal.o mentok/store/hexastore/vector.o mentok/store/hexastore/head.o mentok/store/hexastore/btree.o
 TCSTORE_OBJECTS		= mentok/store/tokyocabinet/tokyocabinet.o mentok/store/tokyocabinet/tcindex.o
-STORE_OBJECTS		= mentok/store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS)
+PSTORE_OBJECTS		= mentok/store/parliament/parliament.o
+STORE_OBJECTS		= mentok/store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS) $(PSTORE_OBJECTS)
 MISC_OBJECTS		= mentok/misc/avl.o mentok/misc/nodemap.o mentok/misc/util.o mentok/misc/idmap.o
 RDF_OBJECTS			= mentok/rdf/node.o mentok/rdf/triple.o
 ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o mentok/engine/union.o
@@ -71,6 +72,9 @@ mentok/store/tokyocabinet/tokyocabinet.o: mentok/store/tokyocabinet/tokyocabinet
 
 mentok/store/tokyocabinet/tcindex.o: mentok/store/tokyocabinet/tcindex.c mentok/store/tokyocabinet/tcindex.h mentok/mentok_types.h
 	$(CC) $(OBJFLAGS) -c -o mentok/store/tokyocabinet/tcindex.o mentok/store/tokyocabinet/tcindex.c
+
+mentok/store/parliament/parliament.o: mentok/store/parliament/parliament.h mentok/store/parliament/parliament.c mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/store/parliament/parliament.o mentok/store/parliament/parliament.c
 
 mentok/store/hexastore/hexastore.o: mentok/store/hexastore/hexastore.c mentok/store/hexastore/hexastore.h mentok/store/hexastore/head.h mentok/store/hexastore/vector.h mentok/store/hexastore/terminal.h mentok/store/hexastore/btree.h mentok/mentok_types.h
 	$(CC) $(OBJFLAGS) -c -o mentok/store/hexastore/hexastore.o mentok/store/hexastore/hexastore.c
@@ -185,7 +189,7 @@ mentok/parser/SPARQLScanner.o: mentok/parser/SPARQLScanner.c mentok/parser/SPARQ
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t t/optimizer-federation.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-parliament.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t t/optimizer-federation.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -261,6 +265,9 @@ t/optimizer-federation.t: test/tap.o t/optimizer-federation.c $(LINKOBJS) test/t
 
 t/store-hexastore.t: test/tap.o t/store-hexastore.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/store-hexastore.t t/store-hexastore.c test/tap.o
+
+t/store-parliament.t: test/tap.o t/store-parliament.c mentok/store/parliament/parliament.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/store-parliament.t t/store-parliament.c test/tap.o
 
 t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c mentok/store/tokyocabinet/tokyocabinet.h $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/store-tokyocabinet.t t/store-tokyocabinet.c test/tap.o
