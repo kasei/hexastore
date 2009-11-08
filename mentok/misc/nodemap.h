@@ -1,0 +1,44 @@
+#ifndef _NODEMAP_H
+#define _NODEMAP_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include "mentok/mentok_types.h"
+#include "mentok/misc/avl.h"
+#include "mentok/rdf/node.h"
+
+typedef struct {
+	hx_node_id next_id;
+	struct avl_table* id2node;
+	struct avl_table* node2id;
+} hx_nodemap;
+
+typedef struct {
+	hx_node_id id;
+	hx_node* node;
+} hx_nodemap_item;
+
+hx_nodemap* hx_new_nodemap( void );
+int hx_free_nodemap ( hx_nodemap* m );
+
+hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n );
+int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id );
+int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n );
+hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* n );
+hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id );
+hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map );
+int hx_nodemap_debug ( hx_nodemap* map );
+
+int hx_nodemap_write( hx_nodemap* t, FILE* f );
+
+hx_nodemap* hx_nodemap_read( FILE* f, int buffer );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

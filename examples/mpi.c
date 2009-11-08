@@ -1,24 +1,24 @@
 #include <stdio.h>
 #include <dirent.h>
-#include "hexastore.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "algebra/graphpattern.h"
-#include "engine/mergejoin.h"
-#include "engine/materialize.h"
-#include "parallel/parallel.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/algebra/graphpattern.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/engine/materialize.h"
+#include "mentok/parallel/parallel.h"
+#include "mentok/store/hexastore/hexastore.h"
 
-#include "misc/timing_choices.h"
+#include "mentok/misc/timing_choices.h"
 #ifndef TIMING_CPU_FREQUENCY
 #define TIMING_CPU_FREQUENCY 2600000000.0
 #endif
 #define TIMING_USE TIMING_RDTSC
-#include "misc/timing.h"
+#include "mentok/misc/timing.h"
 
 int DEBUG_NODE	= -1;
 
-hx_hexastore* distribute_triples_from_file ( hx_hexastore* hx, const char* filename );
+hx_model* distribute_triples_from_file ( hx_model* hx, const char* filename );
 
 int directory_exists ( const char* dir ) {
 	int exists	= 0;
@@ -81,7 +81,7 @@ int main ( int argc, char** argv ) {
 	}
 
 	hx_store* store			= hx_new_store_hexastore_with_indexes( NULL, "spo,pso,ops" );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	
 	const char* data_filename	= argv[1];
 	const char* query_filename	= argv[2];
@@ -183,7 +183,7 @@ int main ( int argc, char** argv ) {
 		hx_free_nodemap( results_map );
 //		hx_free_bgp(b);
 		hx_free_graphpattern(g);
-		hx_free_hexastore( hx );
+		hx_free_model( hx );
 		hx_parallel_free_parallel_execution_context( ctx );
 	}
 	

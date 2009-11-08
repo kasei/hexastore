@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "store/hexastore/vector.h"
+#include "mentok/store/hexastore/vector.h"
 #include "test/tap.h"
 
 void vector_test ( void );

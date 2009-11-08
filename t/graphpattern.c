@@ -1,10 +1,10 @@
-#include "hexastore.h"
-#include "algebra/graphpattern.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/graphpattern.h"
 #include "test/tap.h"
-#include "store/hexastore/hexastore.h"
-#include "engine/graphpattern.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/engine/graphpattern.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 hx_bgp* _test_bgp1 ( void );
 hx_bgp* _test_bgp2 ( void );
 hx_bgp* _test_bgp3 ( void );
@@ -18,7 +18,7 @@ void gp_varsub_test1 ( void );
 
 hx_node *p1, *p2, *r1, *r2, *l1, *l2, *l3, *l4, *l5, *l6, *v1, *v2, *v3;
 int main ( void ) {
-	plan_tests(33);
+	plan_tests(35);
 	
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
@@ -61,7 +61,7 @@ int main ( void ) {
 void eval_test1 ( void ) {
 	fprintf( stdout, "# eval test 1\n" );
 	hx_expr_debug	= 1;
-	hx_hexastore* hx			= hx_new_hexastore( NULL );
+	hx_model* hx			= hx_new_model( NULL );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	hx_nodemap* map				= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
@@ -92,14 +92,14 @@ void eval_test1 ( void ) {
 	ok1( counter == 2 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 }
 
 void eval_test2 ( void ) {
 	fprintf( stdout, "# eval test 2\n" );
 	hx_expr_debug	= 1;
-	hx_hexastore* hx		= hx_new_hexastore( NULL );
+	hx_model* hx		= hx_new_model( NULL );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
@@ -131,7 +131,7 @@ void eval_test2 ( void ) {
 	ok1( counter == 1 );
 	hx_free_variablebindings_iter( iter );
 	hx_free_graphpattern( p );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 }
 
@@ -186,8 +186,17 @@ void serialization_test ( void ) {
 		hx_free_graphpattern( p );
 	}
 	
-	
-	
+	{
+		hx_graphpattern* b	= hx_new_graphpattern( HX_GRAPHPATTERN_BGP, _test_bgp1() );
+		hx_graphpattern* p	= hx_new_graphpattern( HX_GRAPHPATTERN_SERVICE, r1, b );
+		ok1( p != NULL );
+		
+		char* string;
+		hx_graphpattern_sse( p, &string, "  ", 0 );
+		ok1( strcmp(string, "(service <r1>\n  (bgp\n    (triple ?y <p1> \"l1\")\n    (triple ?y <p2> ?x)\n  )\n)\n") == 0 );
+		free( string );
+		hx_free_graphpattern( p );
+	}
 }
 
 void variable_test1 ( void ) {
@@ -272,7 +281,7 @@ void variable_test2 ( void ) {
 void gp_varsub_test1 ( void ) {
 	fprintf( stdout, "# variable substitution test\n" );
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id l4_id		= hx_nodemap_add_node( map, l4 );
 		
@@ -284,7 +293,7 @@ void gp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= l4_id;
-			hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings( 1, names, nodes );
 			
 			hx_graphpattern* q	= hx_graphpattern_substitute_variables( p, b, hx->store );
 			char* string;
@@ -295,7 +304,7 @@ void gp_varsub_test1 ( void ) {
 			hx_free_variablebindings(b);
 		}
 		
-		hx_free_hexastore(hx);
+		hx_free_model(hx);
 		hx_free_graphpattern( p );
 	}
 }
@@ -320,12 +329,12 @@ hx_bgp* _test_bgp3 ( void ) {
 	return b;
 }
 
-void _add_data ( hx_hexastore* hx ) {
-	hx_add_triple( hx, r2, p2, r1 );
-	hx_add_triple( hx, r1, p1, l1 );
-	hx_add_triple( hx, r1, p2, l2 );
-	hx_add_triple( hx, r1, p2, l5 );
-	hx_add_triple( hx, r1, p1, l6 );
-	hx_add_triple( hx, r1, p1, l4 );
-	hx_add_triple( hx, r1, p1, l3 );
+void _add_data ( hx_model* hx ) {
+	hx_model_add_triple( hx, r2, p2, r1 );
+	hx_model_add_triple( hx, r1, p1, l1 );
+	hx_model_add_triple( hx, r1, p2, l2 );
+	hx_model_add_triple( hx, r1, p2, l5 );
+	hx_model_add_triple( hx, r1, p1, l6 );
+	hx_model_add_triple( hx, r1, p1, l4 );
+	hx_model_add_triple( hx, r1, p1, l3 );
 }

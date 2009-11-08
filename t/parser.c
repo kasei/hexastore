@@ -1,7 +1,7 @@
-#include "hexastore.h"
-#include "algebra/graphpattern.h"
-#include "algebra/bgp.h"
-#include "algebra/graphpattern.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/graphpattern.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/algebra/graphpattern.h"
 #include "test/tap.h"
 
 void serialization_test ( void );

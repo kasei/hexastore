@@ -41,9 +41,9 @@
 #include <libdrizzle/drizzle_server.h>
 
 /* HEXASTORE STUFF */
-#include "hexastore.h"
-#include "algebra/bgp.h"
-#include "store/store.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/store/store.h"
 extern hx_bgp* parse_bgp_query_string ( char* );
 /*******************/
 
@@ -69,7 +69,7 @@ typedef struct
   drizzle_con_st con;
   drizzle_result_st result;
   drizzle_column_st column;
-  hx_hexastore* db;
+  hx_model* db;
   bool send_columns;
   uint8_t verbose;
   uint64_t rows;
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
   }
 
   hx_store* store	= hx_store_hexastore_read( NULL, f, 0 );
-  server.db		= hx_new_hexastore_with_store( NULL, store );
+  server.db		= hx_new_model_with_store( NULL, store );
   
   if (server.db == NULL)
   {
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_free(&(server.drizzle));
-  hx_free_hexastore( server.db );
+  hx_free_model( server.db );
 
   return 0;
 }

@@ -1,6 +1,6 @@
-#include "hexastore.h"
-#include "algebra/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void bgp1_test ( void );
@@ -179,7 +179,7 @@ void bgp_vars_test2 ( void ) {
 
 void bgp_varsub_test1 ( void ) {
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
@@ -191,7 +191,7 @@ void bgp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= p1_id;
-			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings ( 1, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
@@ -206,7 +206,7 @@ void bgp_varsub_test1 ( void ) {
 			char* names[1]			= { "x" };
 			hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 			nodes[0]				= p2_id;
-			hx_variablebindings* b	= hx_new_variablebindings ( 1, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings ( 1, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;
@@ -224,7 +224,7 @@ void bgp_varsub_test1 ( void ) {
 
 void bgp_varsub_test2 ( void ) {
 	{
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		hx_node_id p2_id		= hx_nodemap_add_node( map, p2 );
@@ -237,7 +237,7 @@ void bgp_varsub_test2 ( void ) {
 			hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 			nodes[0]				= p2_id;
 			nodes[1]				= p1_id;
-			hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
+			hx_variablebindings* b	= hx_model_new_variablebindings( 2, names, nodes );
 			
 			hx_bgp* c	= hx_bgp_substitute_variables( bgp, b, hx->store );
 			char* string;

@@ -1,10 +1,16 @@
-TODO:
+[parallel]
+
+Fix duplicates. With parallel loading, duplicated triples will lead to mistakenly duplicated results (which should never happen with just BGPs without projection). This can be fixed by passing intermediate results in a parallel hash join along with a flag set when the intermediate results are coming directly from a triple pattern (as opposed to a join operation). If the intermediate results are from a triple pattern, they should be uniqued after distribution and before the join operation.
+
 
 [optimizer]
 
-Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
+*** Implement normalize, merge and re-order rewriting rules, and execute them in joinPlans().
 
-optimizer/optimizer.c:hx_optimizer_optimize_bgp currently implements the dynamic programming algorithm for BGPs. It needs to be generalized and split up to handle a BGP-like structure comprised of several access plans, not triple patterns. This will allow the algorithm to be extended to the IDP algorithm, where several triple pattern access plans in the first optimizer pass are replaced with a single join plan in successive passes (we might call the first pass with access plans T1,T2,T3, and the second pass with J1,T2 with J1 standing in for the best found plan for T1,T3).
+*** Extend plan structs to accept filters. One way to do this is just to attach an optional hx_expr onto each plan node, just like each plan has a location slot to indicate remote execution. When the plan is executed, if the expr slot is non-NULL, hx_new_filter_iter can wrap the underlying plan's iterator.
+
+
+Implement query plan optimizer (based on which indexes are available, pushing down projection/filters). Start with a dynamic programming optimizer, then extend to IDP-balanced-bestRow (IDP1 will give monotonicity, but is slower than IDP2).
 
 ** the computation for interesting plans needs to take into account possible mergejoins later on in the query plan.
 

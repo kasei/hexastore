@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "store/tokyocabinet/tokyocabinet.h"
+#include "mentok/store/tokyocabinet/tokyocabinet.h"
 #include "test/tap.h"
 
 void spo_test1 ( void );

@@ -1,37 +1,39 @@
 #include <stdlib.h>
-#include "hexastore.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
-#include "parser/parser.h"
-#include "optimizer/optimizer.h"
-#include "optimizer/plan.h"
-#include "algebra/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
+#include "mentok/parser/parser.h"
+#include "mentok/optimizer/optimizer.h"
+#include "mentok/optimizer/plan.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 
-void access_plans_test1 ( hx_hexastore* hx );
-void access_plans_test2 ( hx_hexastore* hx );
-void access_plans_test3 ( hx_hexastore* hx );
-void join_plans_test1 ( hx_hexastore* hx );
-void sorting_test1 ( hx_hexastore* hx );
-void access_cost_test1 ( hx_hexastore* hx );
-void join_cost_test1 ( hx_hexastore* hx );
-void prune_plans_test1 ( hx_hexastore* hx );
-void prune_plans_test2 ( hx_hexastore* hx );
-void optimize_bgp_test1 ( hx_hexastore* hx );
-void optimize_bgp_test2 ( hx_hexastore* hx );
-void execute_bgp_test1 ( hx_hexastore* hx );
+void access_plans_test1 ( hx_model* hx );
+void access_plans_test2 ( hx_model* hx );
+void access_plans_test3 ( hx_model* hx );
+void join_plans_test1 ( hx_model* hx );
+void union_plans_test1 ( hx_model* hx );
+void sorting_test1 ( hx_model* hx );
+void access_cost_test1 ( hx_model* hx );
+void join_cost_test1 ( hx_model* hx );
+void prune_plans_test1 ( hx_model* hx );
+void prune_plans_test2 ( hx_model* hx );
+void optimize_bgp_test1 ( hx_model* hx );
+void optimize_bgp_test2 ( hx_model* hx );
+void optimize_bgp_test3 ( hx_model* hx );
+void execute_bgp_test1 ( hx_model* hx );
 
 int _strcmp (const void *a, const void *b) {
 	return strcmp( *((const char**) a), *((const char**) b) );
 }
 
 int main ( void ) {
-	plan_tests(64);
+	plan_tests(68);
 
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	_add_data( hx );
 	
 	access_plans_test1( hx );
@@ -39,6 +41,8 @@ int main ( void ) {
 	access_plans_test3( hx );
 	
 	join_plans_test1( hx );
+	
+	union_plans_test1( hx );
 	
 	sorting_test1( hx );
 	sorting_test1( hx );
@@ -51,14 +55,15 @@ int main ( void ) {
 	
 	optimize_bgp_test1( hx );
 	optimize_bgp_test2( hx );
+	optimize_bgp_test3( hx );
 	
 	execute_bgp_test1( hx );
 	
-	hx_free_hexastore(hx);
+	hx_free_model(hx);
 	return exit_status();
 }
 
-void access_plans_test1 ( hx_hexastore* hx ) {
+void access_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -79,7 +84,7 @@ void access_plans_test1 ( hx_hexastore* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 // 		{
 // 			char* string;
-// 			hx_optimizer_plan_string( plan, &string );
+// 			hx_optimizer_plan_string( ctx, plan, &string );
 // 			fprintf( stderr, "*** access_plans_test1 plan: %s\n", string );
 // 			free(string);
 // 		}
@@ -124,7 +129,7 @@ void access_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_plans_test2 ( hx_hexastore* hx ) {
+void access_plans_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -167,7 +172,7 @@ void access_plans_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_plans_test3 ( hx_hexastore* hx ) {
+void access_plans_test3 ( hx_model* hx ) {
 	fprintf( stdout, "# access_plans_test3\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -198,7 +203,7 @@ void access_plans_test3 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void join_plans_test1 ( hx_hexastore* hx ) {
+void join_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# join_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -232,7 +237,7 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( jplans, i );
 //		fprintf( stderr, "join plan %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		free(string);
 		hx_free_optimizer_plan( plan );
@@ -250,7 +255,56 @@ void join_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void sorting_test1 ( hx_hexastore* hx ) {
+void union_plans_test1 ( hx_model* hx ) {
+	fprintf( stdout, "# union_plans_test1\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_node* v1	= hx_new_node_named_variable( -1, "x" );
+	hx_node* v2	= hx_new_node_named_variable( -2, "y" );
+	hx_node* type	= (hx_node*) hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	hx_node* resultset	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet");
+	hx_node* resultvar	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable");
+	hx_triple* t1	= hx_new_triple( v1, type, resultset );
+	hx_triple* t2	= hx_new_triple( v1, resultvar, v2 );
+	
+	int i;
+	hx_container_t* plans1	= hx_optimizer_access_plans( ctx, t1 );
+	hx_container_t* plans2	= hx_optimizer_access_plans( ctx, t2 );
+	int size1				= hx_container_size(plans1);
+	int size2				= hx_container_size(plans2);
+	ok1( size1 == 2 );
+	ok1( size2 == 2 );
+	
+	hx_optimizer_plan* p1	= hx_container_item(plans1, 0);
+	hx_optimizer_plan* p2	= hx_container_item(plans2, 0);
+	hx_container_t* c		= hx_new_container( 'P', 2 );
+	hx_container_push_item( c, p1 );
+	hx_container_push_item( c, p2 );
+	hx_optimizer_plan* u	= hx_new_optimizer_union_plan( c );
+	
+	char* string;
+	hx_optimizer_plan_string( ctx, u, &string );
+	ok( strcmp(string, "union(POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}), POS({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}))") == 0, "expected union join plan serialization" );
+	free(string);
+	
+	hx_free_optimizer_plan( u );
+	hx_free_optimizer_plan( hx_container_item(plans1,1) );
+	hx_free_optimizer_plan( hx_container_item(plans2,1) );
+	hx_free_container( plans1 );
+	hx_free_container( plans2 );
+	
+	hx_free_triple( t1 );
+	hx_free_triple( t2 );
+	hx_free_node(v1);
+	hx_free_node(v2);
+	hx_free_node(resultvar);
+	hx_free_node(resultset);
+	hx_free_node(type);
+
+	hx_free_execution_context(ctx);
+}
+
+void sorting_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# sorting_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -268,7 +322,7 @@ void sorting_test1 ( hx_hexastore* hx ) {
 		hx_optimizer_plan* plan	= hx_container_item( plans, i );
 		{
 			char* string;
-			hx_optimizer_plan_string( plan, &string );
+			hx_optimizer_plan_string( ctx, plan, &string );
 			
 			hx_variablebindings_iter_sorting** sorting;
 			int count	= hx_optimizer_plan_sorting( plan, &sorting );
@@ -305,7 +359,7 @@ void sorting_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void access_cost_test1 ( hx_hexastore* hx ) {
+void access_cost_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# access_cost_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -329,10 +383,13 @@ void access_cost_test1 ( hx_hexastore* hx ) {
 	
 	for (i = 0; i < size1; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans1, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
+
 // 		fprintf( stderr, "plan1 %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		fprintf( stderr, "- cost: %lld\n", cost );
 // 		free(string);
@@ -343,10 +400,11 @@ void access_cost_test1 ( hx_hexastore* hx ) {
 	
 	for (i = 0; i < size1; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( plans2, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 // 		fprintf( stderr, "plan2 %d: %p\n", i, (void*) plan );
 // 		char* string;
-// 		hx_optimizer_plan_string( plan, &string );
+// 		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "- %s\n", string );
 // 		fprintf( stderr, "- cost: %lld\n", cost );
 // 		free(string);
@@ -369,7 +427,7 @@ void access_cost_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void join_cost_test1 ( hx_hexastore* hx ) {
+void join_cost_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# join_cost_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -401,9 +459,10 @@ void join_cost_test1 ( hx_hexastore* hx ) {
 	int size				= hx_container_size(jplans);
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( jplans, i );
-		int64_t cost	= hx_optimizer_plan_cost( ctx, plan );
+		hx_optimizer_plan_cost_t* c	= hx_optimizer_plan_cost( ctx, plan );
+		int64_t cost				= hx_optimizer_plan_cost_value( ctx, c );
 		char* string;
-		hx_optimizer_plan_string( plan, &string );
+		hx_optimizer_plan_string( ctx, plan, &string );
 // 		fprintf( stderr, "join plan %d cost %lld: %s\n", i, cost, string );
 		
 		if (strncmp( string, "merge-join", 10 ) == 0) {
@@ -436,7 +495,7 @@ void join_cost_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void prune_plans_test1 ( hx_hexastore* hx ) {
+void prune_plans_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# prune_plans_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -469,7 +528,7 @@ void prune_plans_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void prune_plans_test2 ( hx_hexastore* hx ) {
+void prune_plans_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# prune_plans_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 
@@ -499,7 +558,7 @@ void prune_plans_test2 ( hx_hexastore* hx ) {
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan* plan	= hx_container_item( pruned, i );
 		char* string;
-		hx_optimizer_plan_string( plan, &string );
+		hx_optimizer_plan_string( ctx, plan, &string );
 		
 		ok( strcmp(string, "merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}))") == 0, "expected pruned join plan" );
 		
@@ -519,7 +578,7 @@ void prune_plans_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void optimize_bgp_test1 ( hx_hexastore* hx ) {
+void optimize_bgp_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# optimize_bgp_test1\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -527,7 +586,7 @@ void optimize_bgp_test1 ( hx_hexastore* hx ) {
 	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
 	
 	char* string;
-	hx_optimizer_plan_string( plan, &string );
+	hx_optimizer_plan_string( ctx, plan, &string );
 	ok( strcmp(string, "merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?y}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>}))") == 0, "expected best 2-bgp plan" );
 //	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
@@ -537,7 +596,7 @@ void optimize_bgp_test1 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void optimize_bgp_test2 ( hx_hexastore* hx ) {
+void optimize_bgp_test2 ( hx_model* hx ) {
 	fprintf( stdout, "# optimize_bgp_test2\n" );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 	
@@ -545,7 +604,7 @@ void optimize_bgp_test2 ( hx_hexastore* hx ) {
 	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
 	
 	char* string;
-	hx_optimizer_plan_string( plan, &string );
+	hx_optimizer_plan_string( ctx, plan, &string );
 	ok( strcmp(string, "merge-join(merge-join(PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable> ?z}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?x <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?y}))") == 0, "expected best 3-bgp plan" );
 // 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
@@ -555,7 +614,36 @@ void optimize_bgp_test2 ( hx_hexastore* hx ) {
 	hx_free_execution_context(ctx);
 }
 
-void execute_bgp_test1 ( hx_hexastore* hx ) {
+void optimize_bgp_test3 ( hx_model* hx ) {
+	fprintf( stdout, "# optimize_bgp_test3\n" );
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	
+	hx_bgp* b	= hx_bgp_parse_string("PREFIX : <http://www.w3.org/2001/sw/DataAccess/tests/result-set#>\
+	{\
+		?x1 a :ResultSet ;\
+			:solution ?s1 .\
+		?s1 :binding ?b1 .\
+		?b1 :value ?value1 ;\
+			:variable ?variable1 .\
+		?x2 a :ResultSet ;\
+			:solution ?s2 .\
+		?s2 :binding ?b2 .\
+	}");
+//	hx_bgp_debug(b);
+	hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
+	
+	char* string;
+	hx_optimizer_plan_string( ctx, plan, &string );
+	ok( strcmp(string, "hash-join(hash-join(hash-join(merge-join(PSO({?x2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s2}), POS({?x2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?s2 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b2})), PSO({?s1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding> ?b1})), hash-join(hash-join(merge-join(PSO({?x1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution> ?s1}), POS({?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet>})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable> ?variable1})), PSO({?b1 <http://www.w3.org/2001/sw/DataAccess/tests/result-set#value> ?value1})))") == 0, "expected best 8-bgp plan" );
+// 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
+	free(string);
+	
+	hx_free_optimizer_plan(plan);
+	hx_free_bgp( b );
+	hx_free_execution_context(ctx);
+}
+
+void execute_bgp_test1 ( hx_model* hx ) {
 	fprintf( stdout, "# execute_bgp_test1\n" );
 	hx_nodemap* map	= hx_store_hexastore_get_nodemap(hx->store);
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -575,7 +663,7 @@ void execute_bgp_test1 ( hx_hexastore* hx ) {
 	ok1( counter == 4 );
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_model* hx ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \
@@ -615,7 +703,7 @@ void _add_data ( hx_hexastore* hx ) {
 <http://resultset2/>    rdf:type      rs:ResultSet . \
 ";
 	hx_parser* parser	= hx_new_parser();
-	hx_parser_parse_string_into_hexastore( parser, hx, rdf, "http://example.org/", "turtle" );
+	hx_parser_parse_string_into_model( parser, hx, rdf, "http://example.org/", "turtle" );
 	hx_free_parser(parser);
 }
 

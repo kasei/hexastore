@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "hexastore.h"
-#include "rdf/triple.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "engine/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/triple.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];
@@ -14,13 +14,13 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	hx_node* x			= hx_new_named_variable( hx, "x" );
-	hx_node* y			= hx_new_named_variable( hx, "y" );
-	hx_node* z			= hx_new_named_variable( hx, "z" );
+	hx_node* x			= hx_model_new_named_variable( hx, "x" );
+	hx_node* y			= hx_model_new_named_variable( hx, "y" );
+	hx_node* z			= hx_model_new_named_variable( hx, "z" );
 	
 	hx_node* type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 	hx_node* knows		= hx_new_node_resource("http://xmlns.com/foaf/0.1/knows");
@@ -84,7 +84,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( person );
 	hx_free_node( knows );
 	hx_free_node( name );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_execution_context( ctx );
 	
 	return 0;

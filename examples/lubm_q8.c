@@ -10,14 +10,14 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "hexastore.h"
-#include "algebra/variablebindings.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/store.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/store.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
 	t->subject		= s;
@@ -34,12 +34,12 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	hx_node* x			= hx_new_named_variable( hx, "x" );
-	hx_node* y			= hx_new_named_variable( hx, "y" );
-	hx_node* z			= hx_new_named_variable( hx, "z" );
+	hx_node* x			= hx_model_new_named_variable( hx, "x" );
+	hx_node* y			= hx_model_new_named_variable( hx, "y" );
+	hx_node* z			= hx_model_new_named_variable( hx, "z" );
 	hx_node* type			= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 	hx_node* subOrgOf		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#subOrganizationOf");
 	hx_node* univ			= hx_new_node_resource("http://www.University0.edu");
@@ -128,7 +128,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( email );
 
 	hx_free_execution_context( ctx );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	
 	return 0;
 }

@@ -1,4 +1,4 @@
-#include "misc/util.h"
+#include "mentok/misc/util.h"
 #include "test/tap.h"
 
 void test1 ( void );

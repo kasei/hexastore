@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "hexastore.h"
-#include "misc/nodemap.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id );
 void help (int argc, char** argv) {
@@ -37,7 +37,7 @@ int main (int argc, char** argv) {
 	
 	fprintf( stderr, "reading hexastore from file...\n" );
 	hx_store* store			= hx_store_hexastore_read( NULL, inf, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	fprintf( stderr, "reading nodemap from file...\n" );
 	hx_nodemap* map			= hx_store_hexastore_get_nodemap( store );
 	
@@ -51,13 +51,13 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "creating new hexastore...\n" );
 	
 	hx_store* sstore	= hx_new_store_hexastore_with_nodemap( NULL, smap );
-	hx_hexastore* shx	= hx_new_hexastore_with_store( NULL, sstore );
+	hx_model* shx	= hx_new_model_with_store( NULL, sstore );
 	
-	hx_node* sn		= hx_new_named_variable(hx, "s");
-	hx_node* pn		= hx_new_named_variable(hx, "p");
-	hx_node* on		= hx_new_named_variable(hx, "o");
+	hx_node* sn		= hx_model_new_named_variable(hx, "s");
+	hx_node* pn		= hx_model_new_named_variable(hx, "p");
+	hx_node* on		= hx_model_new_named_variable(hx, "o");
 	hx_triple* t	= hx_new_triple( sn, pn, on );
-	hx_variablebindings_iter* iter	= hx_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
+	hx_variablebindings_iter* iter	= hx_model_new_variablebindings_iter_for_triple( hx, t, HX_SUBJECT );
 	while (!hx_variablebindings_iter_finished(iter)) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
@@ -69,7 +69,7 @@ int main (int argc, char** argv) {
 		hx_node_debug(s);
 		hx_node_debug(p);
 		hx_node_debug(o);
-		hx_add_triple( shx, s, p, o );
+		hx_model_add_triple( shx, s, p, o );
 		
 		hx_free_variablebindings( b );
 		hx_variablebindings_iter_next(iter);
@@ -83,7 +83,7 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	hx_free_nodemap( smap );
 	fclose( inf );
 	fclose( outf );

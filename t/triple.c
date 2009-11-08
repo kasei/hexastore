@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "rdf/triple.h"
+#include "mentok/rdf/triple.h"
 #include "test/tap.h"
 
 void test_hash ( void );

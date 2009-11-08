@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "store/hexastore/terminal.h"
+#include "mentok/store/hexastore/terminal.h"
 #include "test/tap.h"
 
 void terminal_test ( void );

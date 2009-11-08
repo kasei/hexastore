@@ -1,18 +1,18 @@
 #include <unistd.h>
-#include "hexastore.h"
-#include "misc/nodemap.h"
-#include "engine/hashjoin.h"
-#include "engine/mergejoin.h"
-#include "engine/nestedloopjoin.h"
-#include "rdf/node.h"
+#include "mentok/mentok.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/engine/hashjoin.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/engine/nestedloopjoin.h"
+#include "mentok/rdf/node.h"
 #include "test/tap.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/hexastore/hexastore.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_model* hx );
 void _debug_node ( char* h, hx_node* node );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 hx_node* p1;
 hx_node* p2;
@@ -49,7 +49,7 @@ int main ( void ) {
 
 void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ), int expect ) {
 	fprintf( stdout, "# test_cartesian_join\n" );
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
@@ -61,20 +61,20 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	char* name;
 	char* string;
 	hx_variablebindings* b;
-// 	hx_node* v1		= hx_new_named_variable( hx );
-// 	hx_node* v2		= hx_new_named_variable( hx );
-// 	hx_node* v3		= hx_new_named_variable( hx );
-// 	hx_node* v4		= hx_new_named_variable( hx );
+// 	hx_node* v1		= hx_model_new_named_variable( hx );
+// 	hx_node* v2		= hx_model_new_named_variable( hx );
+// 	hx_node* v3		= hx_model_new_named_variable( hx );
+// 	hx_node* v4		= hx_model_new_named_variable( hx );
 	
 	{
-		hx_node* v1		= hx_new_named_variable( hx, "x" );
-		hx_node* v2		= hx_new_named_variable( hx, "y" );
+		hx_node* v1		= hx_model_new_named_variable( hx, "x" );
+		hx_node* v2		= hx_model_new_named_variable( hx, "y" );
 		
 		hx_triple* ta	= hx_new_triple( r1, p1, v1 );
-		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+		hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 		
 		hx_triple* tb	= hx_new_triple( r2, p1, v2 );
-		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -124,16 +124,16 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 	}
 	
 	{
-		hx_node* v1		= hx_new_named_variable( hx, "a" );
-		hx_node* v2		= hx_new_named_variable( hx, "b" );
-		hx_node* v3		= hx_new_named_variable( hx, "c" );
-		hx_node* v4		= hx_new_named_variable( hx, "d" );
+		hx_node* v1		= hx_model_new_named_variable( hx, "a" );
+		hx_node* v2		= hx_model_new_named_variable( hx, "b" );
+		hx_node* v3		= hx_model_new_named_variable( hx, "c" );
+		hx_node* v4		= hx_model_new_named_variable( hx, "d" );
 		
 		hx_triple* ta	= hx_new_triple( v1, p1, v2 );
-		hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+		hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 		
 		hx_triple* tb	= hx_new_triple( v3, p2, v4 );
-		hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 		
 		hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -193,12 +193,12 @@ void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variab
 		hx_free_node(v4);
 	}
 	
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
 void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) ) {
 	fprintf( stdout, "# test_path_join\n" );
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 // <r1> :p1 <r2>
@@ -210,15 +210,15 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	char* name;
 	char* string;
 	hx_variablebindings* b;
-	hx_node* v1		= hx_new_named_variable( hx, "from" );
-	hx_node* v2		= hx_new_named_variable( hx, "neighbor" );
-	hx_node* v3		= hx_new_named_variable( hx, "to" );
+	hx_node* v1		= hx_model_new_named_variable( hx, "from" );
+	hx_node* v2		= hx_model_new_named_variable( hx, "neighbor" );
+	hx_node* v3		= hx_model_new_named_variable( hx, "to" );
 	
 	hx_triple* ta	= hx_new_triple( v1, p1, v2 );
-	hx_variablebindings_iter* iter_a	= hx_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+	hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
 	
 	hx_triple* tb	= hx_new_triple( v2, p1, v3 );
-	hx_variablebindings_iter* iter_b	= hx_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+	hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
 	
 	hx_variablebindings_iter* iter	= join_constructor( iter_a, iter_b );
 	
@@ -273,12 +273,12 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	ok1( hx_variablebindings_iter_finished( iter ) );
 	
 	hx_free_variablebindings_iter( iter );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
 void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) ) {
 	fprintf( stdout, "# test_left_join\n" );
-	hx_hexastore* hx	= hx_new_hexastore( NULL );
+	hx_model* hx	= hx_new_model( NULL );
 	hx_nodemap* map		= hx_store_hexastore_get_nodemap( hx->store );
 	_add_data( hx );
 	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
@@ -342,15 +342,15 @@ void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	
 	
 	
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 }
 
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort ) {
 	hx_node* v1	= hx_new_node_named_variable( -1, "subj" );
 	hx_node* v2	= hx_new_node_named_variable( -2, "pred" );
 	hx_node* v3	= hx_new_node_named_variable( -3, "obj" );
 	hx_triple* t	= hx_new_triple( v1, v2, v3 );
-	hx_variablebindings_iter* iter	=  hx_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
+	hx_variablebindings_iter* iter	=  hx_model_new_variablebindings_iter_for_triple( hx, t, HX_OBJECT );
 	hx_free_triple(t);
 	hx_free_node(v1);
 	hx_free_node(v2);
@@ -358,11 +358,11 @@ hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
 	return iter;
 }
 
-void _add_data ( hx_hexastore* hx ) {
-	hx_add_triple( hx, r1, p1, r2 );
-	hx_add_triple( hx, r2, p1, r1 );
-	hx_add_triple( hx, r2, p2, l2 );
-	hx_add_triple( hx, r1, p2, l1 );
+void _add_data ( hx_model* hx ) {
+	hx_model_add_triple( hx, r1, p1, r2 );
+	hx_model_add_triple( hx, r2, p1, r1 );
+	hx_model_add_triple( hx, r2, p2, l2 );
+	hx_model_add_triple( hx, r1, p2, l1 );
 }
 
 void _debug_node ( char* h, hx_node* node ) {

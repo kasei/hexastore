@@ -1,9 +1,9 @@
 #include <unistd.h>
-#include "hexastore.h"
-#include "store/hexastore/hexastore.h"
-#include "algebra/expr.h"
-#include "engine/expr.h"
-#include "misc/nodemap.h"
+#include "mentok/mentok.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/algebra/expr.h"
+#include "mentok/engine/expr.h"
+#include "mentok/misc/nodemap.h"
 #include "test/tap.h"
 
 void test_serialization ( void );
@@ -90,7 +90,7 @@ void test_eval ( void ) {
 	{
 		// variable substitution expr
 		hx_node* value	= NULL;
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* v		= hx_new_node_named_variable( -1, "x" );
@@ -101,7 +101,7 @@ void test_eval ( void ) {
 		hx_node_id mid		= hx_nodemap_add_node( map, m );
 		char* names[2]		= { "x", "y" };
 		hx_node_id ids[2]	= { lid, mid };
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
+		hx_variablebindings* b	= hx_model_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* e	= hx_new_node_expr( v );
 		int r		= hx_expr_eval( e, b, ctx, &value );
@@ -121,7 +121,7 @@ void test_eval ( void ) {
 	{
 		// built-in function expr ISLITERAL(literal)
 		hx_node* value	= NULL;
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_execution_context* ctx		= hx_new_execution_context( NULL, hx );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node* x		= hx_new_node_named_variable( -1, "x" );
@@ -133,7 +133,7 @@ void test_eval ( void ) {
 		hx_node_id iid		= hx_nodemap_add_node( map, iri );
 		char* names[2]		= { "y", "x" };
 		hx_node_id ids[2]	= { iid, lid };
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, ids );
+		hx_variablebindings* b	= hx_model_new_variablebindings ( 2, names, ids );
 		
 		hx_expr* x_e	= hx_new_node_expr( x );
 		hx_expr* e		= hx_new_builtin_expr1( HX_EXPR_BUILTIN_ISLITERAL, x_e );
@@ -156,14 +156,14 @@ void expr_varsub_test1 ( void ) {
 		hx_expr* v1	= hx_new_node_expr( hx_new_node_named_variable( -1, "v" ) );
 		hx_expr* e	= hx_new_builtin_expr1( HX_EXPR_BUILTIN_STR, v1 );
 
-		hx_hexastore* hx		= hx_new_hexastore( NULL );
+		hx_model* hx		= hx_new_model( NULL );
 		hx_nodemap* map			= hx_store_hexastore_get_nodemap( hx->store );
 		hx_node_id p1_id		= hx_nodemap_add_node( map, p1 );
 		
 		char* names[1]			= { "v" };
 		hx_node_id* nodes		= (hx_node_id*) calloc( 1, sizeof( hx_node_id ) );
 		nodes[0]				= p1_id;
-		hx_variablebindings* b	= hx_new_variablebindings( 1, names, nodes );
+		hx_variablebindings* b	= hx_model_new_variablebindings( 1, names, nodes );
 
 		hx_expr* f				= hx_expr_substitute_variables( e, b, hx->store );
 		

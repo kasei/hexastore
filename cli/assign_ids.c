@@ -9,8 +9,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "hexastore.h"
-#include "rdf/node.h"
+#include "mentok/mentok.h"
+#include "mentok/rdf/node.h"
 
 typedef struct {
 	FILE* f;

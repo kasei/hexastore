@@ -1,4 +1,4 @@
-#include "misc/nodemap.h"
+#include "mentok/misc/nodemap.h"
 #include "test/tap.h"
 
 int main ( void ) {

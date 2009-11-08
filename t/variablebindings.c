@@ -1,12 +1,12 @@
 #include <unistd.h>
-#include "hexastore.h"
-#include "algebra/variablebindings.h"
-#include "misc/nodemap.h"
-#include "rdf/node.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/misc/nodemap.h"
+#include "mentok/rdf/node.h"
 #include "test/tap.h"
 
-void _add_data ( hx_hexastore* hx );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+void _add_data ( hx_model* hx );
+hx_variablebindings_iter* _get_triples ( hx_model* hx, int sort );
 
 hx_node* p1;
 hx_node* p2;
@@ -47,7 +47,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings ( 2, names, nodes );
+		hx_variablebindings* b	= hx_model_new_variablebindings ( 2, names, nodes );
 		
 		ok1( hx_variablebindings_size(b) == 2 );
 		ok1( hx_variablebindings_node_id_for_binding(b,0) == 1 );
@@ -65,7 +65,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
+		hx_variablebindings* b	= hx_model_new_variablebindings( 2, names, nodes );
 
 		ok1( hx_variablebindings_size(b) == 2 );
 		hx_variablebindings* p	= hx_variablebindings_project( b, 1, pcols );
@@ -86,7 +86,7 @@ void vb_test1 ( void ) {
 		hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 		nodes[0]				= 1;
 		nodes[1]				= 7;
-		hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
+		hx_variablebindings* b	= hx_model_new_variablebindings( 2, names, nodes );
 
 		ok1( hx_variablebindings_size(b) == 2 );
 		hx_variablebindings* p	= hx_variablebindings_project_names( b, 2, pnames );
@@ -112,7 +112,7 @@ void vb_test1 ( void ) {
 // 	hx_node_id* nodes		= (hx_node_id*) calloc( 2, sizeof( hx_node_id ) );
 // 	nodes[0]				= 1;
 // 	nodes[1]				= 7;
-// 	hx_variablebindings* b	= hx_new_variablebindings( 2, names, nodes );
+// 	hx_variablebindings* b	= hx_model_new_variablebindings( 2, names, nodes );
 // 	
 // 	int len;
 // 	char* frozen			= hx_variablebindings_freeze( b, &len );

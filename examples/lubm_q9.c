@@ -10,17 +10,17 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "hexastore.h"
-#include "algebra/variablebindings.h"
-#include "engine/mergejoin.h"
-#include "rdf/node.h"
-#include "algebra/bgp.h"
-#include "engine/bgp.h"
-#include "store/store.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/algebra/variablebindings.h"
+#include "mentok/engine/mergejoin.h"
+#include "mentok/rdf/node.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/store/store.h"
+#include "mentok/store/hexastore/hexastore.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b );
+double bench ( hx_model* hx, hx_bgp* b );
 
 static hx_node* x;
 static hx_node* y;
@@ -48,12 +48,12 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-	hx_hexastore* hx		= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx		= hx_new_model_with_store( NULL, store );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	x			= hx_new_named_variable( hx, "x" );
-	y			= hx_new_named_variable( hx, "y" );
-	z			= hx_new_named_variable( hx, "z" );
+	x			= hx_model_new_named_variable( hx, "x" );
+	y			= hx_model_new_named_variable( hx, "y" );
+	z			= hx_model_new_named_variable( hx, "z" );
 	type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 	faculty		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Faculty");
 	advisor		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#advisor");
@@ -137,7 +137,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( takesCourse );
 	
 	hx_free_execution_context( ctx );
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	
 	return 0;
 }

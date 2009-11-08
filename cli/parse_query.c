@@ -1,11 +1,12 @@
-#include "parser/SPARQLParser.h"
+#include "mentok/parser/SPARQLParser.h"
 #include <time.h>
-#include "algebra/bgp.h"
-#include "algebra/graphpattern.h"
-#include "engine/bgp.h"
-#include "engine/graphpattern.h"
-#include "store/hexastore/hexastore.h"
-#include "store/tokyocabinet/tokyocabinet.h"
+#include "mentok/algebra/bgp.h"
+#include "mentok/algebra/graphpattern.h"
+#include "mentok/engine/bgp.h"
+#include "mentok/engine/graphpattern.h"
+#include "mentok/store/hexastore/hexastore.h"
+#include "mentok/store/tokyocabinet/tokyocabinet.h"
+#include "mentok/optimizer/optimizer.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
 
@@ -22,6 +23,7 @@ void help (int argc, char** argv) {
 int main( int argc, char** argv ) {
 	int argi		= 1;
 	int dryrun		= 0;
+	int optimize	= 0;
 	
 	if (argc < 3) {
 		help( argc, argv );
@@ -53,6 +55,8 @@ int main( int argc, char** argv ) {
 		while (argi < argc && *(argv[argi]) == '-') {
 			if (strncmp(argv[argi], "-n", 2) == 0) {
 				dryrun	= 1;
+			} else if (strncmp(argv[argi], "-o",2) == 0) {
+				optimize	= 1;
 			}
 			argi++;
 		}
@@ -60,10 +64,10 @@ int main( int argc, char** argv ) {
 	
 	char* filename	= argv[ argi++ ];
 	
-	hx_hexastore* hx;
+	hx_model* hx;
 	if (store_type == 'T') {
 		hx_store* store		= hx_new_store_tokyocabinet( NULL, filename );
-		hx		= hx_new_hexastore_with_store( NULL, store );
+		hx		= hx_new_model_with_store( NULL, store );
 	} else {
 		FILE* f	= fopen( filename, "r" );
 		if (f == NULL) {
@@ -72,7 +76,7 @@ int main( int argc, char** argv ) {
 		}
 		
 		hx_store* store			= hx_store_hexastore_read( NULL, f, 0 );
-		hx		= hx_new_hexastore_with_store( NULL, store );
+		hx		= hx_new_model_with_store( NULL, store );
 	}
 	
 	hx_bgp* b;
@@ -125,13 +129,22 @@ int main( int argc, char** argv ) {
 		fprintf( stdout, "%s\n", sse );
 		free( sse );
 	}
+
+	hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
+	if (optimize) {
+		char* string;
+		hx_optimizer_plan* plan	= hx_optimizer_optimize_bgp( ctx, b );
+		hx_optimizer_plan_string( ctx, plan, &string );
+		fprintf( stdout, "%s\n", string );
+		free(string);
+	}
+	
 	
 	if (!dryrun) {
 		clock_t st_time	= clock();
 		uint64_t count	= 0;
 		
 		hx_variablebindings_iter* iter;
-		hx_execution_context* ctx	= hx_new_execution_context( NULL, hx );
 		if (g) {
 			iter	= hx_graphpattern_execute( ctx, g );
 		} else {
@@ -177,7 +190,7 @@ int main( int argc, char** argv ) {
 	}
 	
 	hx_free_bgp(b);
-	hx_free_hexastore( hx );
+	hx_free_model( hx );
 	return 0;
 }
 

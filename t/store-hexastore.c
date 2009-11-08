@@ -1,5 +1,5 @@
-#include "hexastore.h"
-#include "store/hexastore/hexastore.h"
+#include "mentok/mentok.h"
+#include "mentok/store/hexastore/hexastore.h"
 #include "test/tap.h"
 
 void spo_test1 ( void );
@@ -201,7 +201,7 @@ void orderings_test1 ( void ) {
 void orderings_test2 ( void ) {
 	fprintf( stdout, "# orderings_test2\n" );
 	hx_store* store	= hx_new_store_hexastore_with_indexes( NULL, "pso,pos" );
-	hx_hexastore* hx	= hx_new_hexastore_with_store( NULL, store );
+	hx_model* hx	= hx_new_model_with_store( NULL, store );
 	
 	hx_node* s		= hx_new_node_resource("s");
 	hx_node* s2		= hx_new_node_resource("s2");
@@ -288,5 +288,5 @@ void orderings_test2 ( void ) {
 	hx_free_node(o2);
 	hx_free_node(o3);
 
-	hx_free_hexastore(hx);
+	hx_free_model(hx);
 }

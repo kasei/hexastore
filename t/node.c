@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "rdf/node.h"
+#include "mentok/rdf/node.h"
 #include "test/tap.h"
 
 void test_variables ( void );
