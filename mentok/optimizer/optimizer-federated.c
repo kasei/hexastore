@@ -1,7 +1,6 @@
 #include "mentok/optimizer/optimizer-federated.h"
 #include "mentok/misc/idmap.h"
 
-
 int _hx_optimizer_federated_plan_merge( hx_execution_context* ctx, hx_optimizer_plan* plan, void* thunk );
 
 hx_container_t* hx_optimizer_federated_access_plans ( hx_execution_context* ctx, hx_triple* t ) {
@@ -37,6 +36,7 @@ hx_container_t* hx_optimizer_federated_join_plans ( hx_execution_context* ctx, h
 	for (i = 0; i < size; i++) {
 		hx_optimizer_plan_visit_postfix( ctx, hx_container_item( plans, i ), _hx_optimizer_federated_plan_merge, NULL );
 	}
+	
 	return plans;
 }
 
@@ -49,7 +49,10 @@ int _hx_optimizer_federated_plan_merge( hx_execution_context* ctx, hx_optimizer_
 			lhs->location	= 0;
 			rhs->location	= 0;
 		}
+	} else if (plan->type == HX_OPTIMIZER_PLAN_UNION) {
+		// now that SERVICE joins have been merged, we should re-order unions to prefer fewer SERVICE calls
+		hx_container_t* plans	= plan->data._union.plans;
+		qsort_r( plans->items, hx_container_size(plans), sizeof(void*), ctx, hx_optimizer_plan_cmp_service_calls );
 	}
 	return 0;
 }
-

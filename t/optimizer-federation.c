@@ -117,7 +117,32 @@ void federated_normalize_test1 ( hx_model* hx ) {
 	
 	char* string;
 	hx_optimizer_plan_string( ctx, plan, &string );
-	ok( strcmp(string, "union(hash-join[http://A/sparql](PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join(PSO[http://A/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS[http://B/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join(PSO[http://B/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS[http://A/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join[http://B/sparql](PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})))") == 0, "expected normalized federated plan" );
+// 	union(
+// 		hash-join[http://A/sparql](
+// 			PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}),
+// 			POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})
+// 			),
+// 		hash-join[http://B/sparql](
+// 			PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}),
+// 			POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})
+// 			),
+// 		hash-join(
+// 			PSO[http://A/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}),
+// 			POS[http://B/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})
+// 			),
+// 		hash-join(
+// 			PSO[http://B/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}),
+// 			POS[http://A/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})
+// 			)
+// 	)
+
+	int c	= strcmp(string, "union(hash-join[http://A/sparql](PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join[http://B/sparql](PSO({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join(PSO[http://A/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS[http://B/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})), hash-join(PSO[http://B/sparql]({?x <http://xmlns.com/foaf/0.1/name> ?name}), POS[http://A/sparql]({?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>})))");
+	ok( c == 0, "expected normalized federated plan" );
+	
+	if (c != 0) {
+		fprintf( stderr, "Got plan string: %s\n", string );
+	}
+	
 // 	fprintf( stderr, "GOT BEST PLAN: %s\n", string );
 	free(string);
 	
@@ -125,3 +150,8 @@ void federated_normalize_test1 ( hx_model* hx ) {
 	hx_free_bgp( b );
 	hx_free_execution_context(ctx);
 }
+
+
+
+
+

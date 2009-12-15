@@ -21,6 +21,37 @@ int64_t hx_optimizer_plan_cost_value ( hx_execution_context* ctx, hx_optimizer_p
 	return c->cost;
 }
 
+int hx_optimizer_plan_service_calls ( hx_execution_context* ctx, hx_optimizer_plan* p ) {
+	if (p->location > 0) {
+		if (0) {
+			char* string;
+			hx_optimizer_plan_string( ctx, p, &string );
+			fprintf( stderr, "counting service call: %s\n", string );
+			free(string);
+		}
+		return 1;
+	} else {
+		int count	= 0;
+		if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
+		} else if (p->type == HX_OPTIMIZER_PLAN_JOIN) {
+			count	+= hx_optimizer_plan_service_calls( ctx, p->data.join.lhs_plan );
+			count	+= hx_optimizer_plan_service_calls( ctx, p->data.join.rhs_plan );
+		} else if (p->type == HX_OPTIMIZER_PLAN_UNION) {
+			int i;
+			hx_container_t* src		= p->data._union.plans;
+			int size				= hx_container_size(src);
+			hx_container_t* plans	= hx_new_container( 'P', size );
+			for (i = 0; i < size; i++) {
+				count	+= hx_optimizer_plan_service_calls( ctx, hx_container_item(src,i) );
+			}
+		} else {
+			fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
+			return -1;
+		}
+		return count;
+	}
+}
+
 hx_optimizer_plan* hx_new_optimizer_access_plan ( hx_store* store, void* source, hx_triple* t, hx_container_t* order ) {
 	int order_count				= hx_container_size( order );
 	hx_optimizer_plan* plan		= (hx_optimizer_plan*) calloc( 1, sizeof(hx_optimizer_plan) );
@@ -64,6 +95,23 @@ hx_optimizer_plan* hx_new_optimizer_union_plan ( hx_container_t* plans ) {
 	plan->order					= hx_new_container( 'S', 1 );	// unions have no predictable ordering (might have different variables, or execution might be parallelized)
 	plan->string				= NULL;
 	plan->location				= 0;
+	
+	if (0) {
+		int i;
+		int size	= hx_container_size( plans );
+		fprintf( stderr, "*** Creating new UNION plan with %d subplans...\n", size );
+		for (i = 0; i < size; i++) {
+			hx_optimizer_plan* p	= hx_container_item( plans, i );
+			char* string;
+			hx_optimizer_plan_string( NULL, p, &string );
+			fprintf( stderr, "- (%d) %s\n", i, string );
+			free(string);
+		}
+		if (size > 3) {
+			fprintf( stderr, "breakpoint\n" );
+		}
+	}
+	
 	return plan;
 }
 
@@ -135,11 +183,17 @@ int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, 
 	int len		= 0;
 	char* loc	= "";
 	if (p->location > 0) {
-		hx_remote_service* s	= hx_container_item( ctx->remote_sources, p->location );
-		char* service	= hx_remote_service_name( s );
-		len		= strlen(service) + 3;
-		loc		= (char*) calloc( len, sizeof(char) );
-		snprintf( loc, len, "[%s]", service );
+		if (ctx == NULL) {
+			len		= 7;
+			loc		= (char*) calloc( len, sizeof(char) );
+			snprintf( loc, len, "[%d]", p->location );
+		} else {
+			hx_remote_service* s	= hx_container_item( ctx->remote_sources, p->location );
+			char* service	= hx_remote_service_name( s );
+			len		= strlen(service) + 3;
+			loc		= (char*) calloc( len, sizeof(char) );
+			snprintf( loc, len, "[%s]", service );
+		}
 	}
 	
 	if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
@@ -456,4 +510,14 @@ int hx_optimizer_plan_debug( hx_execution_context* ctx, hx_optimizer_plan* plan 
 	fprintf( stderr, "%s\n", string );
 	free(string);
 	return 0;
+}
+
+int hx_optimizer_plan_cmp_service_calls (void* thunk, const void *a, const void *b) {
+	hx_execution_context* ctx	= (hx_execution_context*) thunk;
+	hx_optimizer_plan* plana	= *((hx_optimizer_plan**) a);
+	hx_optimizer_plan* planb	= *((hx_optimizer_plan**) b);
+	
+	int ca	= hx_optimizer_plan_service_calls(ctx, plana);
+	int cb	= hx_optimizer_plan_service_calls(ctx, planb);
+	return (ca - cb);
 }

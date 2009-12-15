@@ -97,6 +97,7 @@ hx_optimizer_plan* hx_new_optimizer_union_plan ( hx_container_t* plans );
 int hx_optimizer_plan_sorting ( hx_optimizer_plan* plan, hx_variablebindings_iter_sorting*** sorting );
 int hx_free_optimizer_plan ( hx_optimizer_plan* plan );
 
+int hx_optimizer_plan_service_calls ( hx_execution_context* ctx, hx_optimizer_plan* plan );
 hx_optimizer_plan_cost_t* hx_optimizer_plan_cost ( hx_execution_context* ctx, hx_optimizer_plan* plan );
 
 int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, char** string );
@@ -108,6 +109,7 @@ int hx_optimizer_plan_visit_postfix ( hx_execution_context* ctx, hx_optimizer_pl
 
 int hx_optimizer_plan_rewrite ( hx_execution_context* ctx, hx_optimizer_plan** plan, hx_optimizer_plan_rewriter* v );
 
+int hx_optimizer_plan_cmp_service_calls (void* thunk, const void *a, const void *b);
 int hx_optimizer_plan_debug( hx_execution_context* ctx, hx_optimizer_plan* plan );
 
 #ifdef __cplusplus
