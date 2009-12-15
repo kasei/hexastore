@@ -14,9 +14,11 @@ extern hx_bgp* parse_bgp_query ( void );
 extern hx_graphpattern* parse_query_string ( char* );
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage:\n" );
-	fprintf( stderr, "\t%s -store=S [-n] hexastore.dat [query.rq]\n", argv[0] );
-	fprintf( stderr, "\t\tReads a SPARQL query from query.rq or on standard input.\n" );
+	fprintf( stderr, "Usage: %s -store=S [-n] hexastore.dat [query.rq]\n", argv[0] );
+	fprintf( stderr, "    Reads a SPARQL query from query.rq or on standard input.\n\n" );
+	fprintf( stderr, "    S must be one of the following:\n" );
+	fprintf( stderr, "        'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "        'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 	fprintf( stderr, "\n\n" );
 }
 

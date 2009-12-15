@@ -18,9 +18,9 @@ static int count	= 0;
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s -store=S data.rdf data/\n\n", argv[0] );
-	fprintf( stderr, "S must be one of the following:\n" );
-	fprintf( stderr, "    'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
-	fprintf( stderr, "    'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
+	fprintf( stderr, "    S must be one of the following:\n" );
+	fprintf( stderr, "        'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "        'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 }
 
 void logger ( uint64_t _count, void* thunk ) {
