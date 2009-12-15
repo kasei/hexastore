@@ -45,7 +45,7 @@ int hx_optimizer_plan_service_calls ( hx_execution_context* ctx, hx_optimizer_pl
 				count	+= hx_optimizer_plan_service_calls( ctx, hx_container_item(src,i) );
 			}
 		} else {
-			fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
+			fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_service_calls\n" );
 			return -1;
 		}
 		return count;

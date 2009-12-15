@@ -35,11 +35,11 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->hashjoin_penalty				= 1;
 	c->nestedloopjoin_penalty		= 3;
 	c->remote_latency_cost			= 100;
-	c->lookup_node					= hx_execution_context_lookup_node;
-	c->bgp_exec_func				= hx_bgp_execute2;
+	c->lookup_node					= (lookup_node_t) hx_execution_context_lookup_node;
+	c->bgp_exec_func				= (bgp_exec_func_t) hx_bgp_execute2;
 	c->bgp_exec_func_thunk			= NULL;
-	c->optimizer_access_plans		= hx_optimizer_access_plans;
-	c->optimizer_join_plans			= hx_optimizer_join_plans;
+	c->optimizer_access_plans		= (optimizer_access_plans_t) hx_optimizer_access_plans;
+	c->optimizer_join_plans			= (optimizer_join_plans_t) hx_optimizer_join_plans;
 	c->remote_sources				= hx_new_container( 'S', 1 );
 	hx_execution_context_add_service( c, hx_new_remote_service("local") );
 	return 0;

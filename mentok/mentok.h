@@ -48,6 +48,11 @@ typedef struct {
 	char* name;
 } hx_remote_service;
 
+typedef hx_variablebindings_iter* (*bgp_exec_func_t)( void*, hx_model*, void* thunk );
+typedef hx_node* (*lookup_node_t)( void*, hx_node_id );
+typedef hx_container_t* (*optimizer_access_plans_t)( void*, hx_triple* );
+typedef hx_container_t* (*optimizer_join_plans_t) ( void*, hx_container_t*, hx_container_t*, int );
+
 typedef struct {
 	void* world;
 	hx_model* hx;
@@ -56,10 +61,10 @@ typedef struct {
 	int64_t nestedloopjoin_penalty;
 	int64_t hashjoin_penalty;
 	int64_t unsorted_mergejoin_penalty;
-	hx_variablebindings_iter* (*bgp_exec_func)( void*, hx_model*, void* thunk );
-	hx_node* (*lookup_node)( void*, hx_node_id );
-	hx_container_t* (*optimizer_access_plans) ( void* ctx, hx_triple* t );
-	hx_container_t* (*optimizer_join_plans) ( void* ctx, hx_container_t* lhs, hx_container_t* rhs, int leftjoin );
+	bgp_exec_func_t bgp_exec_func;
+	lookup_node_t lookup_node;
+	optimizer_access_plans_t optimizer_access_plans;
+	optimizer_join_plans_t optimizer_join_plans;
 	void* bgp_exec_func_thunk;
 } hx_execution_context;
 
