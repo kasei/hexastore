@@ -4,7 +4,7 @@ int _hx_union_prime_results ( _hx_union_iter_vb_info* info );
 int _hx_union_get_next_result ( _hx_union_iter_vb_info* info );
 
 hx_variablebindings_iter* hx_new_union_iter ( hx_execution_context* ctx, hx_container_t* iters ) {
-	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) calloc( 1, sizeof( hx_variablebindings_iter_vtable ) );
 	if (vtable == NULL) {
 		fprintf( stderr, "*** malloc failed in hx_new_union_iter\n" );
 		return NULL;
@@ -39,7 +39,11 @@ hx_variablebindings_iter* hx_new_union_iter ( hx_execution_context* ctx, hx_cont
 	info->current		= NULL;
 	info->ctx			= ctx;
 	
+	fprintf( stderr, "creating new union variablebindings iterator...\n" );
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
+	fprintf( stderr, "iter: %p\n", iter );
+	fprintf( stderr, "- vtable: %p\n", iter->vtable );
+	fprintf( stderr, "- ptr: %p\n", iter->ptr );
 	return iter;
 }
 

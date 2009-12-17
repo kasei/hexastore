@@ -64,7 +64,7 @@ hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_i
 int hx_free_execution_context ( hx_execution_context* c ) {
 	int size	= hx_container_size( c->remote_sources );
 	int i;
-	for (i = 1; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		hx_free_remote_service( hx_container_item( c->remote_sources, i ) );
 	}
 	hx_free_container( c->remote_sources );
