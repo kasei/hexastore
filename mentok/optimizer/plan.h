@@ -33,6 +33,8 @@ typedef enum {
 	HX_OPTIMIZER_PLAN_LAST	= HX_OPTIMIZER_PLAN_UNION
 } hx_optimizer_plan_type;
 
+const static char* hx_optimizer_plan_name[]	= { "access", "join", "union" };
+
 typedef enum {
 	HX_OPTIMIZER_PLAN_HASHJOIN			= 0,
 	HX_OPTIMIZER_PLAN_MERGEJOIN			= 1,

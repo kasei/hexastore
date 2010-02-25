@@ -46,6 +46,10 @@ typedef struct {
 
 typedef struct {
 	char* name;
+	long latency1;
+	long latency2;
+	double results_per_second1;
+	double results_per_second2;
 } hx_remote_service;
 
 typedef hx_variablebindings_iter* (*bgp_exec_func_t)( void*, hx_model*, void* thunk );

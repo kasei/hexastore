@@ -8,7 +8,11 @@
 
 hx_remote_service* hx_new_remote_service ( char* name ) {
 	hx_remote_service* s	= (hx_remote_service*) calloc( 1, sizeof( hx_remote_service ) );
-	s->name	= hx_copy_string( name );
+	s->name					= hx_copy_string( name );
+	s->latency1				= 0;
+	s->latency2				= 0;
+	s->results_per_second1	= 0.0;
+	s->results_per_second2	= 0.0;
 	return s;
 }
 

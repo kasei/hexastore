@@ -5,7 +5,7 @@
 ### makes, just `make` should do the trick without needing to re-generate the
 ### flex/bison stuff.
 
-CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 # -DDEBUG
+CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 -DDEBUG
 INCPATH		= -I. # -I/usr/local/include -I/ext/local/include
 LIBPATH		= -L. # -L/usr/local/lib -L/ext/local/lib
 CFLAGS		= -std=gnu99 -pedantic $(INCPATH) $(LIBPATH) -ggdb $(CDEFINES)
@@ -25,8 +25,8 @@ ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
 OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o mentok/optimizer/optimizer-federated.o
 OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
-LINKOBJS			= libmentok.dylib
-LINKOBJSFLAGS		= -lmentok
+LINKOBJS			= $(OBJECTS)
+LINKOBJSFLAGS		= $(LIBS) $(OBJECTS)
 INSTDIR				= /usr/local
 
 ################################################################################
@@ -313,7 +313,7 @@ distclean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids fed_test
-	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o test/tap.o
 	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
@@ -323,7 +323,7 @@ clean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
 	rm -f parse print optimize a.out server parse_query dumpmap assign_ids fed_test
-	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o test/tap.o
 	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
@@ -353,5 +353,5 @@ install: libmentok.dylib $(PUBLIC_HEADERS)
 	cp libmentok.dylib $(INSTDIR)/lib/
 
 libmentok.dylib: $(OBJECTS)
-	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
+	libtool --mode=link -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
 

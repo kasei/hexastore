@@ -3,6 +3,7 @@
 #include "mentok/engine/nestedloopjoin.h"
 #include "mentok/engine/hashjoin.h"
 #include "mentok/engine/mergejoin.h"
+#include "mentok/engine/delay.h"
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
@@ -190,9 +191,15 @@ int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, 
 		} else {
 			hx_remote_service* s	= hx_container_item( ctx->remote_sources, p->location );
 			char* service	= hx_remote_service_name( s );
-			len		= strlen(service) + 3;
-			loc		= (char*) calloc( len, sizeof(char) );
-			snprintf( loc, len, "[%s]", service );
+			if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
+				len		= strlen(service) + 21;
+				loc		= (char*) calloc( len, sizeof(char) );
+				snprintf( loc, len, "[%s, store=%p]", service, p->data.access.store );
+			} else {
+				len		= strlen(service) + 3;
+				loc		= (char*) calloc( len, sizeof(char) );
+				snprintf( loc, len, "[%s]", service );
+			}
 		}
 	}
 	
@@ -401,7 +408,6 @@ hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx,
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t		= plan->data.access.triple;
 		iter	= hx_store_get_statements_with_index( plan->data.access.store, t, plan->data.access.source );
-fprintf( stderr, "    turning index plan into iterator\n" );
 	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
 		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->data.join.lhs_plan );
 		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->data.join.rhs_plan );
@@ -414,7 +420,6 @@ fprintf( stderr, "    turning index plan into iterator\n" );
 		} else {
 			fprintf( stderr, "*** unrecognized plan join type in hx_optimizer_plan_execute\n" );
 		}
-fprintf( stderr, "  turning join plan into iterator\n" );
 	} else if (plan->type == HX_OPTIMIZER_PLAN_UNION) {
 		int i;
 		hx_container_t* plans	= plan->data._union.plans;
@@ -425,10 +430,18 @@ fprintf( stderr, "  turning join plan into iterator\n" );
 			hx_container_push_item( iters, _iter );
 		}
 		iter	= hx_new_union_iter( ctx, iters );
-fprintf( stderr, "turning union plan into iterator (%p)\n", iter );
-fprintf( stderr, "- vtable: %p\n", iter->vtable );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_execute\n" );
+	}
+	
+	if (plan->location > 0) {
+		hx_container_t* sources	= ctx->remote_sources;
+		hx_remote_service* s	= hx_container_item( sources, plan->location );
+		char* name	= hx_remote_service_name( s );
+		long latency	= (plan->type == HX_OPTIMIZER_PLAN_INDEX) ? s->latency1 : s->latency2;
+		double rate		= (plan->type == HX_OPTIMIZER_PLAN_INDEX) ? s->results_per_second1 : s->results_per_second2;
+//  		fprintf( stderr, "%s plan is to be simulated for remote execution on %s (endpoint %d latency=%ld rate=%.3lf store=%p)\n", hx_optimizer_plan_name[ plan->type ], name, plan->location, latency, rate, plan->data.access.store );
+		iter	= hx_new_delay_iter( iter, latency, rate );
 	}
 	
 	return iter;

@@ -25,6 +25,7 @@ typedef struct {
 	int started;
 	int finished;
 	int iter_index;
+	long count;
 	hx_variablebindings* current;
 	hx_container_t* iters;
 	hx_execution_context* ctx;

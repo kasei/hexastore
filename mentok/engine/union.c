@@ -34,16 +34,13 @@ hx_variablebindings_iter* hx_new_union_iter ( hx_execution_context* ctx, hx_cont
 	_hx_union_iter_vb_info* info	= (_hx_union_iter_vb_info*) calloc( 1, sizeof( _hx_union_iter_vb_info ) );
 	info->started		= 0;
 	info->finished		= 0;
+	info->count			= 0;
 	info->iter_index	= -1;
 	info->iters			= iters;
 	info->current		= NULL;
 	info->ctx			= ctx;
 	
-	fprintf( stderr, "creating new union variablebindings iterator...\n" );
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
-	fprintf( stderr, "iter: %p\n", iter );
-	fprintf( stderr, "- vtable: %p\n", iter->vtable );
-	fprintf( stderr, "- ptr: %p\n", iter->ptr );
 	return iter;
 }
 
@@ -197,6 +194,11 @@ int _hx_union_get_next_result ( _hx_union_iter_vb_info* info ) {
 	
 	while (hx_variablebindings_iter_finished(iter)) {
 // 		fprintf( stderr, "*** union iterator hit end. going to next iterator\n" );
+		if (1) {
+			fprintf( stderr, "union %p child %d (%p) returned %ld results\n", info, info->iter_index, iter, info->count );
+//			hx_variablebindings_iter_debug( iter, "> ", 0 );
+		}
+		info->count	= 0;
 		info->iter_index++;
 		if (info->iter_index >= size) {
 // 			fprintf( stderr, "*** no more iterators left. setting finished flag and returning.\n" );
@@ -216,7 +218,8 @@ int _hx_union_get_next_result ( _hx_union_iter_vb_info* info ) {
 		hx_free_variablebindings(info->current);
 		info->current	= NULL;
 	}
-		
+	
+	info->count++;
 	info->current	= b;
 	return 0;
 }

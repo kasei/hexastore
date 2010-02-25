@@ -341,6 +341,7 @@ hx_variablebindings_iter* hx_store_hexastore_get_statements_with_index (hx_store
 	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
 	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
 	info->current					= NULL;
+	info->store						= store;
 	
 	int j	= 0;
 	if (subj_name != NULL) {
@@ -589,7 +590,7 @@ int _hx_store_hexastore_iter_vb_iter_debug ( void* data, char* header, int inden
 	int i;
 	for (i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
 	hx_store_hexastore_index_iter* iter	= info->iter;
-	fprintf( stderr, "%s hexastore triples iterator (%p)\n", header, (void*) iter );
+	fprintf( stderr, "%s hexastore triples iterator (iter=%p, store=%p)\n", header, (void*) iter, (void*) info->store );
 	int counter	= 0;
 	fprintf( stderr, "%s ------------------------\n", header );
 	while (!hx_store_hexastore_index_iter_finished( iter )) {

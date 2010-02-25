@@ -33,23 +33,25 @@ int _hx_delay_iter_vb_next ( void* data ) {
 	}
 	
 	
-	double required_ms_delay	= (1.0 / info->results_per_second) * 1000.0;
-	fprintf( stderr, "%lf results/second means a delay of %lfms between results\n", info->results_per_second, required_ms_delay );
-	
-	struct timeval cur_time, elapsedt;
-	int status;
-	status = gettimeofday (&cur_time, NULL);
-	fprintf( stderr, "current time %ld:%ld\n", (long) cur_time.tv_sec, (long) cur_time.tv_usec );
-	double cur_ms		= (1000.0 * cur_time.tv_sec - info->last_time.tv_usec / 1000.0);
-	double last_ms		= (1000.0 * info->last_time.tv_sec - info->last_time.tv_usec / 1000.0);
-	double elapsed_ms	= (cur_ms - last_ms);
-	fprintf( stderr, "elapsed time %lfms\n", elapsed_ms );
-	if (elapsed_ms < required_ms_delay) {
-		double needed_ms_delay	= required_ms_delay - elapsed_ms;
-		fprintf( stderr, "delaying %lfms (%d results, %lf elapsed ms)\n", needed_ms_delay, (int) info->total, elapsed_ms );
-		usleep( needed_ms_delay * 1000 );
+	if (info->results_per_second > 0.0) {
+		double required_ms_delay	= (1.0 / info->results_per_second) * 1000.0;
+	// 	fprintf( stderr, "%lf results/second means a delay of %lfms between results\n", info->results_per_second, required_ms_delay );
+		
+		struct timeval cur_time, elapsedt;
+		int status;
+		status = gettimeofday (&cur_time, NULL);
+	// 	fprintf( stderr, "current time %ld:%ld\n", (long) cur_time.tv_sec, (long) cur_time.tv_usec );
+		double cur_ms		= (1000.0 * cur_time.tv_sec - info->last_time.tv_usec / 1000.0);
+		double last_ms		= (1000.0 * info->last_time.tv_sec - info->last_time.tv_usec / 1000.0);
+		double elapsed_ms	= (cur_ms - last_ms);
+	// 	fprintf( stderr, "elapsed time %lfms\n", elapsed_ms );
+		if (elapsed_ms < required_ms_delay) {
+			double needed_ms_delay	= required_ms_delay - elapsed_ms;
+			fprintf( stderr, "delaying %lfms (%d results, %lf elapsed ms)\n", needed_ms_delay, (int) info->total, elapsed_ms );
+			usleep( needed_ms_delay * 1000 );
+		}
+		info->last_time	= cur_time;
 	}
-	info->last_time	= cur_time;
 	return hx_variablebindings_iter_next( info->iter );
 }
 
@@ -95,7 +97,7 @@ hx_variablebindings_iter* hx_new_delay_iter ( hx_variablebindings_iter* iter, lo
 	info->latency				= latency;
 	info->iter					= iter;
 	
-	fprintf( stderr, "new delay iterator with latency=%ldms and %lf results/second\n", latency, results_per_second );
+// 	fprintf( stderr, "new delay iterator with latency=%ldms and %lf results/second\n", latency, results_per_second );
 	
 	hx_variablebindings_iter* diter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return diter;
