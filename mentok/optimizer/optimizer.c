@@ -623,7 +623,11 @@ int _hx_optimizer_plan_merge_unions( hx_execution_context* ctx, hx_optimizer_pla
 	
 	if (merged) {
 		hx_free_container( plans );
+// don't try to compile this if HXMPI is defined. qsort_r isn't available on
+// the clusters, but we're not using this optimizer code on the clusters anyway.
+#ifndef HXMPI
 		qsort_r( newplans->items, hx_container_size(newplans), sizeof(void*), ctx, hx_optimizer_plan_cmp_service_calls );
+#endif
 		plan->data._union.plans	= newplans;
 	} else {
 		hx_free_container( newplans );
