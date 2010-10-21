@@ -141,6 +141,7 @@ hx_optimizer_plan* hx_optimizer_optimize_bgp ( hx_execution_context* ctx, hx_bgp
 	for (i = 0; i < bgpsize; i++) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		hx_container_t* plans	= ctx->optimizer_access_plans( ctx, t );
+		
 		char* key				= _hx_optimizer_new_opt_plan_access_key_set( bgpsize, i );
 // 		_hx_optimizer_debug_plans( ctx, "Access plans (before pruning):", plans );
 		hx_container_t* pruned	= hx_optimizer_prune_plans( ctx, plans );
@@ -358,6 +359,7 @@ hx_container_t* hx_optimizer_access_plans ( hx_execution_context* ctx, hx_triple
 		fprintf( stderr, "*** no appropriate access plan found. scan+filter isn't implemented yet.\n" );
 	}
 	
+	hx_free_container( indexes );
 	return access_plans;
 }
 

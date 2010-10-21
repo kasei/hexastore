@@ -207,6 +207,15 @@ void hx_variablebindings_debug ( hx_variablebindings* b ) {
 	free( string );
 }
 
+void hx_variablebindings_print ( hx_variablebindings* b ) {
+	char* string;
+	if (hx_variablebindings_string( b, &string ) != 0) {
+		return;
+	}
+	fprintf( stdout, "%s\n", string );
+	free( string );
+}
+
 int hx_variablebindings_nodes_string ( hx_variablebindings_nodes* b, char** string ) {
 	int size		= b->size;
 	char** nodestrs	= (char**) calloc( size, sizeof( char* ) );

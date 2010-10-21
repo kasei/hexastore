@@ -8,7 +8,11 @@
 
 hx_remote_service* hx_new_remote_service ( char* name ) {
 	hx_remote_service* s	= (hx_remote_service*) calloc( 1, sizeof( hx_remote_service ) );
-	s->name	= hx_copy_string( name );
+	s->name					= hx_copy_string( name );
+	s->latency1				= 0;
+	s->latency2				= 0;
+	s->results_per_second1	= 0.0;
+	s->results_per_second2	= 0.0;
 	return s;
 }
 
@@ -35,11 +39,11 @@ int hx_execution_context_init ( hx_execution_context* c, void* world, hx_model* 
 	c->hashjoin_penalty				= 1;
 	c->nestedloopjoin_penalty		= 3;
 	c->remote_latency_cost			= 100;
-	c->lookup_node					= hx_execution_context_lookup_node;
-	c->bgp_exec_func				= hx_bgp_execute2;
+	c->lookup_node					= (lookup_node_t) hx_execution_context_lookup_node;
+	c->bgp_exec_func				= (bgp_exec_func_t) hx_bgp_execute2;
 	c->bgp_exec_func_thunk			= NULL;
-	c->optimizer_access_plans		= hx_optimizer_access_plans;
-	c->optimizer_join_plans			= hx_optimizer_join_plans;
+	c->optimizer_access_plans		= (optimizer_access_plans_t) hx_optimizer_access_plans;
+	c->optimizer_join_plans			= (optimizer_join_plans_t) hx_optimizer_join_plans;
 	c->remote_sources				= hx_new_container( 'S', 1 );
 	hx_execution_context_add_service( c, hx_new_remote_service("local") );
 	return 0;
@@ -64,7 +68,7 @@ hx_node* hx_execution_context_lookup_node ( hx_execution_context* ctx, hx_node_i
 int hx_free_execution_context ( hx_execution_context* c ) {
 	int size	= hx_container_size( c->remote_sources );
 	int i;
-	for (i = 1; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		hx_free_remote_service( hx_container_item( c->remote_sources, i ) );
 	}
 	hx_free_container( c->remote_sources );

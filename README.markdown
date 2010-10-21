@@ -8,6 +8,11 @@ documentation to speak of, but there are some small example programs included
 that can hopefully provide a starting point for anyone wanting to dive into the
 code.
 
+*NOTE*: Despite it's name, this project is not the Hexastore described by
+Weiss, et. al (VLDB08). It started as a re-implementation of the Hexastore
+system as described in their publication, but has no official connection with
+that work.
+
 ### Requirements
 
 * [Raptor](http://librdf.org/raptor/)

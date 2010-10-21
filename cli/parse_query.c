@@ -14,9 +14,11 @@ extern hx_bgp* parse_bgp_query ( void );
 extern hx_graphpattern* parse_query_string ( char* );
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage:\n" );
-	fprintf( stderr, "\t%s -store=S [-n] hexastore.dat [query.rq]\n", argv[0] );
-	fprintf( stderr, "\t\tReads a SPARQL query from query.rq or on standard input.\n" );
+	fprintf( stderr, "Usage: %s -store=S [-n] hexastore.dat [query.rq]\n", argv[0] );
+	fprintf( stderr, "    Reads a SPARQL query from query.rq or on standard input.\n\n" );
+	fprintf( stderr, "    S must be one of the following:\n" );
+	fprintf( stderr, "        'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "        'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 	fprintf( stderr, "\n\n" );
 }
 
@@ -24,6 +26,7 @@ int main( int argc, char** argv ) {
 	int argi		= 1;
 	int dryrun		= 0;
 	int optimize	= 0;
+	int terse		= 0;
 	
 	if (argc < 3) {
 		help( argc, argv );
@@ -57,6 +60,8 @@ int main( int argc, char** argv ) {
 				dryrun	= 1;
 			} else if (strncmp(argv[argi], "-o",2) == 0) {
 				optimize	= 1;
+			} else if (strncmp(argv[argi], "-t",2) == 0) {
+				terse	= 1;
 			}
 			argi++;
 		}
@@ -159,17 +164,23 @@ int main( int argc, char** argv ) {
 				count++;
 				hx_variablebindings* b;
 				hx_variablebindings_iter_current( iter, &b );
-				int size		= hx_variablebindings_size( b );
-				char** names	= hx_variablebindings_names( b );
 				
-				fprintf( stdout, "Row %d:\n", (int) count );
-				int i;
-				for (i = 0; i < size; i++) {
-					char* string;
-					hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, i );
-					hx_node_string( node, &string );
-					fprintf( stdout, "\t%s: %s\n", names[i], string );
-					free( string );
+				if (terse) {
+					fprintf( stdout, "Result %d: ", (int) count );
+					hx_variablebindings_print( b );
+				} else {
+					int size		= hx_variablebindings_size( b );
+					char** names	= hx_variablebindings_names( b );
+					
+					fprintf( stdout, "Row %d:\n", (int) count );
+					int i;
+					for (i = 0; i < size; i++) {
+						char* string;
+						hx_node* node	= hx_variablebindings_node_for_binding( b, hx->store, i );
+						hx_node_string( node, &string );
+						fprintf( stdout, "\t%s: %s\n", names[i], string );
+						free( string );
+					}
 				}
 				
 				hx_free_variablebindings(b);

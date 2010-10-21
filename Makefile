@@ -5,7 +5,7 @@
 ### makes, just `make` should do the trick without needing to re-generate the
 ### flex/bison stuff.
 
-CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 # -DDEBUG
+CDEFINES	= -DTIMING_CPU_FREQUENCY=2400000000.0 -DDEBUG
 INCPATH		= -I. # -I/usr/local/include -I/ext/local/include
 LIBPATH		= -L. # -L/usr/local/lib -L/ext/local/lib
 CFLAGS		= -std=gnu99 -pedantic $(INCPATH) $(LIBPATH) -ggdb $(CDEFINES)
@@ -20,20 +20,20 @@ PSTORE_OBJECTS		= mentok/store/parliament/parliament.o
 STORE_OBJECTS		= mentok/store/store.o $(HEXASTORE_OBJECTS) $(TCSTORE_OBJECTS) $(PSTORE_OBJECTS)
 MISC_OBJECTS		= mentok/misc/avl.o mentok/misc/nodemap.o mentok/misc/util.o mentok/misc/idmap.o
 RDF_OBJECTS			= mentok/rdf/node.o mentok/rdf/triple.o
-ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o mentok/engine/union.o
+ENGINE_OBJECTS		= mentok/engine/expr.o mentok/engine/variablebindings_iter.o mentok/engine/variablebindings_iter_sorting.o mentok/engine/nestedloopjoin.o mentok/engine/mergejoin.o mentok/engine/materialize.o mentok/engine/filter.o mentok/engine/project.o mentok/engine/hashjoin.o mentok/engine/bgp.o mentok/engine/graphpattern.o mentok/engine/union.o mentok/engine/delay.o
 ALGEBRA_OBJECTS		= mentok/algebra/variablebindings.o mentok/algebra/bgp.o mentok/algebra/expr.o mentok/algebra/graphpattern.o
 PARSER_OBJECTS		= mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/parser.o
 OPT_OBJECTS			= mentok/optimizer/optimizer.o mentok/optimizer/plan.o mentok/optimizer/optimizer-federated.o
 OBJECTS				= mentok/mentok.o $(STORE_OBJECTS) $(MISC_OBJECTS) $(RDF_OBJECTS) $(ENGINE_OBJECTS) $(ALGEBRA_OBJECTS) $(PARSER_OBJECTS) $(OPT_OBJECTS)
-LINKOBJS			= libmentok.dylib
-LINKOBJSFLAGS		= -lmentok
+LINKOBJS			= $(OBJECTS)
+LINKOBJSFLAGS		= $(LIBS) $(OBJECTS)
 INSTDIR				= /usr/local
 
 ################################################################################
 
 default: parse print optimize tests examples parse_query
 
-all: sparql parse print optimize tests examples parse_query dumpmap assign_ids
+all: sparql parse print optimize tests examples parse_query dumpmap assign_ids fed_test
 
 server: cli/server.c $(LINKOBJS)
 	$(CC) $(LINKOBJSFLAGS) -ldrizzle -o server cli/server.c
@@ -55,6 +55,9 @@ parse_query: cli/parse_query.c $(LINKOBJS)
 
 dumpmap: cli/dumpmap.c $(LINKOBJS)
 	$(CC) $(LINKOBJSFLAGS) -o dumpmap cli/dumpmap.c
+
+fed_test: cli/fed_test.c $(LINKOBJS)
+	$(CC) $(LINKOBJSFLAGS) -o fed_test cli/fed_test.c
 
 ###
 
@@ -133,6 +136,9 @@ mentok/engine/materialize.o: mentok/engine/materialize.c mentok/engine/materiali
 mentok/engine/filter.o: mentok/engine/filter.c mentok/engine/filter.h mentok/mentok_types.h mentok/rdf/node.h mentok/misc/nodemap.h
 	$(CC) $(OBJFLAGS) -c -o mentok/engine/filter.o mentok/engine/filter.c
 
+mentok/engine/delay.o: mentok/engine/delay.c mentok/engine/delay.h mentok/mentok_types.h
+	$(CC) $(OBJFLAGS) -c -o mentok/engine/delay.o mentok/engine/delay.c
+
 mentok/rdf/triple.o: mentok/rdf/triple.c mentok/rdf/triple.h mentok/mentok_types.h
 	$(CC) $(OBJFLAGS) -c -o mentok/rdf/triple.o mentok/rdf/triple.c
 
@@ -189,7 +195,7 @@ mentok/parser/SPARQLScanner.o: mentok/parser/SPARQLScanner.c mentok/parser/SPARQ
 
 ########
 
-tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-parliament.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t t/optimizer-federation.t
+tests: t/nodemap.t t/node.t t/expr.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/union.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/filter.t t/graphpattern.t t/parser.t t/variablebindings.t t/project.t t/triple.t t/hash.t t/store-hexastore.t t/store-parliament.t t/store-tokyocabinet.t t/tokyocabinet.t t/optimizer.t t/optimizer-federation.t t/delay.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
@@ -275,6 +281,9 @@ t/store-tokyocabinet.t: test/tap.o t/store-tokyocabinet.c mentok/store/tokyocabi
 t/tokyocabinet.t: test/tap.o t/tokyocabinet.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
 	$(CC) $(LINKOBJSFLAGS) -o t/tokyocabinet.t t/tokyocabinet.c test/tap.o
 
+t/delay.t: test/tap.o t/delay.c mentok/store/hexastore/hexastore.h $(LINKOBJS) test/tap.o
+	$(CC) $(LINKOBJSFLAGS) -o t/delay.t t/delay.c test/tap.o
+
 ########
 
 examples/lubm_q4: examples/lubm_q4.c $(LINKOBJS)
@@ -303,8 +312,8 @@ distclean:
 	rm -f SPARQL mentok/parser/SPARQLParser.o mentok/parser/SPARQLScanner.o mentok/parser/SPARQLParser.c mentok/parser/SPARQLScanner.c mentok/parser/SPARQLParser.h
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
-	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
-	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f parse print optimize a.out server parse_query dumpmap assign_ids fed_test
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o test/tap.o
 	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
@@ -313,8 +322,8 @@ distclean:
 clean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows examples/mpi
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM examples/mpi.dSYM
-	rm -f parse print optimize a.out server parse_query dumpmap assign_ids
-	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o
+	rm -f parse print optimize a.out server parse_query dumpmap assign_ids fed_test
+	rm -f mentok/*.o mentok/*/*.o mentok/*/*/*.o test/tap.o
 	rm -f libmentok.dylib
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
@@ -344,5 +353,5 @@ install: libmentok.dylib $(PUBLIC_HEADERS)
 	cp libmentok.dylib $(INSTDIR)/lib/
 
 libmentok.dylib: $(OBJECTS)
-	libtool -dynamic -flat_namespace -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
+	libtool --mode=link -install_name $(INSTDIR)/lib/libmentok.dylib -current_version 0.1 $(LIBS) -o libmentok.dylib  $(OBJECTS)
 

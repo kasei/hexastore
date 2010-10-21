@@ -42,6 +42,7 @@ typedef struct {
 	int* index_to_triple_pos;
 	char *subject, *predicate, *object;
 	hx_variablebindings* current;
+	hx_store* store;
 } _hx_store_hexastore_iter_vb_info;
 
 hx_store* hx_new_store_hexastore ( void* world );

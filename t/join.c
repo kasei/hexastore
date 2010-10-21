@@ -22,11 +22,12 @@ hx_node* l1;
 hx_node* l2;
 
 void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) );
+void test_path_join2 ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) );
 void test_cartesian_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ), int expect );
 void test_left_join ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter*, int ) );
 
 int main ( void ) {
-	plan_tests((3*10) + (14 + (2+2)) + 7);
+	plan_tests((3*10) + (24 + (2+2)) + 7);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
@@ -37,6 +38,7 @@ int main ( void ) {
 	test_path_join( hx_new_mergejoin_iter );
 	test_path_join( hx_new_nestedloopjoin_iter );
 	test_path_join( hx_new_hashjoin_iter );
+	test_path_join2( hx_new_hashjoin_iter );
 	
 	test_cartesian_join( hx_new_nestedloopjoin_iter, 1 );	// the 1 signifies that we expect the join to work and produce 1 result
 	test_cartesian_join( hx_new_mergejoin_iter, 0 );		// the 0 signifies that we don't expect the join to work, since mergejoin isn't implemented for the cartesian join case (with no shared variables)
@@ -272,6 +274,70 @@ void test_path_join ( hx_variablebindings_iter* join_constructor( hx_variablebin
 	hx_variablebindings_iter_next( iter );
 	ok1( hx_variablebindings_iter_finished( iter ) );
 	
+	hx_free_variablebindings_iter( iter );
+	hx_free_model( hx );
+}
+
+void test_path_join2 ( hx_variablebindings_iter* join_constructor( hx_variablebindings_iter*, hx_variablebindings_iter* ) ) {
+	fprintf( stdout, "# test_path_join2\n" );
+	hx_model* hx	= hx_new_model( NULL );
+	hx_nodemap* map	= hx_store_hexastore_get_nodemap( hx->store );
+	_add_data( hx );
+// <r1> :p1 <r2>
+// <r2> :p1 <r1>
+// <r2> :p2 "l2"
+// <r1> :p2 "l1"
+	
+	int size;
+	char* name;
+	char* string;
+	hx_variablebindings* b;
+	hx_node* v1		= hx_model_new_named_variable( hx, "x" );
+	hx_node* v2		= hx_model_new_named_variable( hx, "y" );
+	hx_node* v3		= hx_model_new_named_variable( hx, "z" );
+	hx_node* v4		= hx_model_new_named_variable( hx, "q" );
+	
+	hx_triple* ta	= hx_new_triple( v1, p1, v2 );
+	hx_variablebindings_iter* iter_a	= hx_model_new_variablebindings_iter_for_triple( hx, ta, HX_OBJECT );
+	
+	hx_triple* tb	= hx_new_triple( v2, p1, v3 );
+	hx_variablebindings_iter* iter_b	= hx_model_new_variablebindings_iter_for_triple( hx, tb, HX_SUBJECT );
+	
+	hx_triple* tc	= hx_new_triple( v3, p2, v4 );
+	hx_variablebindings_iter* iter_c	= hx_model_new_variablebindings_iter_for_triple( hx, tc, HX_OBJECT );
+	
+	hx_variablebindings_iter* iter1	= join_constructor( iter_a, iter_b );
+	hx_variablebindings_iter* iter	= join_constructor( iter1, iter_c );
+	
+	ok1( !hx_variablebindings_iter_finished( iter ) );
+	while (!hx_variablebindings_iter_finished( iter )) {
+		hx_variablebindings_iter_current( iter, &b );
+		// expect 3 variable bindings for the three triple nodes
+		size	= hx_variablebindings_size( b );
+		ok1( size == 4 );
+		
+		{
+			hx_node_id xid	= hx_variablebindings_node_id_for_binding_name( b, "x" );
+			hx_node* x		= hx_nodemap_get_node( map, xid );
+			hx_node_id yid	= hx_variablebindings_node_id_for_binding_name( b, "y" );
+			hx_node* y		= hx_nodemap_get_node( map, yid );
+			hx_node_id zid	= hx_variablebindings_node_id_for_binding_name( b, "z" );
+			hx_node* z		= hx_nodemap_get_node( map, zid );
+			hx_node_id qid	= hx_variablebindings_node_id_for_binding_name( b, "q" );
+			hx_node* q		= hx_nodemap_get_node( map, qid );
+			
+			ok1( hx_node_cmp( x, z ) == 0 );
+			ok1( hx_node_cmp( x, y ) != 0 );
+			if (hx_node_cmp( x, r1 ) == 0) {
+				ok1( hx_node_cmp( q, l1 ) == 0 );
+			} else {
+				ok1( hx_node_cmp( q, l2 ) == 0 );
+			}
+		}
+		hx_variablebindings_iter_next( iter );
+	}
+	
+	ok1( hx_variablebindings_iter_finished( iter ) );
 	hx_free_variablebindings_iter( iter );
 	hx_free_model( hx );
 }

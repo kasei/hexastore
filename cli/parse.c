@@ -17,10 +17,10 @@ int main (int argc, char** argv);
 static int count	= 0;
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s -store=S data.rdf data/\n\n", argv[0] );
-	fprintf( stderr, "S must be one of the following:\n" );
-	fprintf( stderr, "    'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
-	fprintf( stderr, "    'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
+	fprintf( stderr, "Usage: %s -store=S [-nodemap filename.hx] data.rdf data/\n\n", argv[0] );
+	fprintf( stderr, "    S must be one of the following:\n" );
+	fprintf( stderr, "        'T' - Use the tokyocabinet backend with files stored in the directory data/\n" );
+	fprintf( stderr, "        'H' - Use the hexastore memory backend serialized to the file data.\n\n" );
 }
 
 void logger ( uint64_t _count, void* thunk ) {
@@ -32,6 +32,7 @@ void logger ( uint64_t _count, void* thunk ) {
 }
 
 int main (int argc, char** argv) {
+	int argi					= 1;
 	const char* rdf_filename	= NULL;
 	const char* output_location	= NULL;
 	
@@ -41,9 +42,8 @@ int main (int argc, char** argv) {
 	}
 	
 	char type	= 'T';
-	int i	= 1;
-	if (strncmp(argv[i], "-store=", 7) == 0) {
-		switch (argv[i][7]) {
+	if (strncmp(argv[argi], "-store=", 7) == 0) {
+		switch (argv[argi][7]) {
 			case 'T':
 				type	= 'T';
 				break;
@@ -54,28 +54,43 @@ int main (int argc, char** argv) {
 				fprintf( stderr, "Unrecognized store type.\n\n" );
 				exit(1);
 		};
-		i++;
+		argi++;
 	} else {
 		fprintf( stderr, "No store type specified.\n" );
 		exit(1);
 	}
 	
-	rdf_filename	= argv[i++];
-	output_location	= argv[i++];
-	
-	const char* index_string;
-	if (i < argc) {
-		index_string	= argv[i++];
-	} else {
-		index_string	= "spo,sop,pso,pos,osp,ops";
+	const char* nodemap_filename	= NULL;
+	hx_node_id start	= 1;
+	while (argi < argc && *(argv[argi]) == '-') {
+		if (strcmp(argv[argi], "-nodemap") == 0) {
+			argi++;
+			nodemap_filename	= argv[argi];
+		}
+		argi++;
 	}
+	
+	rdf_filename	= argv[argi++];
+	output_location	= argv[argi++];
 	
 	hx_model* hx;
 	if (type == 'T') {
 		hx_store* store	= hx_new_store_tokyocabinet( NULL, output_location );
 		hx				= hx_new_model_with_store( NULL, store );
 	} else {
-		hx_store* store	= hx_new_store_hexastore_with_indexes( NULL, index_string );
+		hx_store* store;
+		if (nodemap_filename == NULL) {
+			store	= hx_new_store_hexastore( NULL );
+		} else {
+			FILE* f	= fopen( nodemap_filename, "r" );
+			if (f == NULL) {
+				perror( "Failed to open hexastore file for reading: " );
+				return 1;
+			}
+			hx_store* map_store			= hx_store_hexastore_read( NULL, f, 0 );
+			hx_nodemap* map	= hx_store_hexastore_get_nodemap( map_store );
+			store	= hx_new_store_hexastore_with_nodemap( NULL, map );
+		}
 		hx				= hx_new_model_with_store( NULL, store );
 	}
 	

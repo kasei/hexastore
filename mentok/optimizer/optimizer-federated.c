@@ -1,6 +1,8 @@
 #include "mentok/optimizer/optimizer-federated.h"
 #include "mentok/misc/idmap.h"
 
+void qsort_r(void *base, size_t nel, size_t width, void *thunk, int (*compar)(void *, const void *, const void *)) {}
+
 int _hx_optimizer_federated_plan_merge( hx_execution_context* ctx, hx_optimizer_plan* plan, void* thunk );
 
 hx_container_t* hx_optimizer_federated_access_plans ( hx_execution_context* ctx, hx_triple* t ) {

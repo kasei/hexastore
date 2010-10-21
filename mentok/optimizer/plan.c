@@ -3,6 +3,7 @@
 #include "mentok/engine/nestedloopjoin.h"
 #include "mentok/engine/hashjoin.h"
 #include "mentok/engine/mergejoin.h"
+#include "mentok/engine/delay.h"
 
 int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimizer_plan* p );
 
@@ -45,7 +46,7 @@ int hx_optimizer_plan_service_calls ( hx_execution_context* ctx, hx_optimizer_pl
 				count	+= hx_optimizer_plan_service_calls( ctx, hx_container_item(src,i) );
 			}
 		} else {
-			fprintf( stderr, "*** unrecognized plan type in hx_copy_optimizer_plan\n" );
+			fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_service_calls\n" );
 			return -1;
 		}
 		return count;
@@ -190,9 +191,15 @@ int hx_optimizer_plan_string ( hx_execution_context* ctx, hx_optimizer_plan* p, 
 		} else {
 			hx_remote_service* s	= hx_container_item( ctx->remote_sources, p->location );
 			char* service	= hx_remote_service_name( s );
-			len		= strlen(service) + 3;
-			loc		= (char*) calloc( len, sizeof(char) );
-			snprintf( loc, len, "[%s]", service );
+			if (p->type == HX_OPTIMIZER_PLAN_INDEX) {
+				len		= strlen(service) + 21;
+				loc		= (char*) calloc( len, sizeof(char) );
+				snprintf( loc, len, "[%s, store=%p]", service, p->data.access.store );
+			} else {
+				len		= strlen(service) + 3;
+				loc		= (char*) calloc( len, sizeof(char) );
+				snprintf( loc, len, "[%s]", service );
+			}
 		}
 	}
 	
@@ -396,12 +403,11 @@ int _hx_optimizer_plan_mergeable_sorting ( hx_execution_context* ctx, hx_optimiz
 }
 
 hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx, hx_optimizer_plan* plan ) {
-	hx_model* hx	= ctx->hx;
 	hx_variablebindings_iter* iter	= NULL;
 	
 	if (plan->type == HX_OPTIMIZER_PLAN_INDEX) {
 		hx_triple* t		= plan->data.access.triple;
-		iter	= hx_store_get_statements_with_index (hx->store, t, plan->data.access.source);
+		iter	= hx_store_get_statements_with_index( plan->data.access.store, t, plan->data.access.source );
 	} else if (plan->type == HX_OPTIMIZER_PLAN_JOIN) {
 		hx_variablebindings_iter* lhs	= hx_optimizer_plan_execute( ctx, plan->data.join.lhs_plan );
 		hx_variablebindings_iter* rhs	= hx_optimizer_plan_execute( ctx, plan->data.join.rhs_plan );
@@ -420,12 +426,22 @@ hx_variablebindings_iter* hx_optimizer_plan_execute ( hx_execution_context* ctx,
 		int size	= hx_container_size( plans );
 		hx_container_t* iters	= hx_new_container( 'I', size );
 		for (i = 0; i < size; i++) {
-			hx_variablebindings_iter* iter	= hx_optimizer_plan_execute( ctx, hx_container_item(plans, i) );
-			hx_container_push_item( iters, iter );
+			hx_variablebindings_iter* _iter	= hx_optimizer_plan_execute( ctx, hx_container_item(plans, i) );
+			hx_container_push_item( iters, _iter );
 		}
 		iter	= hx_new_union_iter( ctx, iters );
 	} else {
 		fprintf( stderr, "*** unrecognized plan type in hx_optimizer_plan_execute\n" );
+	}
+	
+	if (plan->location > 0) {
+		hx_container_t* sources	= ctx->remote_sources;
+		hx_remote_service* s	= hx_container_item( sources, plan->location );
+		char* name	= hx_remote_service_name( s );
+		long latency	= (plan->type == HX_OPTIMIZER_PLAN_INDEX) ? s->latency1 : s->latency2;
+		double rate		= (plan->type == HX_OPTIMIZER_PLAN_INDEX) ? s->results_per_second1 : s->results_per_second2;
+//  		fprintf( stderr, "%s plan is to be simulated for remote execution on %s (endpoint %d latency=%ld rate=%.3lf store=%p)\n", hx_optimizer_plan_name[ plan->type ], name, plan->location, latency, rate, plan->data.access.store );
+		iter	= hx_new_delay_iter( iter, latency, rate );
 	}
 	
 	return iter;

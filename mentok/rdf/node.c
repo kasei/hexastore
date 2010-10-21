@@ -336,7 +336,7 @@ int hx_node_string ( hx_node* n, char** str ) {
 		sprintf( *str, "?%s", vname );
 		free( vname );
 	} else {
-		fprintf( stderr, "*** Unrecognized node type '%c'\n", n->type );
+		fprintf( stderr, "*** Unrecognized node type '%c' in hx_node_string\n", n->type );
 		return 0;
 	}
 	return alloc;
